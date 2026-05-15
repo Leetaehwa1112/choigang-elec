@@ -310,21 +310,21 @@
 
         <ul class="space-y-2">
           <!-- 결혼식 -->
-          <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4 hover:border-line-l transition">
+          <li class="bg-white border-2 border-line-l/50 rounded-lg p-4 flex items-center gap-4">
             <div class="text-center flex-shrink-0">
-              <div class="font-mono text-[10px] text-ink-3">5월</div>
-              <div class="font-display text-2xl leading-none">30</div>
-              <div class="font-mono text-[10px] text-ink-3">금</div>
+              <div class="font-mono text-[10px] text-ink-3">6월</div>
+              <div class="font-display text-2xl leading-none text-line-l">28</div>
+              <div class="font-mono text-[10px] text-ink-3">토</div>
             </div>
             <div class="w-px h-10 bg-ink/15"></div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-mono bg-line-l/15 text-line-l px-1.5 py-0.5 rounded">경조사</span>
-                <h4 class="font-bold truncate">김철수 결혼식</h4>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-mono bg-line-l/15 text-line-l px-1.5 py-0.5 rounded">💍 경조사</span>
+                <h4 class="font-bold">이은준 결혼식</h4>
               </div>
-              <p class="text-xs text-ink-3 mt-1">강남 ○○웨딩홀 12:00 · 9명 참석 예정</p>
+              <p class="text-xs text-ink-3 mt-1">장소 확인 청첩장 참고 · 5명 청첩장 수령 완료 ✓</p>
             </div>
-            <button class="text-xs font-bold wago-btn px-3 py-2 rounded flex-shrink-0">축의금</button>
+            <a href="https://bojagicard.com/i/home.php?uid=o5hladp5&inflow_suid=1" target="_blank" class="text-xs font-bold wago-btn px-3 py-2 rounded flex-shrink-0 whitespace-nowrap">📩 청첩장</a>
           </li>
 
           <!-- 동창회 -->
@@ -654,30 +654,35 @@
           <a href="#" class="text-sm text-ink-3 hover:text-line-l">전체 →</a>
         </div>
 
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
-          <div class="bg-white p-1.5 pb-3 shadow rotate-[-2deg] hover:rotate-0 transition cursor-pointer">
-            <div class="aspect-square bg-gradient-to-br from-board-dark to-board flex items-center justify-center text-3xl">🛠️</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'09 실습</div>
+        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          <!-- 실제 사진: 오늘 청첩장 모임 -->
+          <div class="bg-white p-1.5 pb-4 shadow-md rotate-[-1deg] hover:rotate-0 hover:scale-105 transition cursor-pointer col-span-2 sm:col-span-1 relative">
+            <img src="images/memory_2026_05_16_cheongmo.jpeg" alt="이은준 청첩장 모임" class="w-full aspect-square object-cover"/>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2 leading-tight">'26.05.16<br/>이은준 청모</div>
+            <span class="absolute top-2 right-2 text-[8px] font-bold bg-line-l text-white px-1 rounded">NEW</span>
           </div>
-          <div class="bg-white p-1.5 pb-3 shadow rotate-[1.5deg] hover:rotate-0 transition cursor-pointer">
+          <!-- 실제 사진: 옛날 식당 -->
+          <div class="bg-white p-1.5 pb-4 shadow-md rotate-[2deg] hover:rotate-0 hover:scale-105 transition cursor-pointer">
+            <img src="images/memory_old_1.jpeg" alt="옛날 식당" class="w-full aspect-square object-cover"/>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">고등학교 시절</div>
+          </div>
+          <!-- 실제 사진: 옛날 숙소 -->
+          <div class="bg-white p-1.5 pb-4 shadow-md rotate-[-2deg] hover:rotate-0 hover:scale-105 transition cursor-pointer">
+            <img src="images/memory_old_2.jpeg" alt="옛날 숙소" class="w-full aspect-square object-cover"/>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">수학여행 or MT</div>
+          </div>
+          <!-- 플레이스홀더들 -->
+          <div class="bg-white p-1.5 pb-4 shadow rotate-[1.5deg] hover:rotate-0 transition cursor-pointer">
             <div class="aspect-square bg-gradient-to-br from-line-l/40 to-line-y/40 flex items-center justify-center text-3xl">🎓</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'10 졸업</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">'10 졸업식</div>
           </div>
-          <div class="bg-white p-1.5 pb-3 shadow rotate-[-1deg] hover:rotate-0 transition cursor-pointer">
+          <div class="bg-white p-1.5 pb-4 shadow rotate-[-1deg] hover:rotate-0 transition cursor-pointer">
             <div class="aspect-square bg-gradient-to-br from-line-e/40 to-board flex items-center justify-center text-3xl">🍻</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'24 송년</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">'24 송년</div>
           </div>
-          <div class="bg-white p-1.5 pb-3 shadow rotate-[2deg] hover:rotate-0 transition cursor-pointer">
-            <div class="aspect-square bg-gradient-to-br from-panel-dark to-ink flex items-center justify-center text-3xl">⚡</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'25 모임</div>
-          </div>
-          <div class="bg-white p-1.5 pb-3 shadow rotate-[-1.5deg] hover:rotate-0 transition cursor-pointer">
-            <div class="aspect-square bg-gradient-to-br from-line-y/30 to-board flex items-center justify-center text-3xl">🏫</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'08 입학</div>
-          </div>
-          <div class="bg-white p-1.5 pb-3 shadow rotate-[1deg] hover:rotate-0 transition cursor-pointer">
-            <div class="aspect-square bg-gradient-to-br from-line-l/30 to-line-e/30 flex items-center justify-center text-3xl">🎒</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'25 MT</div>
+          <div class="bg-white/70 p-1.5 pb-4 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition">
+            <div class="aspect-square w-full flex items-center justify-center text-2xl text-ink-3">＋</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">사진 추가</div>
           </div>
         </div>
       </div>
