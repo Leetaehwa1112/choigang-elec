@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>최강전기 · 동창회</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Pretendard:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme {
+        --color-board: #e8dcc0;
+        --color-board-dark: #a37e3f;
+        --color-panel: #f4efe2;
+        --color-panel-dark: #2b3140;
+        --color-steel: #c9ccd1;
+
+        --color-line-l: #d12c2c;
+        --color-line-n: #1f2937;
+        --color-line-e: #16a34a;
+        --color-line-y: #f5b400;
+        --color-kakao: #fae100;
+
+        --color-ink: #1a1d24;
+        --color-ink-2: #4b5160;
+        --color-ink-3: #7a8090;
+        --color-warn: #ef4444;
+        --color-ok: #16a34a;
+
+        --font-display: "Black Han Sans", sans-serif;
+        --font-sans: "Pretendard", system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+      }
+    </style>
+    <style>
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: "Pretendard", system-ui, sans-serif;
+        color: #1a1d24;
+        background: #f4efe2;
+      }
+      .font-display { font-family: "Black Han Sans", sans-serif; letter-spacing: 0.01em; }
+      .font-mono { font-family: "JetBrains Mono", monospace; }
+
+      /* 가독성 위해 작업판 텍스처 톤다운 */
+      .workboard-light {
+        background-color: #f4efe2;
+        background-image:
+          radial-gradient(circle at 25% 35%, rgba(138,102,40,0.06) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 75% 65%, rgba(138,102,40,0.05) 0 1px, transparent 1.5px),
+          linear-gradient(rgba(138,102,40,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(138,102,40,0.05) 1px, transparent 1px);
+        background-size: 180px 180px, 220px 220px, 32px 32px, 32px 32px;
+      }
+
+      .conduit-pipe {
+        height: 14px;
+        background: linear-gradient(180deg, #b8bcc4 0%, #e6e9ee 35%, #f4f6f8 55%, #c9ccd1 85%, #8a8e95 100%);
+        border-top: 1px solid #9aa0a8;
+        border-bottom: 1px solid #6e737b;
+      }
+
+      .breaker {
+        background: linear-gradient(180deg, #f4f6f8 0%, #d6d9de 100%);
+        border: 1px solid #9aa0a8;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 0 rgba(0,0,0,0.1);
+      }
+
+      .wire { height: 6px; border-radius: 3px; }
+      .wire-l { background: repeating-linear-gradient(45deg, #d12c2c 0 4px, #a32020 4px 8px); }
+      .wire-n { background: repeating-linear-gradient(45deg, #1f2937 0 4px, #0d1117 4px 8px); }
+      .wire-e { background: repeating-linear-gradient(45deg, #16a34a 0 4px, #0d7a36 4px 8px); }
+      .wire-y { background: repeating-linear-gradient(45deg, #f5b400 0 4px, #c08c00 4px 8px); }
+
+      .wago-btn {
+        background: linear-gradient(180deg, #f5b400 0%, #d99a00 100%);
+        color: #1a1d24;
+        border: 1px solid #a37700;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.15), 0 2px 0 #7a5a00;
+        transition: transform 0.05s;
+      }
+      .wago-btn:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+
+      .kakao-btn {
+        background: linear-gradient(180deg, #fae100 0%, #d4be00 100%);
+        color: #391b1b;
+        border: 1px solid #b39f00;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 0 #8a7a00;
+      }
+      .kakao-btn:active { transform: translateY(2px); }
+
+      .label-tape {
+        background: linear-gradient(180deg, #fff8e1, #ffeaa0);
+        color: #1a1d24;
+        border-left: 3px solid #d12c2c;
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+
+      @keyframes blink {
+        0%,100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+        50% { opacity: 0.35; box-shadow: 0 0 2px currentColor; }
+      }
+      .led-blink { animation: blink 1.4s ease-in-out infinite; }
+
+      .distribution {
+        background: linear-gradient(180deg, #2b3140 0%, #1a1d24 100%);
+        box-shadow: inset 0 2px 0 rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.15);
+      }
+
+      .metal-panel {
+        background:
+          linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 60%),
+          linear-gradient(180deg, #f4efe2 0%, #d9d1bf 100%);
+        border: 1px solid #b8af9a;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+      }
+
+      .new-badge {
+        background: #d12c2c;
+        color: white;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* 8각 박스 (근황 작은 카드) */
+      .octbox {
+        clip-path: polygon(12% 0, 88% 0, 100% 12%, 100% 88%, 88% 100%, 12% 100%, 0 88%, 0 12%);
+      }
+
+      /* 플로팅 도움 요청 버튼 */
+      .fab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 30;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ===== 상단 시스템 바 ===== -->
+    <div class="distribution text-white text-xs">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-1.5 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="led-blink inline-block w-1.5 h-1.5 rounded-full bg-line-e text-line-e"></span>
+          <span class="font-mono">PWR · ON</span>
+        </div>
+        <a href="#kakao" class="hidden sm:flex items-center gap-1.5 bg-kakao text-ink-2 font-mono font-bold px-2 py-0.5 rounded hover:brightness-105">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.5 2 11c0 2.8 1.8 5.3 4.5 6.7l-1 3.6c-.1.3.2.5.5.3l4.3-2.8c.6.1 1.1.1 1.7.1 5.5 0 10-3.5 10-8s-4.5-7.9-10-7.9z"/></svg>
+          <span>채널 친구추가</span>
+        </a>
+        <div class="font-mono text-ink-3">6/6</div>
+      </div>
+    </div>
+
+    <!-- ===== 네비게이션 ===== -->
+    <nav class="sticky top-0 z-40 bg-panel/95 backdrop-blur border-b-2 border-panel-dark shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+        <a href="#home" class="flex items-center gap-2">
+          <svg width="34" height="34" viewBox="0 0 34 34">
+            <rect x="2" y="2" width="30" height="30" rx="3" fill="#2b3140"/>
+            <rect x="6" y="6" width="22" height="22" rx="1" fill="#f5b400"/>
+            <path d="M19 9L11 19h6l-1 7 9-11h-6l0-6z" fill="#1a1d24"/>
+          </svg>
+          <div class="leading-tight">
+            <div class="font-display text-lg text-ink">최강전기</div>
+            <div class="text-[9px] font-mono text-ink-3 tracking-widest">북공고 최고의 아웃풋</div>
+          </div>
+        </a>
+
+        <ul class="hidden md:flex items-center gap-1 text-sm font-bold">
+          <li><a href="#meet" class="px-3 py-2 rounded hover:bg-board/40">모임</a></li>
+          <li><a href="#calendar" class="px-3 py-2 rounded hover:bg-board/40">캘린더</a></li>
+          <li><a href="#status" class="px-3 py-2 rounded hover:bg-board/40">근황</a></li>
+          <li><a href="#members" class="px-3 py-2 rounded hover:bg-board/40">멤버</a></li>
+          <li><a href="#memory" class="px-3 py-2 rounded hover:bg-board/40">추억</a></li>
+        </ul>
+
+        <div class="flex items-center gap-2">
+          <button class="hidden sm:inline-flex wago-btn font-bold text-xs px-3 py-2 rounded">로그인</button>
+          <button id="menuBtn" class="md:hidden p-2 -mr-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <ul id="mobileMenu" class="hidden md:hidden border-t border-board bg-panel">
+        <li><a href="#meet" class="block px-6 py-3 border-b border-board font-bold">모임</a></li>
+        <li><a href="#calendar" class="block px-6 py-3 border-b border-board font-bold">캘린더</a></li>
+        <li><a href="#status" class="block px-6 py-3 border-b border-board font-bold">근황</a></li>
+        <li><a href="#members" class="block px-6 py-3 border-b border-board font-bold">멤버</a></li>
+        <li><a href="#memory" class="block px-6 py-3 font-bold">추억</a></li>
+      </ul>
+    </nav>
+
+    <!-- ===== HERO + 최근 활동 ===== -->
+    <section id="home" class="workboard-light pt-8 pb-6 sm:pt-10 sm:pb-8">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <!-- 헤드라인 (압축) -->
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-01</div>
+            <h1 class="font-display text-4xl sm:text-5xl mt-2 text-ink">최강전기.</h1>
+            <p class="font-bold text-ink-2 mt-1">인생은 짜릿하게.</p>
+          </div>
+          <!-- 최근 활동 요약 (마지막 방문 이후) -->
+          <div class="bg-panel-dark text-white rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 max-w-full">
+            <span class="led-blink w-2 h-2 rounded-full bg-line-l text-line-l flex-shrink-0"></span>
+            <div class="text-sm min-w-0">
+              <div class="font-mono text-[10px] text-ink-3">지난 방문 이후</div>
+              <div class="font-bold truncate">새 활동 5건 · 새 모임 1건</div>
+            </div>
+            <button class="text-xs underline text-line-y whitespace-nowrap">보기 →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ⭐ 카카오 채널 친구추가 (KILL FEATURE 진입점) ===== -->
+    <section id="kakao" class="bg-kakao border-y-2 border-ink py-4 sm:py-5">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center gap-4 flex-wrap">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="#391b1b" class="flex-shrink-0">
+          <path d="M12 3C6.5 3 2 6.5 2 11c0 2.8 1.8 5.3 4.5 6.7l-1 3.6c-.1.3.2.5.5.3l4.3-2.8c.6.1 1.1.1 1.7.1 5.5 0 10-3.5 10-8s-4.5-7.9-10-7.9z"/>
+        </svg>
+        <div class="flex-1 min-w-0">
+          <div class="font-display text-xl sm:text-2xl text-ink leading-tight">최강전기 채널 친구추가</div>
+          <p class="text-sm text-ink-2 mt-0.5">새 모임·경조사·동기 소식 — 카톡으로 바로 알림. <span class="font-bold">놓치지 않는 게 핵심.</span></p>
+        </div>
+        <button class="kakao-btn font-display text-base px-5 py-3 rounded flex-shrink-0">+ 친구추가</button>
+      </div>
+    </section>
+
+    <!-- ===== ⭐ 다음 모임 (RSVP 큰 카드) ===== -->
+    <section id="meet" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display text-2xl sm:text-3xl flex items-center gap-2">
+            다음 모임
+            <span class="new-badge">D-29</span>
+          </h2>
+          <a href="#" class="text-sm text-ink-3 hover:text-line-l">전체 일정 →</a>
+        </div>
+
+        <!-- 큰 RSVP 카드 -->
+        <div class="distribution rounded-xl p-3 sm:p-4">
+          <div class="metal-panel rounded-lg p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+              <div class="min-w-0 flex-1">
+                <div class="label-tape inline-block px-2 py-0.5 text-[11px]">2026.06.14 토 19:00</div>
+                <h3 class="font-display text-3xl sm:text-4xl mt-2 leading-tight">정기 동창회</h3>
+                <p class="text-ink-2 mt-1">강남 ○○삼겹살 · 2층 단독룸 · 회비 4만원</p>
+              </div>
+              <div class="text-right">
+                <div class="font-mono text-[10px] text-ink-3">현재 참석</div>
+                <div class="font-display text-4xl text-ok">4<span class="text-ink-3 text-2xl">/5</span></div>
+              </div>
+            </div>
+
+            <!-- 참석자 결선 -->
+            <div class="mt-4">
+              <div class="bg-ink/10 rounded h-2.5 overflow-hidden">
+                <div class="h-full wire wire-e" style="width:80%; height:100%; border-radius:0;"></div>
+              </div>
+              <div class="mt-3 grid grid-cols-5 gap-1.5">
+                <div class="aspect-square rounded-full bg-line-e text-white font-bold text-xs flex items-center justify-center" title="참석 · 한동명">한</div>
+                <div class="aspect-square rounded-full bg-line-e text-white font-bold text-xs flex items-center justify-center" title="참석 · 김하람">김</div>
+                <div class="aspect-square rounded-full bg-line-e text-white font-bold text-xs flex items-center justify-center" title="참석 · 이은준">이</div>
+                <div class="aspect-square rounded-full bg-line-e text-white font-bold text-xs flex items-center justify-center" title="참석 · 나준민">나</div>
+                <div class="aspect-square rounded-full bg-ink-3/30 text-ink-2 font-bold text-xs flex items-center justify-center" title="미응답 · 김상현">김</div>
+              </div>
+            </div>
+
+            <!-- 큰 RSVP 버튼 (모바일에서 잘 보이게) -->
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <button class="wago-btn font-display text-xl py-4 rounded-lg">참석</button>
+              <button class="bg-white border-2 border-ink/20 font-display text-xl py-4 rounded-lg hover:border-line-l">불참</button>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-dashed border-ink/15 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
+              <span><span class="font-mono text-ink-3">준비위원장</span> 나준민</span>
+              <a href="#" class="text-line-l underline"><span class="font-mono text-ink-3">위치</span> 지도열기 ↗</a>
+              <span><span class="font-mono text-ink-3">메모</span> 결혼식 끝나고 바로</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ⭐ 이번 달 챙길 것 (캘린더) ===== -->
+    <section id="calendar" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-end justify-between mb-5">
+          <div>
+            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-02</div>
+            <h2 class="font-display text-2xl sm:text-3xl mt-2">이번 달 챙길 것</h2>
+            <p class="text-ink-2 text-sm mt-1">잊지 않는 게 동창회의 본질.</p>
+          </div>
+        </div>
+
+        <ul class="space-y-2">
+          <!-- 결혼식 -->
+          <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4 hover:border-line-l transition">
+            <div class="text-center flex-shrink-0">
+              <div class="font-mono text-[10px] text-ink-3">5월</div>
+              <div class="font-display text-2xl leading-none">30</div>
+              <div class="font-mono text-[10px] text-ink-3">금</div>
+            </div>
+            <div class="w-px h-10 bg-ink/15"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono bg-line-l/15 text-line-l px-1.5 py-0.5 rounded">경조사</span>
+                <h4 class="font-bold truncate">김철수 결혼식</h4>
+              </div>
+              <p class="text-xs text-ink-3 mt-1">강남 ○○웨딩홀 12:00 · 9명 참석 예정</p>
+            </div>
+            <button class="text-xs font-bold wago-btn px-3 py-2 rounded flex-shrink-0">축의금</button>
+          </li>
+
+          <!-- 동창회 -->
+          <li class="bg-white border border-line-y/40 rounded-lg p-4 flex items-center gap-4 ring-1 ring-line-y/30">
+            <div class="text-center flex-shrink-0">
+              <div class="font-mono text-[10px] text-ink-3">6월</div>
+              <div class="font-display text-2xl leading-none">14</div>
+              <div class="font-mono text-[10px] text-ink-3">토</div>
+            </div>
+            <div class="w-px h-10 bg-ink/15"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono bg-line-y/20 text-line-y px-1.5 py-0.5 rounded">정기모임</span>
+                <h4 class="font-bold truncate">정기 동창회</h4>
+              </div>
+              <p class="text-xs text-ink-3 mt-1">강남 ○○삼겹살 · 19:00 · 7명 참석</p>
+            </div>
+            <span class="text-[10px] font-mono text-ok flex-shrink-0">RSVP 완료 ✓</span>
+          </li>
+
+          <!-- 생일 -->
+          <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4 hover:border-line-y transition">
+            <div class="text-center flex-shrink-0">
+              <div class="font-mono text-[10px] text-ink-3">6월</div>
+              <div class="font-display text-2xl leading-none">22</div>
+              <div class="font-mono text-[10px] text-ink-3">일</div>
+            </div>
+            <div class="w-px h-10 bg-ink/15"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">생일</span>
+                <h4 class="font-bold truncate">박영수 생일 🎂</h4>
+              </div>
+              <p class="text-xs text-ink-3 mt-1">단톡방에 한마디 잊지 말기</p>
+            </div>
+          </li>
+
+          <!-- 자녀 -->
+          <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4 hover:border-line-y transition">
+            <div class="text-center flex-shrink-0">
+              <div class="font-mono text-[10px] text-ink-3">7월</div>
+              <div class="font-display text-2xl leading-none">03</div>
+              <div class="font-mono text-[10px] text-ink-3">목</div>
+            </div>
+            <div class="w-px h-10 bg-ink/15"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono bg-line-y/15 text-line-y px-1.5 py-0.5 rounded">기념일</span>
+                <h4 class="font-bold truncate">최기태 둘째 100일</h4>
+              </div>
+              <p class="text-xs text-ink-3 mt-1">백일 선물 준비</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== 동기 근황 ===== -->
+    <section id="status" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-end justify-between mb-5 flex-wrap gap-3">
+          <div>
+            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-03</div>
+            <h2 class="font-display text-2xl sm:text-3xl mt-2">동기 근황</h2>
+            <p class="text-ink-2 text-sm mt-1">인스타 연동된 동기는 자동, 나머지는 한 줄.</p>
+          </div>
+          <button class="wago-btn font-bold text-sm px-4 py-2.5 rounded">＋ 내 근황</button>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- 1. 인스타 -->
+          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
+            <div class="aspect-video bg-gradient-to-br from-line-l/40 to-line-y/40 flex items-center justify-center text-5xl relative">
+              🏪
+              <span class="absolute top-2 left-2 inline-flex items-center gap-0.5 text-[9px] font-mono bg-gradient-to-r from-line-l to-line-y text-white px-1.5 py-0.5 rounded">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                IG
+              </span>
+            </div>
+            <div class="p-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-line-l text-white font-bold flex items-center justify-center text-sm">박</div>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-sm">박영수</div>
+                  <div class="text-[10px] font-mono text-ink-3">@youngsoo_elec · 2일 전</div>
+                </div>
+              </div>
+              <p class="mt-2 text-sm">가게 오픈했다 🎉 동창들 와라.</p>
+              <div class="mt-3 flex items-center justify-between text-xs text-ink-2">
+                <a href="#" class="text-line-l underline">원본 ↗</a>
+                <div class="flex gap-3">
+                  <button>💬 4</button>
+                  <button>⚡ 7</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 2. 직접 작성 -->
+          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
+            <div class="p-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-line-e text-white font-bold flex items-center justify-center text-sm">김</div>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-sm">김철수</div>
+                  <div class="text-[10px] font-mono text-ink-3">직접 작성 · 4일 전</div>
+                </div>
+              </div>
+              <p class="mt-3 text-sm leading-relaxed">드디어 장가갑니다 💍 5/30 강남 ○○웨딩홀. 다들 시간 비워둬!</p>
+              <div class="mt-3 flex flex-wrap gap-1">
+                <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">#결혼</span>
+              </div>
+              <div class="mt-3 flex items-center justify-end text-xs text-ink-2 gap-3">
+                <button>💬 12</button>
+                <button>⚡ 10</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 3. 인스타 -->
+          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
+            <div class="aspect-video bg-gradient-to-br from-line-y/40 to-line-e/30 flex items-center justify-center text-5xl relative">
+              👶
+              <span class="absolute top-2 left-2 inline-flex items-center gap-0.5 text-[9px] font-mono bg-gradient-to-r from-line-l to-line-y text-white px-1.5 py-0.5 rounded">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                IG
+              </span>
+            </div>
+            <div class="p-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-line-y text-ink font-bold flex items-center justify-center text-sm">최</div>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-sm">최기태</div>
+                  <div class="text-[10px] font-mono text-ink-3">@kitae_design · 1주 전</div>
+                </div>
+              </div>
+              <p class="mt-2 text-sm">둘째 태어났습니다 👶 또 남자입니다...</p>
+              <div class="mt-3 flex items-center justify-between text-xs text-ink-2">
+                <a href="#" class="text-line-l underline">원본 ↗</a>
+                <div class="flex gap-3">
+                  <button>💬 9</button>
+                  <button>⚡ 10</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 4. 직접 -->
+          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
+            <div class="p-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-ink-2 text-white font-bold flex items-center justify-center text-sm">이</div>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-sm">이민호</div>
+                  <div class="text-[10px] font-mono text-ink-3">직접 작성 · 2주 전</div>
+                </div>
+              </div>
+              <p class="mt-3 text-sm leading-relaxed">9급 공무원 합격 🎓 5수만에... 다들 고맙다.</p>
+              <div class="mt-3 flex flex-wrap gap-1">
+                <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">#합격</span>
+              </div>
+              <div class="mt-3 flex items-center justify-end text-xs text-ink-2 gap-3">
+                <button>💬 7</button>
+                <button>⚡ 10</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="mt-4 text-center">
+          <a href="#" class="text-sm text-ink-3 hover:text-line-l">더 보기 →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 멤버 패널 (10명 다 표시) ===== -->
+    <section id="members" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="mb-5">
+          <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-04</div>
+          <h2 class="font-display text-2xl sm:text-3xl mt-2">멤버 6명</h2>
+          <p class="text-ink-2 text-sm mt-1">각자 다른 분야 · 도움 필요하면 카드 눌러서 1:1 요청.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <!-- 한동명 · 전기과 실세 -->
+          <article class="bg-white border-2 border-line-y rounded-lg p-4 hover:shadow-md transition cursor-pointer relative">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-mono bg-line-y text-ink px-2 py-0.5 rounded font-bold">⚡ 전기과 실세</span>
+              <span class="text-[10px] font-mono text-ink-3">전기기사</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-line-y text-ink font-display text-xl flex items-center justify-center flex-shrink-0 shadow">한</div>
+              <div class="min-w-0">
+                <div class="font-bold">한동명</div>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <span class="text-[10px] bg-line-y/20 text-ink-2 px-2 py-0.5 rounded">#배선공사</span>
+              <span class="text-[10px] bg-line-y/20 text-ink-2 px-2 py-0.5 rounded">#분전반</span>
+              <span class="text-[10px] bg-line-y/20 text-ink-2 px-2 py-0.5 rounded">#견적상담</span>
+            </div>
+            <p class="text-sm text-ink-2 mt-2">"집 전기 문제는 무조건 나한테. 동기 출장비 면제."</p>
+            <button class="mt-3 w-full wago-btn font-bold py-2.5 rounded text-sm">⚡ 도움 요청</button>
+          </article>
+
+          <!-- 김하람 · 개그맨 -->
+          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-mono bg-line-l/20 text-line-l px-2 py-0.5 rounded font-bold">😂 개그맨</span>
+              <span class="text-[10px] font-mono text-ink-3">자동차 부품업</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-panel-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">김</div>
+              <div class="min-w-0">
+                <div class="font-bold">김하람</div>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#부품도매가</span>
+              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#수리견적</span>
+              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#중고차</span>
+            </div>
+            <p class="text-sm text-ink-2 mt-2">"차 관련은 뭐든. 부품 도매가로 구해줄 수 있어."</p>
+            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
+          </article>
+
+          <!-- 이은준 · 마스코트 -->
+          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-mono bg-ink/10 text-ink-2 px-2 py-0.5 rounded font-bold">🎖️ 전기과 마스코트</span>
+              <span class="text-[10px] font-mono text-ink-3">프라다 팀장</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-ink text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">이</div>
+              <div class="min-w-0">
+                <div class="font-bold">이은준</div>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#명품선물</span>
+              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#기념일</span>
+              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#VIP혜택</span>
+            </div>
+            <p class="text-sm text-ink-2 mt-2">"기념일 선물 뭐 살지 모르겠으면 먼저 물어봐."</p>
+            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
+          </article>
+
+          <!-- 나준민 · 모임 준비위원장 -->
+          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-2 py-0.5 rounded font-bold">🎬 모임 프로듀서</span>
+              <span class="text-[10px] font-mono text-ink-3">족발 매니저</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-line-l text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">나</div>
+              <div class="min-w-0">
+                <div class="font-bold">나준민</div>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <span class="text-[10px] bg-line-l/10 text-line-l px-2 py-0.5 rounded">#단체주문</span>
+              <span class="text-[10px] bg-line-l/10 text-line-l px-2 py-0.5 rounded">#회식야식</span>
+              <span class="text-[10px] bg-line-l/10 text-line-l px-2 py-0.5 rounded">#할인혜택</span>
+            </div>
+            <p class="text-sm text-ink-2 mt-2">"야식 모임 예약하면 서비스 한 접시 더. 미리 연락줘."</p>
+            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
+          </article>
+
+          <!-- 김상현 · 분위기메이커 -->
+          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-mono bg-line-y/20 text-line-y px-2 py-0.5 rounded font-bold">🔥 분위기메이커</span>
+              <span class="text-[10px] font-mono text-ink-3">원단시장 마스터</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-board-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">김</div>
+              <div class="min-w-0">
+                <div class="font-bold">김상현</div>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <span class="text-[10px] bg-board/60 text-ink-2 px-2 py-0.5 rounded">#원단도매</span>
+              <span class="text-[10px] bg-board/60 text-ink-2 px-2 py-0.5 rounded">#맞춤제작</span>
+              <span class="text-[10px] bg-board/60 text-ink-2 px-2 py-0.5 rounded">#작업복</span>
+            </div>
+            <p class="text-sm text-ink-2 mt-2">"옷감이나 작업복 살 일 있으면 나한테 먼저. 도매가."</p>
+            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
+          </article>
+
+          <!-- 이태화 · 사이트 만든 놈 -->
+          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-mono bg-line-n text-white px-2 py-0.5 rounded font-bold">💻 이 사이트 만든 놈</span>
+              <span class="text-[10px] font-mono text-ink-3">사업가</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-line-n text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">이</div>
+              <div class="min-w-0">
+                <div class="font-bold">이태화</div>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#브랜딩</span>
+              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#마케팅</span>
+              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#AI개발</span>
+              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#비주얼디렉</span>
+            </div>
+            <p class="text-sm text-ink-2 mt-2">"사업 아이디어, 브랜드 방향, AI 활용 — 같이 생각해줄 수 있어."</p>
+            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 추억 (작게) ===== -->
+    <section id="memory" class="workboard-light py-10 sm:py-14">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-end justify-between mb-5">
+          <div>
+            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-05</div>
+            <h2 class="font-display text-2xl sm:text-3xl mt-2">추억</h2>
+            <p class="text-ink-2 text-sm mt-1">모임 끝나면 자동으로 쌓입니다.</p>
+          </div>
+          <a href="#" class="text-sm text-ink-3 hover:text-line-l">전체 →</a>
+        </div>
+
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
+          <div class="bg-white p-1.5 pb-3 shadow rotate-[-2deg] hover:rotate-0 transition cursor-pointer">
+            <div class="aspect-square bg-gradient-to-br from-board-dark to-board flex items-center justify-center text-3xl">🛠️</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'09 실습</div>
+          </div>
+          <div class="bg-white p-1.5 pb-3 shadow rotate-[1.5deg] hover:rotate-0 transition cursor-pointer">
+            <div class="aspect-square bg-gradient-to-br from-line-l/40 to-line-y/40 flex items-center justify-center text-3xl">🎓</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'10 졸업</div>
+          </div>
+          <div class="bg-white p-1.5 pb-3 shadow rotate-[-1deg] hover:rotate-0 transition cursor-pointer">
+            <div class="aspect-square bg-gradient-to-br from-line-e/40 to-board flex items-center justify-center text-3xl">🍻</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'24 송년</div>
+          </div>
+          <div class="bg-white p-1.5 pb-3 shadow rotate-[2deg] hover:rotate-0 transition cursor-pointer">
+            <div class="aspect-square bg-gradient-to-br from-panel-dark to-ink flex items-center justify-center text-3xl">⚡</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'25 모임</div>
+          </div>
+          <div class="bg-white p-1.5 pb-3 shadow rotate-[-1.5deg] hover:rotate-0 transition cursor-pointer">
+            <div class="aspect-square bg-gradient-to-br from-line-y/30 to-board flex items-center justify-center text-3xl">🏫</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'08 입학</div>
+          </div>
+          <div class="bg-white p-1.5 pb-3 shadow rotate-[1deg] hover:rotate-0 transition cursor-pointer">
+            <div class="aspect-square bg-gradient-to-br from-line-l/30 to-line-e/30 flex items-center justify-center text-3xl">🎒</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-1">'25 MT</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="distribution text-white py-8">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 grid sm:grid-cols-3 gap-6">
+        <div>
+          <div class="flex items-center gap-2">
+            <svg width="24" height="24" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="3" fill="#1a1d24"/><rect x="6" y="6" width="22" height="22" rx="1" fill="#f5b400"/><path d="M19 9L11 19h6l-1 7 9-11h-6l0-6z" fill="#1a1d24"/></svg>
+            <span class="font-display text-lg text-line-y">최강전기</span>
+          </div>
+          <p class="text-xs text-ink-3 mt-2">북공고 전기과 동창회 · 6명의 분전반</p>
+        </div>
+        <div>
+          <div class="font-mono text-[10px] text-ink-3 mb-2">알림</div>
+          <a href="#kakao" class="inline-flex items-center gap-2 kakao-btn px-3 py-1.5 rounded text-sm font-bold">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#391b1b"><path d="M12 3C6.5 3 2 6.5 2 11c0 2.8 1.8 5.3 4.5 6.7l-1 3.6c-.1.3.2.5.5.3l4.3-2.8c.6.1 1.1.1 1.7.1 5.5 0 10-3.5 10-8s-4.5-7.9-10-7.9z"/></svg>
+            카톡 채널 친구추가
+          </a>
+        </div>
+        <div>
+          <div class="font-mono text-[10px] text-ink-3 mb-2">비상연락망</div>
+          <ul class="space-y-1">
+            <li class="flex items-center justify-between gap-3 text-xs">
+              <span class="text-white/70">이태화</span>
+              <a href="tel:01041960532" class="font-mono text-line-y">010-4196-0532</a>
+            </li>
+            <li class="flex items-center justify-between gap-3 text-xs">
+              <span class="text-white/70">나준민</span>
+              <a href="tel:01080741639" class="font-mono text-line-y">010-8074-1639</a>
+            </li>
+            <li class="flex items-center justify-between gap-3 text-xs">
+              <span class="text-white/70">한동명</span>
+              <a href="tel:01030113744" class="font-mono text-line-y">010-3011-3744</a>
+            </li>
+            <li class="flex items-center justify-between gap-3 text-xs">
+              <span class="text-white/70">이은준</span>
+              <a href="tel:01026231118" class="font-mono text-line-y">010-2623-1118</a>
+            </li>
+            <li class="flex items-center justify-between gap-3 text-xs">
+              <span class="text-white/70">김상현</span>
+              <a href="tel:01028422400" class="font-mono text-line-y">010-2842-2400</a>
+            </li>
+          </ul>
+          <div class="text-xs text-ink-3 mt-3 font-mono">© 2026 · CHOIGANG ELEC</div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ===== 플로팅 도움 요청 ===== -->
+    <button class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
+      <span class="text-xl">⚡</span>
+      <span class="hidden sm:inline">도움이 필요해요</span>
+    </button>
+
+    <script>
+      const btn = document.getElementById('menuBtn');
+      const menu = document.getElementById('mobileMenu');
+      btn?.addEventListener('click', () => menu.classList.toggle('hidden'));
+      menu?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.add('hidden')));
+    </script>
+  </body>
+</html>
