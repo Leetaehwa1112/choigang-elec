@@ -355,89 +355,158 @@
       </div>
     </section>
 
-    <!-- ===== ⭐ 이번 달 챙길 것 (캘린더) ===== -->
+    <!-- ===== 이벤트 ===== -->
     <section id="calendar" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
-        <div class="flex items-end justify-between mb-5">
+        <div class="flex items-center justify-between mb-5">
           <div>
             <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-02</div>
             <h2 class="font-display text-2xl sm:text-3xl mt-2">이벤트</h2>
           </div>
+          <!-- 뷰 토글 -->
+          <div class="flex rounded-lg overflow-hidden border border-ink/15 text-sm font-bold">
+            <button id="btn-list" onclick="setView('list')" class="px-4 py-2 bg-ink text-white transition">리스트</button>
+            <button id="btn-cal"  onclick="setView('cal')"  class="px-4 py-2 bg-white text-ink-2 transition">달력</button>
+          </div>
         </div>
 
-        <ul class="space-y-2">
-          <!-- 결혼식 -->
-          <li class="bg-white border-2 border-line-l/50 rounded-lg p-4 flex items-center gap-4">
-            <div class="text-center flex-shrink-0">
-              <div class="font-mono text-[10px] text-ink-3">6월</div>
-              <div class="font-display text-2xl leading-none text-line-l">28</div>
-              <div class="font-mono text-[10px] text-ink-3">토</div>
-            </div>
-            <div class="w-px h-10 bg-ink/15"></div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-mono bg-line-l/15 text-line-l px-1.5 py-0.5 rounded">💍 경조사</span>
-                <h4 class="font-bold">이은준 결혼식</h4>
+        <!-- 리스트 뷰 -->
+        <div id="view-list">
+          <ul class="space-y-2">
+            <li class="bg-white border-2 border-line-l/50 rounded-lg p-4 flex items-center gap-4">
+              <div class="text-center flex-shrink-0">
+                <div class="font-mono text-[10px] text-ink-3">6월</div>
+                <div class="font-display text-2xl leading-none text-line-l">14</div>
+                <div class="font-mono text-[10px] text-ink-3">토</div>
               </div>
-              <p class="text-xs text-ink-3 mt-1">장소 확인 청첩장 참고 · 5명 청첩장 수령 완료 ✓</p>
-            </div>
-            <a href="https://bojagicard.com/i/home.php?uid=o5hladp5&inflow_suid=1" target="_blank" class="text-xs font-bold wago-btn px-3 py-2 rounded flex-shrink-0 whitespace-nowrap">📩 청첩장</a>
-          </li>
+              <div class="w-px h-10 bg-ink/15"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2"><span class="text-[10px] font-mono bg-line-y/20 text-line-y px-1.5 py-0.5 rounded">정기모임</span><h4 class="font-bold truncate">정기 동창회</h4></div>
+                <p class="text-xs text-ink-3 mt-1">강남 ○○삼겹살 · 19:00 · 7명 참석</p>
+              </div>
+              <span class="text-[10px] font-mono text-ok flex-shrink-0">RSVP 완료 ✓</span>
+            </li>
+            <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4">
+              <div class="text-center flex-shrink-0">
+                <div class="font-mono text-[10px] text-ink-3">6월</div>
+                <div class="font-display text-2xl leading-none">22</div>
+                <div class="font-mono text-[10px] text-ink-3">일</div>
+              </div>
+              <div class="w-px h-10 bg-ink/15"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2"><span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">생일</span><h4 class="font-bold truncate">박영수 생일 🎂</h4></div>
+                <p class="text-xs text-ink-3 mt-1">단톡방에 한마디 잊지 말기</p>
+              </div>
+            </li>
+            <li class="bg-white border-2 border-line-l/50 rounded-lg p-4 flex items-center gap-4">
+              <div class="text-center flex-shrink-0">
+                <div class="font-mono text-[10px] text-ink-3">6월</div>
+                <div class="font-display text-2xl leading-none text-line-l">28</div>
+                <div class="font-mono text-[10px] text-ink-3">토</div>
+              </div>
+              <div class="w-px h-10 bg-ink/15"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap"><span class="text-[10px] font-mono bg-line-l/15 text-line-l px-1.5 py-0.5 rounded">💍 경조사</span><h4 class="font-bold">이은준 결혼식</h4></div>
+                <p class="text-xs text-ink-3 mt-1">장소 확인 청첩장 참고 · 5명 청첩장 수령 완료 ✓</p>
+              </div>
+              <a href="https://bojagicard.com/i/home.php?uid=o5hladp5&inflow_suid=1" target="_blank" class="text-xs font-bold wago-btn px-3 py-2 rounded flex-shrink-0 whitespace-nowrap">📩 청첩장</a>
+            </li>
+            <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4">
+              <div class="text-center flex-shrink-0">
+                <div class="font-mono text-[10px] text-ink-3">7월</div>
+                <div class="font-display text-2xl leading-none">03</div>
+                <div class="font-mono text-[10px] text-ink-3">목</div>
+              </div>
+              <div class="w-px h-10 bg-ink/15"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2"><span class="text-[10px] font-mono bg-line-y/15 text-line-y px-1.5 py-0.5 rounded">기념일</span><h4 class="font-bold truncate">최기태 둘째 100일</h4></div>
+                <p class="text-xs text-ink-3 mt-1">백일 선물 준비</p>
+              </div>
+            </li>
+          </ul>
+        </div>
 
-          <!-- 동창회 -->
-          <li class="bg-white border border-line-y/40 rounded-lg p-4 flex items-center gap-4 ring-1 ring-line-y/30">
-            <div class="text-center flex-shrink-0">
-              <div class="font-mono text-[10px] text-ink-3">6월</div>
-              <div class="font-display text-2xl leading-none">14</div>
-              <div class="font-mono text-[10px] text-ink-3">토</div>
+        <!-- 달력 뷰 -->
+        <div id="view-cal" class="hidden">
+          <div class="bg-white rounded-xl border border-ink/10 overflow-hidden shadow-sm">
+            <div class="bg-ink text-white px-4 py-3 flex items-center justify-between">
+              <span class="font-display text-lg">2026년 6월</span>
+              <span class="font-mono text-xs text-ink-3">JUN 2026</span>
             </div>
-            <div class="w-px h-10 bg-ink/15"></div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-mono bg-line-y/20 text-line-y px-1.5 py-0.5 rounded">정기모임</span>
-                <h4 class="font-bold truncate">정기 동창회</h4>
+            <div class="grid grid-cols-7 text-center border-b border-ink/10">
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">월</div>
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">화</div>
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">수</div>
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">목</div>
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">금</div>
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">토</div>
+              <div class="py-2 font-mono text-[10px] font-bold text-ink-3">일</div>
+            </div>
+            <div class="grid grid-cols-7 divide-x divide-y divide-ink/8">
+              <!-- 6월 1일(월) ~ 30일(화) -->
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">1</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">2</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">3</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">4</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">5</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">6</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">7</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">8</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">9</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">10</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">11</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">12</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">13</span></div>
+              <!-- 14 토: 정기 동창회 -->
+              <div class="p-1.5 min-h-[64px] bg-line-y/10">
+                <span class="text-xs font-mono font-bold text-line-y">14</span>
+                <div class="mt-1 text-[9px] font-bold bg-line-y text-ink px-1 py-0.5 rounded leading-tight">정기 동창회</div>
               </div>
-              <p class="text-xs text-ink-3 mt-1">강남 ○○삼겹살 · 19:00 · 7명 참석</p>
-            </div>
-            <span class="text-[10px] font-mono text-ok flex-shrink-0">RSVP 완료 ✓</span>
-          </li>
-
-          <!-- 생일 -->
-          <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4 hover:border-line-y transition">
-            <div class="text-center flex-shrink-0">
-              <div class="font-mono text-[10px] text-ink-3">6월</div>
-              <div class="font-display text-2xl leading-none">22</div>
-              <div class="font-mono text-[10px] text-ink-3">일</div>
-            </div>
-            <div class="w-px h-10 bg-ink/15"></div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">생일</span>
-                <h4 class="font-bold truncate">박영수 생일 🎂</h4>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">15</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">16</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">17</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">18</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">19</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">20</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">21</span></div>
+              <!-- 22 일: 박영수 생일 -->
+              <div class="p-1.5 min-h-[64px] bg-line-e/10">
+                <span class="text-xs font-mono font-bold text-line-e">22</span>
+                <div class="mt-1 text-[9px] font-bold bg-line-e/20 text-line-e px-1 py-0.5 rounded leading-tight">박영수 생일 🎂</div>
               </div>
-              <p class="text-xs text-ink-3 mt-1">단톡방에 한마디 잊지 말기</p>
-            </div>
-          </li>
-
-          <!-- 자녀 -->
-          <li class="bg-white border border-ink/10 rounded-lg p-4 flex items-center gap-4 hover:border-line-y transition">
-            <div class="text-center flex-shrink-0">
-              <div class="font-mono text-[10px] text-ink-3">7월</div>
-              <div class="font-display text-2xl leading-none">03</div>
-              <div class="font-mono text-[10px] text-ink-3">목</div>
-            </div>
-            <div class="w-px h-10 bg-ink/15"></div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-mono bg-line-y/15 text-line-y px-1.5 py-0.5 rounded">기념일</span>
-                <h4 class="font-bold truncate">최기태 둘째 100일</h4>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">23</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">24</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">25</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">26</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">27</span></div>
+              <!-- 28 토: 이은준 결혼식 -->
+              <div class="p-1.5 min-h-[64px] bg-line-l/10">
+                <span class="text-xs font-mono font-bold text-line-l">28</span>
+                <div class="mt-1 text-[9px] font-bold bg-line-l text-white px-1 py-0.5 rounded leading-tight">💍 이은준 결혼식</div>
               </div>
-              <p class="text-xs text-ink-3 mt-1">백일 선물 준비</p>
+              <!-- 29 일 -->
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">29</span></div>
+              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">30</span></div>
+              <!-- 빈칸 5개 -->
+              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
+              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
+              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
+              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
+              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
     </section>
+
+    <script>
+      function setView(v) {
+        document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
+        document.getElementById('view-cal').classList.toggle('hidden', v !== 'cal');
+        document.getElementById('btn-list').className = 'px-4 py-2 transition ' + (v === 'list' ? 'bg-ink text-white' : 'bg-white text-ink-2');
+        document.getElementById('btn-cal').className  = 'px-4 py-2 transition ' + (v === 'cal'  ? 'bg-ink text-white' : 'bg-white text-ink-2');
+      }
+    </script>
 
     <!-- ===== 근황 ===== -->
     <section id="status" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
