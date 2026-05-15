@@ -429,10 +429,13 @@
         <!-- 달력 뷰 -->
         <div id="view-cal" class="hidden">
           <div class="bg-white rounded-xl border border-ink/10 overflow-hidden shadow-sm">
+            <!-- 월 헤더 + 이동 -->
             <div class="bg-ink text-white px-4 py-3 flex items-center justify-between">
-              <span class="font-display text-lg">2026년 6월</span>
-              <span class="font-mono text-xs text-ink-3">JUN 2026</span>
+              <button onclick="moveMonth(-1)" class="text-xl font-bold px-2 hover:text-line-y transition">‹</button>
+              <span id="cal-title" class="font-display text-lg"></span>
+              <button onclick="moveMonth(1)" class="text-xl font-bold px-2 hover:text-line-y transition">›</button>
             </div>
+            <!-- 요일 헤더 -->
             <div class="grid grid-cols-7 text-center border-b border-ink/10">
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">월</div>
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">화</div>
@@ -442,69 +445,78 @@
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">토</div>
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">일</div>
             </div>
-            <div class="grid grid-cols-7 divide-x divide-y divide-ink/8">
-              <!-- 6월 1일(월) ~ 30일(화) -->
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">1</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">2</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">3</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">4</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">5</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">6</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">7</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">8</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">9</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">10</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">11</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">12</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">13</span></div>
-              <!-- 14 토: 정기 동창회 -->
-              <div class="p-1.5 min-h-[64px] bg-line-y/10">
-                <span class="text-xs font-mono font-bold text-line-y">14</span>
-                <div class="mt-1 text-[9px] font-bold bg-line-y text-ink px-1 py-0.5 rounded leading-tight">정기 동창회</div>
-              </div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">15</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">16</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">17</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">18</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">19</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">20</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">21</span></div>
-              <!-- 22 일: 박영수 생일 -->
-              <div class="p-1.5 min-h-[64px] bg-line-e/10">
-                <span class="text-xs font-mono font-bold text-line-e">22</span>
-                <div class="mt-1 text-[9px] font-bold bg-line-e/20 text-line-e px-1 py-0.5 rounded leading-tight">박영수 생일 🎂</div>
-              </div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">23</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">24</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">25</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">26</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">27</span></div>
-              <!-- 28 토: 이은준 결혼식 -->
-              <div class="p-1.5 min-h-[64px] bg-line-l/10">
-                <span class="text-xs font-mono font-bold text-line-l">28</span>
-                <div class="mt-1 text-[9px] font-bold bg-line-l text-white px-1 py-0.5 rounded leading-tight">💍 이은준 결혼식</div>
-              </div>
-              <!-- 29 일 -->
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">29</span></div>
-              <div class="p-1.5 min-h-[64px]"><span class="text-xs font-mono">30</span></div>
-              <!-- 빈칸 5개 -->
-              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
-              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
-              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
-              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
-              <div class="p-1.5 min-h-[64px] bg-ink/3"></div>
-            </div>
+            <!-- 날짜 그리드 -->
+            <div id="cal-grid" class="grid grid-cols-7 divide-x divide-y divide-ink/8"></div>
           </div>
         </div>
       </div>
     </section>
 
     <script>
+      // 이벤트 데이터 (YYYY-MM-DD)
+      const CAL_EVENTS = {
+        '2026-06-14': [{label:'정기 동창회', cls:'bg-line-y text-ink'}],
+        '2026-06-22': [{label:'박영수 생일 🎂', cls:'bg-line-e/30 text-line-e'}],
+        '2026-06-28': [{label:'💍 이은준 결혼식', cls:'bg-line-l text-white'}],
+        '2026-07-03': [{label:'최기태 둘째 100일', cls:'bg-line-y text-ink'}],
+      };
+
+      const MONTH_KR = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+      const MIN_YEAR = 2026, MAX_YEAR = 2028;
+
+      let calYear = 2026, calMonth = 5; // 0-indexed: 5 = June
+
+      function renderCal() {
+        const y = calYear, m = calMonth;
+        document.getElementById('cal-title').textContent = y + '년 ' + MONTH_KR[m];
+
+        const firstDay = new Date(y, m, 1).getDay(); // 0=Sun
+        // Monday-first: offset = (firstDay + 6) % 7
+        const offset = (firstDay + 6) % 7;
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+        let html = '';
+        // 앞 빈칸
+        for (let i = 0; i < offset; i++) html += '<div class="p-1.5 min-h-[60px] bg-ink/3"></div>';
+        // 날짜
+        for (let d = 1; d <= daysInMonth; d++) {
+          const key = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+          const evts = CAL_EVENTS[key] || [];
+          const today = new Date(); const isToday = (y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate());
+          const dayOfWeek = (offset + d - 1) % 7; // 0=Mon…6=Sun
+          const isSun = dayOfWeek === 6;
+          const numColor = evts.length ? 'font-bold ' + (evts[0].cls.includes('line-l') ? 'text-line-l' : evts[0].cls.includes('line-e') ? 'text-line-e' : 'text-line-y') : (isSun ? 'text-line-l' : 'text-ink');
+          const bg = evts.length ? 'bg-' + (evts[0].cls.includes('line-l') ? 'line-l/8' : evts[0].cls.includes('line-e') ? 'line-e/8' : 'line-y/10') : '';
+          html += '<div class="p-1.5 min-h-[60px] ' + bg + (isToday ? ' ring-2 ring-inset ring-line-y' : '') + '">';
+          html += '<span class="text-xs font-mono ' + numColor + (isToday ? ' underline underline-offset-2' : '') + '">' + d + '</span>';
+          evts.forEach(e => {
+            html += '<div class="mt-0.5 text-[9px] font-bold px-1 py-0.5 rounded leading-tight ' + e.cls + '">' + e.label + '</div>';
+          });
+          html += '</div>';
+        }
+        // 뒤 빈칸
+        const total = offset + daysInMonth;
+        const tail = (7 - (total % 7)) % 7;
+        for (let i = 0; i < tail; i++) html += '<div class="p-1.5 min-h-[60px] bg-ink/3"></div>';
+
+        document.getElementById('cal-grid').innerHTML = html;
+      }
+
+      function moveMonth(dir) {
+        calMonth += dir;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        if (calMonth < 0)  { calMonth = 11; calYear--; }
+        if (calYear < MIN_YEAR) { calYear = MIN_YEAR; calMonth = 0; }
+        if (calYear > MAX_YEAR) { calYear = MAX_YEAR; calMonth = 11; }
+        renderCal();
+      }
+
       function setView(v) {
         document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
         document.getElementById('view-cal').classList.toggle('hidden', v !== 'cal');
         document.getElementById('btn-list').className = 'px-4 py-2 transition ' + (v === 'list' ? 'bg-ink text-white' : 'bg-white text-ink-2');
         document.getElementById('btn-cal').className  = 'px-4 py-2 transition ' + (v === 'cal'  ? 'bg-ink text-white' : 'bg-white text-ink-2');
+        if (v === 'cal') renderCal();
       }
     </script>
 
