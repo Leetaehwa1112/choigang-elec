@@ -182,7 +182,6 @@
           <li><a href="#meet" class="px-3 py-2 rounded hover:bg-board/40">모임</a></li>
           <li><a href="#calendar" class="px-3 py-2 rounded hover:bg-board/40">캘린더</a></li>
           <li><a href="#status" class="px-3 py-2 rounded hover:bg-board/40">근황</a></li>
-          <li><a href="#members" class="px-3 py-2 rounded hover:bg-board/40">멤버</a></li>
           <li><a href="#memory" class="px-3 py-2 rounded hover:bg-board/40">추억</a></li>
         </ul>
 
@@ -199,7 +198,6 @@
         <li><a href="#meet" class="block px-6 py-3 border-b border-board font-bold">모임</a></li>
         <li><a href="#calendar" class="block px-6 py-3 border-b border-board font-bold">캘린더</a></li>
         <li><a href="#status" class="block px-6 py-3 border-b border-board font-bold">근황</a></li>
-        <li><a href="#members" class="block px-6 py-3 border-b border-board font-bold">멤버</a></li>
         <li><a href="#memory" class="block px-6 py-3 font-bold">추억</a></li>
       </ul>
     </nav>
@@ -269,7 +267,6 @@
           <div>
             <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-01</div>
             <h1 class="font-display text-4xl sm:text-5xl mt-2 text-ink">최강전기.</h1>
-            <p class="font-bold text-ink-2 mt-1">인생은 짜릿하게.</p>
           </div>
           <!-- 최근 활동 요약 (마지막 방문 이후) -->
           <div class="bg-panel-dark text-white rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 max-w-full">
@@ -280,6 +277,10 @@
             </div>
             <button class="text-xs underline text-line-y whitespace-nowrap">보기 →</button>
           </div>
+        </div>
+        <!-- 메인 사진 -->
+        <div class="mt-6 rounded-xl overflow-hidden shadow-lg">
+          <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg" alt="최강전기 고등학교 시절" class="w-full max-h-72 object-cover object-center"/>
         </div>
       </div>
     </section>
@@ -553,148 +554,6 @@
 
         <div class="mt-4 text-center">
           <a href="#" class="text-sm text-ink-3 hover:text-line-l">더 보기 →</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== 멤버 패널 (10명 다 표시) ===== -->
-    <section id="members" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6">
-        <div class="mb-5">
-          <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-04</div>
-          <h2 class="font-display text-2xl sm:text-3xl mt-2">멤버 6명</h2>
-          <p class="text-ink-2 text-sm mt-1">각자 다른 분야 · 도움 필요하면 카드 눌러서 1:1 요청.</p>
-        </div>
-
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-          <!-- 한동명 · 전기과 실세 -->
-          <article class="bg-white border-2 border-line-y rounded-lg p-4 hover:shadow-md transition cursor-pointer relative">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[10px] font-mono bg-line-y text-ink px-2 py-0.5 rounded font-bold">⚡ 전기과 실세</span>
-              <span class="text-[10px] font-mono text-ink-3">전기기사</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-line-y text-ink font-display text-xl flex items-center justify-center flex-shrink-0 shadow">한</div>
-              <div class="min-w-0">
-                <div class="font-bold">한동명</div>
-              </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-1.5">
-              <span class="text-[10px] bg-line-y/20 text-ink-2 px-2 py-0.5 rounded">#배선공사</span>
-              <span class="text-[10px] bg-line-y/20 text-ink-2 px-2 py-0.5 rounded">#분전반</span>
-              <span class="text-[10px] bg-line-y/20 text-ink-2 px-2 py-0.5 rounded">#견적상담</span>
-            </div>
-            <p class="text-sm text-ink-2 mt-2">"집 전기 문제는 무조건 나한테. 동기 출장비 면제."</p>
-            <button class="mt-3 w-full wago-btn font-bold py-2.5 rounded text-sm">⚡ 도움 요청</button>
-          </article>
-
-          <!-- 김하람 · 개그맨 -->
-          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[10px] font-mono bg-line-l/20 text-line-l px-2 py-0.5 rounded font-bold">😂 개그맨</span>
-              <span class="text-[10px] font-mono text-ink-3">자동차 부품업</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-panel-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">김</div>
-              <div class="min-w-0">
-                <div class="font-bold">김하람</div>
-              </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-1.5">
-              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#부품도매가</span>
-              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#수리견적</span>
-              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#중고차</span>
-            </div>
-            <p class="text-sm text-ink-2 mt-2">"차 관련은 뭐든. 부품 도매가로 구해줄 수 있어."</p>
-            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
-          </article>
-
-          <!-- 이은준 · 마스코트 -->
-          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[10px] font-mono bg-ink/10 text-ink-2 px-2 py-0.5 rounded font-bold">🎖️ 전기과 마스코트</span>
-              <span class="text-[10px] font-mono text-ink-3">프라다 팀장</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-ink text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">이</div>
-              <div class="min-w-0">
-                <div class="font-bold">이은준</div>
-              </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-1.5">
-              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#명품선물</span>
-              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#기념일</span>
-              <span class="text-[10px] bg-ink/8 text-ink-2 px-2 py-0.5 rounded">#VIP혜택</span>
-            </div>
-            <p class="text-sm text-ink-2 mt-2">"기념일 선물 뭐 살지 모르겠으면 먼저 물어봐."</p>
-            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
-          </article>
-
-          <!-- 나준민 · 모임 준비위원장 -->
-          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-2 py-0.5 rounded font-bold">🎬 모임 프로듀서</span>
-              <span class="text-[10px] font-mono text-ink-3">족발 매니저</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-line-l text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">나</div>
-              <div class="min-w-0">
-                <div class="font-bold">나준민</div>
-              </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-1.5">
-              <span class="text-[10px] bg-line-l/10 text-line-l px-2 py-0.5 rounded">#단체주문</span>
-              <span class="text-[10px] bg-line-l/10 text-line-l px-2 py-0.5 rounded">#회식야식</span>
-              <span class="text-[10px] bg-line-l/10 text-line-l px-2 py-0.5 rounded">#할인혜택</span>
-            </div>
-            <p class="text-sm text-ink-2 mt-2">"야식 모임 예약하면 서비스 한 접시 더. 미리 연락줘."</p>
-            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
-          </article>
-
-          <!-- 김상현 · 분위기메이커 -->
-          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[10px] font-mono bg-line-y/20 text-line-y px-2 py-0.5 rounded font-bold">🔥 분위기메이커</span>
-              <span class="text-[10px] font-mono text-ink-3">원단시장 마스터</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-board-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">김</div>
-              <div class="min-w-0">
-                <div class="font-bold">김상현</div>
-              </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-1.5">
-              <span class="text-[10px] bg-board/60 text-ink-2 px-2 py-0.5 rounded">#원단도매</span>
-              <span class="text-[10px] bg-board/60 text-ink-2 px-2 py-0.5 rounded">#맞춤제작</span>
-              <span class="text-[10px] bg-board/60 text-ink-2 px-2 py-0.5 rounded">#작업복</span>
-            </div>
-            <p class="text-sm text-ink-2 mt-2">"옷감이나 작업복 살 일 있으면 나한테 먼저. 도매가."</p>
-            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
-          </article>
-
-          <!-- 이태화 · 사이트 만든 놈 -->
-          <article class="bg-white border border-ink/10 rounded-lg p-4 hover:border-line-l hover:shadow-md transition cursor-pointer relative">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[10px] font-mono bg-line-n text-white px-2 py-0.5 rounded font-bold">💻 이 사이트 만든 놈</span>
-              <span class="text-[10px] font-mono text-ink-3">사업가</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-line-n text-white font-display text-xl flex items-center justify-center flex-shrink-0 shadow">이</div>
-              <div class="min-w-0">
-                <div class="font-bold">이태화</div>
-              </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-1.5">
-              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#브랜딩</span>
-              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#마케팅</span>
-              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#AI개발</span>
-              <span class="text-[10px] bg-line-n/10 text-ink-2 px-2 py-0.5 rounded">#비주얼디렉</span>
-            </div>
-            <p class="text-sm text-ink-2 mt-2">"사업 아이디어, 브랜드 방향, AI 활용 — 같이 생각해줄 수 있어."</p>
-            <button class="mt-3 w-full text-sm font-bold bg-ink/8 text-ink py-2.5 rounded hover:bg-line-l hover:text-white transition">⚡ 도움 요청</button>
-          </article>
-
         </div>
       </div>
     </section>
