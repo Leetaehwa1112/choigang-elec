@@ -698,6 +698,11 @@
       let meetTotal = 1, meetCur = 0;
 
       async function initMeetSlider() {
+        // 기존 extra 슬라이드 제거 (재호출 시)
+        const meetSlides = document.getElementById('meet-slides');
+        while (meetSlides.children.length > 1) meetSlides.removeChild(meetSlides.lastChild);
+        meetTotal = 1; meetCur = Math.min(meetCur, 0); updateMeetArrows();
+
         const { data } = await sb.from('schedule_sessions')
           .select('*').eq('is_active', true).order('created_at', { ascending: true });
         const extras = (data || []).filter(s => s.title !== '이은준 결혼식');
@@ -707,7 +712,6 @@
           {name:'이태화',ch:'태'},{name:'나준민',ch:'준'},{name:'한동명',ch:'동'},
           {name:'이은준',ch:'은'},{name:'김상현',ch:'상'},{name:'김하람',ch:'하'},{name:'김건우',ch:'건'},
         ];
-        const meetSlides = document.getElementById('meet-slides');
         meetSlides.insertAdjacentHTML('beforeend', extras.map(s => {
           const fd = s.candidate_dates?.[0];
           const diff = fd?Math.ceil((new Date(fd+'T00:00:00+09:00')-new Date())/86400000):null;
@@ -899,8 +903,12 @@
               </div>` : ''}
               <!-- 콘텐츠 -->
               <div class="bg-white flex-1 p-5 flex flex-col gap-2 min-w-0">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between gap-2">
                   <span class="text-[10px] font-bold tracking-wide text-ink-3 uppercase">${s.type_icon} ${s.type}</span>
+                  <div class="flex gap-1 flex-shrink-0">
+                    <button onclick='editEvent(${JSON.stringify(s).replace(/'/g,"&#39;")})' class="w-7 h-7 rounded-lg bg-ink/6 hover:bg-ink/12 transition flex items-center justify-center text-sm" title="수정">✏️</button>
+                    <button onclick="deleteEvent('${s.id}')" class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 transition flex items-center justify-center text-sm" title="삭제">🗑️</button>
+                  </div>
                 </div>
                 <h4 class="font-display text-xl leading-tight text-ink">${s.title}</h4>
                 ${s.place||timeDisplay ? `<p class="text-xs text-ink-3">${[s.place, timeDisplay].filter(Boolean).join('  ·  ')}</p>` : ''}
@@ -1600,7 +1608,7 @@
             <div id="sched-type-icon" class="text-2xl">⚡</div>
             <div>
               <div class="font-mono text-[10px] text-ink-3 leading-none mb-0.5">일정잡기</div>
-              <h2 class="font-display text-xl leading-tight">언제 모일까요?</h2>
+              <h2 id="sched-modal-title" class="font-display text-xl leading-tight">언제 모일까요?</h2>
             </div>
           </div>
           <button onclick="closeSchedule()" class="w-9 h-9 rounded-full bg-ink/8 flex items-center justify-center text-ink-2 hover:bg-ink/15 transition text-lg">✕</button>
@@ -1692,7 +1700,7 @@
 
         <!-- 등록 버튼 -->
         <div class="px-5 py-4 border-t border-ink/8 flex-shrink-0">
-          <button onclick="submitSchedule()" class="w-full py-3.5 rounded-xl bg-ink text-white font-display text-base font-bold flex items-center justify-center gap-2 hover:bg-ink/85 active:scale-[0.98] transition">
+          <button id="sched-submit-btn" onclick="submitSchedule()" class="w-full py-3.5 rounded-xl bg-ink text-white font-display text-base font-bold flex items-center justify-center gap-2 hover:bg-ink/85 active:scale-[0.98] transition">
             <span>⚡</span> 등록하기
           </button>
         </div>
@@ -1739,15 +1747,59 @@
       let schedCalY  = new Date().getFullYear();
       let schedCalM  = new Date().getMonth();
 
-      function openSchedule() {
+      let editingEventId = null;
+
+      function openSchedule(session = null) {
+        editingEventId = session ? session.id : null;
+        const title = document.getElementById('sched-modal-title');
+        const btn = document.getElementById('sched-submit-btn');
+        if (title) title.textContent = session ? '이벤트 수정' : '언제 모일까요?';
+        if (btn) btn.innerHTML = session ? '<span>✏️</span> 수정하기' : '<span>⚡</span> 등록하기';
         document.getElementById('schedule-modal').classList.replace('hidden','flex');
-        renderSchedTypeBtns();
-        renderSchedCal();
-        loadScheduleData();
-        loadSchedDetail();
+        if (session) {
+          schedType = session.type || '정기모임';
+          schedDates = (session.candidate_dates || []).map(ds => {
+            const dt = new Date(ds + 'T12:00:00+09:00');
+            return { date_str: ds, date_label: `${dt.getMonth()+1}/${dt.getDate()} (${SCHED_DAYS[dt.getDay()]})` };
+          });
+          renderSchedTypeBtns();
+          renderSchedCal();
+          const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+          set('sched-title',        session.title);
+          set('sched-time',         session.time_str || '18:00');
+          set('sched-place',        session.place);
+          set('sched-addr',         session.addr);
+          set('sched-map',          session.map_url);
+          set('sched-memo',         session.memo);
+          set('sched-action-label', session.action_label);
+          set('sched-action-url',   session.action_url);
+          renderMapPreview();
+        } else {
+          renderSchedTypeBtns();
+          renderSchedCal();
+          loadScheduleData();
+          loadSchedDetail();
+        }
       }
+
+      function editEvent(session) {
+        openSchedule(session);
+      }
+
+      async function deleteEvent(id) {
+        if (!confirm('이 이벤트를 삭제할까요?')) return;
+        const { error } = await sb.from('schedule_sessions').delete().eq('id', id);
+        if (error) { alert('삭제 실패: ' + error.message); return; }
+        showToast('삭제됐어요 🗑️');
+        loadEvents();
+        meetCur = 0;
+        document.getElementById('meet-slides').style.transform = 'translateX(0)';
+        initMeetSlider();
+      }
+
       function closeSchedule() {
         document.getElementById('schedule-modal').classList.replace('flex','hidden');
+        editingEventId = null;
       }
 
       /* ── 모임 종류 ── */
@@ -1923,22 +1975,28 @@
           is_active: true,
         };
 
-        const btn = document.querySelector('#schedule-modal button[onclick="submitSchedule()"]');
-        if (btn) { btn.disabled = true; btn.textContent = '등록 중…'; }
+        const btn = document.getElementById('sched-submit-btn');
+        const isEdit = !!editingEventId;
+        if (btn) { btn.disabled = true; btn.textContent = isEdit ? '수정 중…' : '등록 중…'; }
 
-        const { error } = await sb.from('schedule_sessions').insert(payload);
+        const { error } = isEdit
+          ? await sb.from('schedule_sessions').update(payload).eq('id', editingEventId)
+          : await sb.from('schedule_sessions').insert(payload);
 
-        if (btn) { btn.disabled = false; btn.innerHTML = '<span>⚡</span> 등록하기'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = isEdit ? '<span>✏️</span> 수정하기' : '<span>⚡</span> 등록하기'; }
 
         if (error) {
           console.error(error);
-          alert('등록 중 오류가 발생했어요: ' + (error.message || ''));
+          alert((isEdit ? '수정' : '등록') + ' 중 오류가 발생했어요: ' + (error.message || ''));
           return;
         }
 
         closeSchedule();
-        showToast('일정이 등록됐어요! 🎉');
+        showToast(isEdit ? '수정됐어요! ✏️' : '일정이 등록됐어요! 🎉');
         loadEvents();
+        meetCur = 0;
+        document.getElementById('meet-slides').style.transform = 'translateX(0)';
+        initMeetSlider();
       }
 
       function showToast(msg) {
