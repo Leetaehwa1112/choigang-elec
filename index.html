@@ -1434,35 +1434,56 @@
 
 
     <!-- ===== 일정잡기 모달 ===== -->
-    <div id="schedule-modal" class="fixed inset-0 z-[60] bg-ink/60 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)closeSchedule()">
-      <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl">
+    <div id="schedule-modal" class="fixed inset-0 z-[60] bg-ink/70 backdrop-blur-sm hidden items-end sm:items-center justify-center" onclick="if(event.target===this)closeSchedule()">
+      <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[92vh] flex flex-col shadow-2xl">
+
         <!-- 헤더 -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-ink/10 flex-shrink-0">
-          <div>
-            <div class="label-tape inline-block px-2 py-0.5 text-[11px] mb-1">일정잡기</div>
-            <h2 class="font-display text-xl">언제 모일까요?</h2>
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 flex-shrink-0">
+          <div class="flex items-center gap-3">
+            <div id="sched-type-icon" class="text-2xl">⚡</div>
+            <div>
+              <div class="font-mono text-[10px] text-ink-3 leading-none mb-0.5">일정잡기</div>
+              <h2 class="font-display text-xl leading-tight">언제 모일까요?</h2>
+            </div>
           </div>
-          <button onclick="closeSchedule()" class="w-8 h-8 rounded-full bg-ink/8 flex items-center justify-center text-ink-3 hover:bg-ink/15 transition">✕</button>
+          <button onclick="closeSchedule()" class="w-9 h-9 rounded-full bg-ink/8 flex items-center justify-center text-ink-2 hover:bg-ink/15 transition text-lg">✕</button>
         </div>
 
-        <!-- 내 이름 선택 -->
-        <div class="px-5 py-3 border-b border-ink/10 flex-shrink-0">
-          <div class="font-mono text-[10px] text-ink-3 mb-2">내 이름을 선택하면 편집할 수 있어요</div>
-          <div class="flex gap-2 flex-wrap" id="schedule-member-btns"></div>
-        </div>
+        <!-- 스크롤 영역 -->
+        <div class="flex-1 overflow-y-auto">
 
-        <!-- 그리드 -->
-        <div class="flex-1 overflow-y-auto px-5 py-4" id="schedule-grid-wrap">
-          <div class="text-center text-ink-3 text-sm py-8">불러오는 중...</div>
-        </div>
-
-        <!-- 날짜 추가 -->
-        <div class="px-5 py-3 border-t border-ink/10 flex-shrink-0 bg-ink/3">
-          <div class="font-mono text-[10px] text-ink-3 mb-2">후보 날짜 추가</div>
-          <div class="flex gap-2">
-            <input type="date" id="schedule-new-date" class="flex-1 border border-ink/20 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-line-l">
-            <button onclick="addScheduleDate()" class="wago-btn font-bold px-4 py-2 rounded-lg text-sm">추가</button>
+          <!-- ① 모임 종류 -->
+          <div class="px-5 pb-4 border-b border-ink/8">
+            <div class="font-mono text-[10px] text-ink-3 mb-2.5">모임 종류</div>
+            <div class="flex flex-wrap gap-2" id="sched-type-btns"></div>
           </div>
+
+          <!-- ② 후보 날짜 선택 (미니 캘린더) -->
+          <div class="px-5 py-4 border-b border-ink/8">
+            <div class="font-mono text-[10px] text-ink-3 mb-3">후보 날짜 <span class="opacity-50">· 날짜를 탭하면 추가/삭제돼요</span></div>
+            <!-- 월 네비 -->
+            <div class="flex items-center justify-between mb-3">
+              <button onclick="schedCalMove(-1)" class="w-8 h-8 rounded-full bg-ink/8 flex items-center justify-center font-bold text-ink hover:bg-ink/15 transition">‹</button>
+              <span id="sched-cal-title" class="font-display text-base"></span>
+              <button onclick="schedCalMove(1)"  class="w-8 h-8 rounded-full bg-ink/8 flex items-center justify-center font-bold text-ink hover:bg-ink/15 transition">›</button>
+            </div>
+            <!-- 캘린더 그리드 -->
+            <div id="sched-cal-grid" class="select-none"></div>
+            <!-- 선택된 날짜 칩 -->
+            <div id="sched-date-chips" class="mt-3 flex flex-wrap gap-1.5 min-h-[28px]"></div>
+          </div>
+
+          <!-- ③ 가능 여부 그리드 -->
+          <div class="px-5 py-4 pb-6">
+            <div class="font-mono text-[10px] text-ink-3 mb-2.5">가능 여부 <span class="opacity-50">· 내 이름 선택 후 탭해서 표시</span></div>
+            <!-- 내 이름 -->
+            <div class="flex gap-1.5 flex-wrap mb-4" id="sched-member-btns"></div>
+            <!-- 그리드 -->
+            <div id="sched-grid">
+              <div class="text-center text-ink-3 text-sm py-6 opacity-50">날짜를 선택하면 여기에 표시돼요</div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1495,116 +1516,187 @@
 
     <script>
       // ── 일정잡기 ──
-      let schedDates = [];   // [{date_str, date_label}]
-      let schedVotes = {};   // { "2026-07-05": { "이태화": "available"|"unavailable" } }
-      let schedMe = null;
+      const SCHED_TYPES = [
+        { key:'술자리',  icon:'🍻' }, { key:'밥자리',  icon:'🍚' },
+        { key:'번개',   icon:'⚡' }, { key:'정기모임', icon:'🎉' },
+        { key:'야외활동',icon:'⛰️' }, { key:'기타',    icon:'🎲' },
+      ];
+      const SCHED_DAYS = ['일','월','화','수','목','금','토'];
 
-      const DAYS = ['일','월','화','수','목','금','토'];
+      let schedDates = [], schedVotes = {}, schedMe = null;
+      let schedType  = localStorage.getItem('schedType') || '번개';
+      let schedCalY  = new Date().getFullYear();
+      let schedCalM  = new Date().getMonth();
 
       function openSchedule() {
         document.getElementById('schedule-modal').classList.replace('hidden','flex');
+        renderSchedTypeBtns();
+        renderSchedCal();
         loadScheduleData();
       }
       function closeSchedule() {
         document.getElementById('schedule-modal').classList.replace('flex','hidden');
       }
 
+      /* ── 모임 종류 ── */
+      function renderSchedTypeBtns() {
+        const found = SCHED_TYPES.find(t => t.key === schedType) || SCHED_TYPES[2];
+        document.getElementById('sched-type-icon').textContent = found.icon;
+        document.getElementById('sched-type-btns').innerHTML = SCHED_TYPES.map(t => {
+          const on = t.key === schedType;
+          return `<button onclick="setSchedType('${t.key}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold border-2 transition ${on ? 'border-ink bg-ink text-white' : 'border-ink/15 text-ink/60 hover:border-ink/40'}">${t.icon} ${t.key}</button>`;
+        }).join('');
+      }
+      function setSchedType(key) {
+        schedType = key;
+        localStorage.setItem('schedType', key);
+        renderSchedTypeBtns();
+      }
+
+      /* ── 미니 캘린더 ── */
+      function schedCalMove(d) { schedCalM += d; if (schedCalM > 11) { schedCalM=0; schedCalY++; } if (schedCalM < 0) { schedCalM=11; schedCalY--; } renderSchedCal(); }
+
+      function renderSchedCal() {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const firstDay = new Date(schedCalY, schedCalM, 1).getDay(); // 0=Sun
+        const daysInMonth = new Date(schedCalY, schedCalM+1, 0).getDate();
+        const offset = (firstDay + 6) % 7; // Mon-first
+
+        document.getElementById('sched-cal-title').textContent = `${schedCalY}년 ${schedCalM+1}월`;
+
+        let h = '<div class="grid grid-cols-7 gap-1 mb-1">';
+        ['월','화','수','목','금','토','일'].forEach((d,i) => {
+          h += `<div class="text-center font-mono text-[10px] py-1 ${i>=5?'text-line-l':'text-ink-3'}">${d}</div>`;
+        });
+        h += '</div><div class="grid grid-cols-7 gap-1">';
+        for (let i=0; i<offset; i++) h += '<div></div>';
+        for (let day=1; day<=daysInMonth; day++) {
+          const ds = `${schedCalY}-${String(schedCalM+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const dt = new Date(schedCalY, schedCalM, day);
+          const isPast = dt < today;
+          const isCandidate = schedDates.some(d => d.date_str === ds);
+          const isToday = dt.getTime() === today.getTime();
+          const dow = dt.getDay(); // 0=Sun
+          const isWeekend = dow === 0 || dow === 6;
+          let cls;
+          if (isCandidate)    cls = 'bg-line-l text-white font-bold cursor-pointer hover:bg-line-l/80';
+          else if (isPast)    cls = 'text-ink/20 cursor-default';
+          else                cls = `${isWeekend?'text-line-l':'text-ink'} hover:bg-ink/8 cursor-pointer`;
+          const ring = isToday && !isCandidate ? 'ring-1 ring-line-y' : '';
+          h += `<button onclick="${isPast?'':(`schedToggleDate('${ds}')`)}" class="aspect-square flex items-center justify-center text-sm rounded-lg transition ${cls} ${ring}">${day}</button>`;
+        }
+        h += '</div>';
+        document.getElementById('sched-cal-grid').innerHTML = h;
+        renderSchedChips();
+      }
+
+      function renderSchedChips() {
+        const el = document.getElementById('sched-date-chips');
+        if (!schedDates.length) { el.innerHTML = '<span class="text-[11px] text-ink-3 opacity-50">선택된 날짜 없음</span>'; return; }
+        el.innerHTML = schedDates.map(d =>
+          `<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-line-l/10 border border-line-l/30 rounded-full text-xs font-bold text-line-l">
+            ${d.date_label}
+            <button onclick="schedRemoveDate('${d.date_str}')" class="ml-0.5 opacity-50 hover:opacity-100 leading-none">×</button>
+          </span>`
+        ).join('');
+      }
+
+      async function schedToggleDate(dateStr) {
+        const idx = schedDates.findIndex(d => d.date_str === dateStr);
+        if (idx >= 0) { await schedRemoveDate(dateStr); return; }
+        const dt = new Date(dateStr + 'T12:00:00+09:00');
+        const label = `${dt.getMonth()+1}/${dt.getDate()} (${SCHED_DAYS[dt.getDay()]})`;
+        const { error } = await sb.from('schedule_dates').insert({ date_str: dateStr, date_label: label });
+        if (!error) { schedDates.push({ date_str: dateStr, date_label: label }); schedDates.sort((a,b)=>a.date_str.localeCompare(b.date_str)); }
+        renderSchedCal(); renderSchedGrid();
+      }
+
+      async function schedRemoveDate(dateStr) {
+        await Promise.all([
+          sb.from('schedule_dates').delete().eq('date_str', dateStr),
+          sb.from('schedule_votes').delete().eq('date_str', dateStr),
+        ]);
+        schedDates = schedDates.filter(d => d.date_str !== dateStr);
+        delete schedVotes[dateStr];
+        renderSchedCal(); renderSchedGrid();
+      }
+
+      /* ── 데이터 로드 ── */
       async function loadScheduleData() {
-        document.getElementById('schedule-grid-wrap').innerHTML = '<div class="text-center text-ink-3 text-sm py-8">불러오는 중...</div>';
         const [{ data: dates }, { data: votes }] = await Promise.all([
           sb.from('schedule_dates').select('*').order('date_str'),
           sb.from('schedule_votes').select('*'),
         ]);
         schedDates = dates || [];
         schedVotes = {};
-        (votes || []).forEach(v => {
-          if (!schedVotes[v.date_str]) schedVotes[v.date_str] = {};
-          schedVotes[v.date_str][v.member_name] = v.status;
-        });
-        renderScheduleMemberBtns();
-        renderScheduleGrid();
+        (votes||[]).forEach(v => { if (!schedVotes[v.date_str]) schedVotes[v.date_str]={}; schedVotes[v.date_str][v.member_name]=v.status; });
+        renderSchedCal(); renderSchedMemberBtns(); renderSchedGrid();
       }
 
-      function renderScheduleMemberBtns() {
-        const el = document.getElementById('schedule-member-btns');
-        el.innerHTML = MEMBERS.map(m => {
+      /* ── 멤버 버튼 ── */
+      function renderSchedMemberBtns() {
+        document.getElementById('sched-member-btns').innerHTML = MEMBERS.map(m => {
           const char = m[1];
           const color = MEMBER_COLORS[m] || 'bg-ink text-white';
-          const sel = schedMe === m ? 'ring-2 ring-offset-1 ring-line-e scale-110' : 'opacity-60';
-          return `<button onclick="selectSchedMe('${m}')" class="w-10 h-10 rounded-full ${color} ${sel} font-display text-base flex items-center justify-center transition hover:scale-105 hover:opacity-100">${char}</button>`;
+          const on = schedMe === m;
+          return `<button onclick="selectSchedMe('${m}')" class="flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full border-2 transition ${on ? 'border-ink' : 'border-transparent opacity-50 hover:opacity-80'}">
+            <div class="w-7 h-7 rounded-full ${color} font-display text-sm flex items-center justify-center flex-shrink-0">${char}</div>
+            <span class="text-xs font-bold">${m}</span>
+          </button>`;
         }).join('');
       }
+      function selectSchedMe(name) { schedMe = schedMe===name ? null : name; renderSchedMemberBtns(); renderSchedGrid(); }
 
-      function selectSchedMe(name) {
-        schedMe = schedMe === name ? null : name;
-        renderScheduleMemberBtns();
-        renderScheduleGrid();
-      }
+      /* ── 가능 여부 그리드 ── */
+      function renderSchedGrid() {
+        const el = document.getElementById('sched-grid');
+        if (!schedDates.length) { el.innerHTML = '<div class="text-center text-ink-3/50 text-xs py-4">날짜를 선택하면 여기에 표시돼요</div>'; return; }
 
-      function renderScheduleGrid() {
-        const wrap = document.getElementById('schedule-grid-wrap');
-        if (!schedDates.length) {
-          wrap.innerHTML = '<div class="text-center text-ink-3 py-10 text-sm">아직 후보 날짜가 없어요<br><span class="text-xs opacity-60">아래에서 날짜를 추가해주세요</span></div>';
-          return;
-        }
-
+        let h = '<div class="overflow-x-auto"><table class="w-full text-center text-xs border-collapse">';
         // 헤더
-        let html = '<div class="overflow-x-auto -mx-1"><table class="w-full text-center text-xs border-collapse"><thead><tr>';
-        html += '<th class="text-left pb-2 pr-2 font-mono text-[10px] text-ink-3 whitespace-nowrap">날짜</th>';
+        h += '<thead><tr><th class="text-left pb-2 pr-1 font-mono text-[10px] text-ink-3 whitespace-nowrap w-16">날짜</th>';
         MEMBERS.forEach(m => {
-          const char = m[1];
-          const color = MEMBER_COLORS[m] || 'bg-ink text-white';
-          const sel = schedMe === m ? 'ring-2 ring-offset-1 ring-line-e' : '';
-          html += `<th class="pb-2 px-0.5"><div class="w-7 h-7 rounded-full ${color} ${sel} font-display text-sm flex items-center justify-center mx-auto">${char}</div></th>`;
+          const on = schedMe === m;
+          h += `<th class="pb-2 px-0"><div class="w-7 h-7 rounded-full ${MEMBER_COLORS[m]||'bg-ink text-white'} ${on?'ring-2 ring-offset-1 ring-line-l':''} font-display text-xs flex items-center justify-center mx-auto">${m[1]}</div></th>`;
         });
-        html += '<th class="pb-2 pl-1 font-mono text-[10px] text-ink-3">가능</th></tr></thead><tbody>';
+        h += '<th class="pb-2 pl-1 font-mono text-[10px] text-ink-3 whitespace-nowrap">가능</th></tr></thead><tbody>';
 
         schedDates.forEach(d => {
-          const votes = schedVotes[d.date_str] || {};
-          const availCount = Object.values(votes).filter(s => s === 'available').length;
-          const countColor = availCount >= 5 ? 'text-line-e font-extrabold' : availCount >= 3 ? 'text-line-y font-bold' : 'text-ink-3';
-          html += `<tr class="border-t border-ink/8"><td class="text-left py-2.5 pr-2 font-mono text-[11px] font-bold whitespace-nowrap">${d.date_label}</td>`;
+          const vt = schedVotes[d.date_str] || {};
+          const cnt = Object.values(vt).filter(s=>s==='available').length;
+          const best = cnt >= 6;
+          h += `<tr class="border-t border-ink/8 ${best?'bg-line-e/5':''}">
+            <td class="text-left py-2 pr-1 whitespace-nowrap">
+              <div class="font-bold text-[11px]">${d.date_label}</div>
+            </td>`;
           MEMBERS.forEach(m => {
-            const status = votes[m] || 'none';
+            const st = vt[m] || 'none';
             const isMe = schedMe === m;
-            const cell = status === 'available' ? '✓' : status === 'unavailable' ? '✗' : '·';
-            const bg = status === 'available' ? 'bg-line-e/15 text-line-e' : status === 'unavailable' ? 'bg-ink/10 text-ink/25' : 'bg-ink/5 text-ink/20';
-            const cursor = isMe ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-default';
-            html += `<td class="py-1 px-0.5"><button onclick="schedToggle('${d.date_str}','${m}')" class="w-7 h-7 rounded-full ${bg} ${cursor} transition-transform font-bold flex items-center justify-center mx-auto text-sm">${cell}</button></td>`;
+            const sym = st==='available'?'✓' : st==='unavailable'?'✗' : '·';
+            const bg  = st==='available'?'bg-line-e/15 text-line-e font-bold' : st==='unavailable'?'bg-ink/8 text-ink/25' : 'text-ink/20';
+            const act = isMe ? 'cursor-pointer active:scale-90' : 'cursor-default';
+            h += `<td class="py-1 px-0"><button onclick="schedToggleVote('${d.date_str}','${m}')" class="w-7 h-7 rounded-full ${bg} ${act} transition-transform flex items-center justify-center mx-auto text-sm">${sym}</button></td>`;
           });
-          html += `<td class="py-2.5 pl-1 font-bold text-sm ${countColor}">${availCount}<span class="text-[9px] font-normal opacity-60">/7</span></td></tr>`;
+          const cc = cnt>=6?'text-line-e font-extrabold' : cnt>=4?'text-line-y font-bold':'text-ink-3';
+          h += `<td class="py-2 pl-1 ${cc} whitespace-nowrap">${cnt}<span class="text-[9px] font-normal opacity-50">/7</span></td></tr>`;
         });
-
-        html += '</tbody></table></div>';
-        wrap.innerHTML = html;
+        h += '</tbody></table></div>';
+        el.innerHTML = h;
       }
 
-      async function schedToggle(dateStr, memberName) {
+      async function schedToggleVote(dateStr, memberName) {
         if (schedMe !== memberName) return;
-        const cur = (schedVotes[dateStr] || {})[memberName] || 'none';
-        const next = cur === 'none' ? 'available' : cur === 'available' ? 'unavailable' : 'none';
+        const cur = (schedVotes[dateStr]||{})[memberName] || 'none';
+        const next = cur==='none'?'available' : cur==='available'?'unavailable':'none';
         if (!schedVotes[dateStr]) schedVotes[dateStr] = {};
-        if (next === 'none') {
+        if (next==='none') {
           delete schedVotes[dateStr][memberName];
-          await sb.from('schedule_votes').delete().eq('date_str', dateStr).eq('member_name', memberName);
+          await sb.from('schedule_votes').delete().eq('date_str',dateStr).eq('member_name',memberName);
         } else {
           schedVotes[dateStr][memberName] = next;
-          await sb.from('schedule_votes').upsert({ date_str: dateStr, member_name: memberName, status: next }, { onConflict: 'date_str,member_name' });
+          await sb.from('schedule_votes').upsert({date_str:dateStr,member_name:memberName,status:next},{onConflict:'date_str,member_name'});
         }
-        renderScheduleGrid();
-      }
-
-      async function addScheduleDate() {
-        const input = document.getElementById('schedule-new-date');
-        const dateStr = input.value;
-        if (!dateStr) return;
-        const d = new Date(dateStr + 'T12:00:00+09:00');
-        const label = `${d.getMonth()+1}/${d.getDate()} (${DAYS[d.getDay()]})`;
-        const { error } = await sb.from('schedule_dates').insert({ date_str: dateStr, date_label: label });
-        if (!error) {
-          input.value = '';
-          await loadScheduleData();
-        }
+        renderSchedGrid();
       }
     </script>
 
