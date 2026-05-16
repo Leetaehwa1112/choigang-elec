@@ -575,24 +575,6 @@
       </div>
     </section>
 
-    <!-- ===== 제안된 일정 ===== -->
-    <section id="proposed" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6">
-        <div class="flex items-center justify-between mb-5">
-          <div>
-            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">일정잡기</div>
-            <h2 class="font-display text-2xl sm:text-3xl mt-2">제안된 일정</h2>
-          </div>
-          <button onclick="openSchedule()" class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-ink text-white text-sm font-bold hover:bg-ink/85 transition">
-            + 제안하기
-          </button>
-        </div>
-        <div id="proposed-list" class="grid gap-4 sm:grid-cols-2">
-          <div class="col-span-full text-center py-10 text-ink-3 text-sm opacity-60">불러오는 중…</div>
-        </div>
-      </div>
-    </section>
-
     <script>
       // ── Supabase 클라이언트 ──
       const { createClient } = supabase;
@@ -691,46 +673,30 @@
             <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-02</div>
             <h2 class="font-display text-2xl sm:text-3xl mt-2">이벤트</h2>
           </div>
-          <!-- 뷰 토글 -->
-          <div class="flex flex-col items-end gap-2">
+          <div class="flex items-center gap-2">
+            <button onclick="openSchedule()" class="px-3 py-2 rounded-full bg-ink text-white text-sm font-bold hover:bg-ink/85 transition">+ 일정잡기</button>
             <div class="flex rounded-lg overflow-hidden border border-ink/15 text-sm font-bold shadow-sm">
               <button id="btn-list" onclick="setView('list')" class="px-4 py-2 bg-ink text-white transition">리스트</button>
-              <button id="btn-cal"  onclick="setView('cal')"  class="relative px-4 py-2 transition bg-line-y text-ink font-extrabold shadow-[0_0_12px_rgba(245,180,0,0.6)]">
-                📅 달력
-              </button>
+              <button id="btn-cal"  onclick="setView('cal')"  class="px-4 py-2 transition bg-line-y text-ink font-extrabold">📅 달력</button>
             </div>
           </div>
         </div>
 
         <!-- 리스트 뷰 -->
         <div id="view-list">
-          <ul class="space-y-2">
-            <li class="bg-white border-2 border-line-l/50 rounded-lg p-4 flex items-center gap-4">
-              <div class="text-center flex-shrink-0">
-                <div class="font-mono text-[10px] text-ink-3">6월</div>
-                <div class="font-display text-2xl leading-none text-line-l">28</div>
-                <div class="font-mono text-[10px] text-ink-3">일</div>
-              </div>
-              <div class="w-px h-10 bg-ink/15"></div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap"><span class="text-[10px] font-mono bg-line-l/15 text-line-l px-1.5 py-0.5 rounded">💍 경조사</span><h4 class="font-bold">이은준 결혼식</h4></div>
-                <p class="text-xs text-ink-3 mt-1">르한스 · 오후 6시</p>
-              </div>
-              <a href="https://bojagicard.com/i/home.php?uid=o5hladp5&inflow_suid=1" target="_blank" class="text-xs font-bold wago-btn px-3 py-2 rounded flex-shrink-0 whitespace-nowrap">📩 청첩장</a>
-            </li>
-          </ul>
+          <div id="event-list" class="space-y-3">
+            <div class="text-center py-10 text-ink-3 text-sm opacity-60">불러오는 중…</div>
+          </div>
         </div>
 
         <!-- 달력 뷰 -->
         <div id="view-cal" class="hidden">
           <div class="bg-white rounded-xl border border-ink/10 overflow-hidden shadow-sm">
-            <!-- 월 헤더 + 이동 -->
             <div class="bg-ink text-white px-4 py-3 flex items-center justify-between">
               <button onclick="moveMonth(-1)" class="text-xl font-bold px-2 hover:text-line-y transition">‹</button>
               <span id="cal-title" class="font-display text-lg"></span>
               <button onclick="moveMonth(1)" class="text-xl font-bold px-2 hover:text-line-y transition">›</button>
             </div>
-            <!-- 요일 헤더 -->
             <div class="grid grid-cols-7 text-center border-b border-ink/10">
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">월</div>
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">화</div>
@@ -740,7 +706,6 @@
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">토</div>
               <div class="py-2 font-mono text-[10px] font-bold text-ink-3">일</div>
             </div>
-            <!-- 날짜 그리드 -->
             <div id="cal-grid" class="grid grid-cols-7 divide-x divide-y divide-ink/8"></div>
           </div>
         </div>
@@ -748,49 +713,92 @@
     </section>
 
     <script>
-      // 이벤트 데이터 (YYYY-MM-DD)
-      const CAL_EVENTS = {
-        '2026-06-28': [{label:'💍 이은준 결혼식', cls:'bg-line-l text-white'}],
-      };
-
       const MONTH_KR = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+      const DOW_KR   = ['일','월','화','수','목','금','토'];
       const MIN_YEAR = 2026, MAX_YEAR = 2028;
+      let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+      let calEvents = {}; // { 'YYYY-MM-DD': [{label, icon, type}] }
 
-      let calYear = 2026, calMonth = 5; // 0-indexed: 5 = June
+      /* ── 이벤트 로드 ── */
+      async function loadEvents() {
+        const el = document.getElementById('event-list');
+        const { data, error } = await sb.from('schedule_sessions')
+          .select('*').eq('is_active', true).order('created_at', { ascending: true });
+
+        // 달력 데이터 재구성
+        calEvents = {};
+        if (data) {
+          data.forEach(s => {
+            (s.candidate_dates || []).forEach(ds => {
+              if (!calEvents[ds]) calEvents[ds] = [];
+              calEvents[ds].push({ label: s.title, icon: s.type_icon || '📌', session: s });
+            });
+          });
+        }
+
+        if (error || !data || !data.length) {
+          el.innerHTML = `<div class="text-center py-10 text-ink-3 text-sm opacity-60">${error ? '불러올 수 없어요' : '등록된 이벤트가 없어요 · 일정잡기로 추가해보세요!'}</div>`;
+          return;
+        }
+
+        el.innerHTML = data.map(s => {
+          const dates = (s.candidate_dates || []);
+          const firstDate = dates[0] ? new Date(dates[0] + 'T00:00:00') : null;
+          const dateCol = firstDate
+            ? `<div class="text-center flex-shrink-0 w-12">
+                <div class="font-mono text-[10px] text-ink-3">${firstDate.getMonth()+1}월</div>
+                <div class="font-display text-2xl leading-none text-ink">${firstDate.getDate()}</div>
+                <div class="font-mono text-[10px] text-ink-3">${DOW_KR[firstDate.getDay()]}</div>
+               </div>
+               <div class="w-px h-10 bg-ink/15 flex-shrink-0"></div>` : '';
+
+          const extraDates = dates.length > 1
+            ? `<div class="flex flex-wrap gap-1 mt-1.5">${dates.map((d,i) => {
+                const dt = new Date(d + 'T00:00:00');
+                const isWe = dt.getDay()===0||dt.getDay()===6;
+                return `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isWe?'bg-warn/10 text-warn':'bg-ink/8 text-ink-3'}">${dt.getMonth()+1}/${dt.getDate()}(${DOW_KR[dt.getDay()]})</span>`;
+              }).join('')}</div>` : '';
+
+          const mapBtn = s.map_url && s.map_provider
+            ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="flex-shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg"
+                style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>` : '';
+
+          return `<div class="bg-white border border-ink/10 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+            ${dateCol}
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-bold bg-ink/8 text-ink-2 px-1.5 py-0.5 rounded">${s.type_icon} ${s.type}</span>
+                <h4 class="font-bold">${s.title}</h4>
+              </div>
+              ${s.place||s.time_str ? `<p class="text-xs text-ink-3 mt-0.5">${[s.place, s.time_str ? s.time_str.replace(':','시 ')+'분' : ''].filter(Boolean).join(' · ')}</p>` : ''}
+              ${extraDates}
+            </div>
+            ${mapBtn}
+          </div>`;
+        }).join('');
+      }
 
       function renderCal() {
         const y = calYear, m = calMonth;
         document.getElementById('cal-title').textContent = y + '년 ' + MONTH_KR[m];
-
-        const firstDay = new Date(y, m, 1).getDay(); // 0=Sun
-        // Monday-first: offset = (firstDay + 6) % 7
-        const offset = (firstDay + 6) % 7;
+        const offset = (new Date(y, m, 1).getDay() + 6) % 7;
         const daysInMonth = new Date(y, m + 1, 0).getDate();
-
+        const today = new Date();
         let html = '';
-        // 앞 빈칸
         for (let i = 0; i < offset; i++) html += '<div class="p-1.5 min-h-[60px] bg-ink/3"></div>';
-        // 날짜
         for (let d = 1; d <= daysInMonth; d++) {
           const key = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-          const evts = CAL_EVENTS[key] || [];
-          const today = new Date(); const isToday = (y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate());
-          const dayOfWeek = (offset + d - 1) % 7; // 0=Mon…6=Sun
-          const isSun = dayOfWeek === 6;
-          const numColor = evts.length ? 'font-bold ' + (evts[0].cls.includes('line-l') ? 'text-line-l' : evts[0].cls.includes('line-e') ? 'text-line-e' : 'text-line-y') : (isSun ? 'text-line-l' : 'text-ink');
-          const bg = evts.length ? 'bg-' + (evts[0].cls.includes('line-l') ? 'line-l/8' : evts[0].cls.includes('line-e') ? 'line-e/8' : 'line-y/10') : '';
-          html += '<div class="p-1.5 min-h-[60px] ' + bg + (isToday ? ' ring-2 ring-inset ring-line-y' : '') + '">';
-          html += '<span class="text-xs font-mono ' + numColor + (isToday ? ' underline underline-offset-2' : '') + '">' + d + '</span>';
-          evts.forEach(e => {
-            html += '<div class="mt-0.5 text-[9px] font-bold px-1 py-0.5 rounded leading-tight ' + e.cls + '">' + e.label + '</div>';
-          });
+          const evts = calEvents[key] || [];
+          const isToday = (y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate());
+          const isSun = ((offset + d - 1) % 7) === 6;
+          const numColor = evts.length ? 'text-line-l font-bold' : (isSun ? 'text-line-l' : 'text-ink');
+          html += `<div class="p-1.5 min-h-[60px]${evts.length?' bg-line-l/5':''}${isToday?' ring-2 ring-inset ring-line-y':''}">`;
+          html += `<span class="text-xs font-mono ${numColor}${isToday?' underline underline-offset-2':''}">${d}</span>`;
+          evts.forEach(e => html += `<div class="mt-0.5 text-[9px] font-bold px-1 py-0.5 rounded leading-tight bg-line-l text-white truncate">${e.icon} ${e.label}</div>`);
           html += '</div>';
         }
-        // 뒤 빈칸
-        const total = offset + daysInMonth;
-        const tail = (7 - (total % 7)) % 7;
+        const tail = (7 - ((offset + daysInMonth) % 7)) % 7;
         for (let i = 0; i < tail; i++) html += '<div class="p-1.5 min-h-[60px] bg-ink/3"></div>';
-
         document.getElementById('cal-grid').innerHTML = html;
       }
 
@@ -806,18 +814,12 @@
       function setView(v) {
         document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
         document.getElementById('view-cal').classList.toggle('hidden', v !== 'cal');
-        document.getElementById('btn-list').className = 'px-4 py-2 transition ' + (v === 'list' ? 'bg-ink text-white' : 'bg-white text-ink-2');
-        document.getElementById('btn-cal').className  = 'relative px-4 py-2 transition ' + (v === 'cal' ? 'bg-ink text-white' : 'bg-white text-ink-2');
-        if (v === 'cal') {
-          renderCal();
-          const hint = document.getElementById('cal-hint');
-          if (hint) hint.remove();
-          // 달력 버튼 하이라이트 제거
-          const bc = document.getElementById('btn-cal');
-          bc.classList.remove('bg-line-y','text-ink','font-extrabold');
-          bc.style.boxShadow = '';
-        }
+        document.getElementById('btn-list').className = 'px-4 py-2 transition ' + (v==='list' ? 'bg-ink text-white' : 'bg-white text-ink-2');
+        document.getElementById('btn-cal').className  = 'px-4 py-2 transition ' + (v==='cal'  ? 'bg-ink text-white' : 'bg-line-y text-ink font-extrabold');
+        if (v === 'cal') renderCal();
       }
+
+      loadEvents();
     </script>
 
     <!-- ===== 멤버 ===== -->
@@ -1582,7 +1584,7 @@
       const SCHED_TYPES = [
         { key:'술자리',  icon:'🍻' }, { key:'밥자리',  icon:'🍚' },
         { key:'번개',   icon:'⚡' }, { key:'정기모임', icon:'🎉' },
-        { key:'야외활동',icon:'⛰️' },
+        { key:'야외활동',icon:'⛰️' }, { key:'경조사',  icon:'💍' },
       ];
       const SCHED_DAYS = ['일','월','화','수','목','금','토'];
 
@@ -1804,61 +1806,9 @@
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2800);
       }
 
-      /* ── 제안된 일정 목록 ── */
       const MAP_COLORS = { kakao: '#FEE500', naver: '#03C75A', tmap: '#1a6dff' };
       const MAP_LABELS = { kakao: '카카오맵', naver: '네이버지도', tmap: '티맵' };
       const MAP_TEXT   = { kakao: '#3C1E1E', naver: '#fff', tmap: '#fff' };
-
-      async function loadProposed() {
-        const el = document.getElementById('proposed-list');
-        if (!el) return;
-        const { data, error } = await sb.from('schedule_sessions')
-          .select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10);
-        if (error) {
-          el.innerHTML = '<div class="col-span-full text-center py-10 text-ink-3 text-sm opacity-60">일정을 불러올 수 없어요</div>';
-          return;
-        }
-        if (!data || !data.length) {
-          el.innerHTML = '<div class="col-span-full text-center py-10 text-ink-3 text-sm opacity-60">아직 제안된 일정이 없어요 · 첫 번째로 제안해보세요!</div>';
-          return;
-        }
-        el.innerHTML = data.map(s => {
-          const dates = (s.candidate_dates || []).map(d => {
-            const dt = new Date(d + 'T00:00:00');
-            const dow = ['일','월','화','수','목','금','토'][dt.getDay()];
-            const isWe = dt.getDay() === 0 || dt.getDay() === 6;
-            return `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${isWe ? 'bg-warn/10 text-warn' : 'bg-ink/8 text-ink-2'}">
-              ${(dt.getMonth()+1)}/${dt.getDate()} (${dow})
-            </span>`;
-          }).join('');
-          const mapBtn = s.map_url && s.map_provider
-            ? `<a href="${s.map_url}" target="_blank" rel="noopener"
-                style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};font-size:11px;font-weight:700;text-decoration:none;">
-                ${MAP_LABELS[s.map_provider]} ↗
-               </a>` : '';
-          return `<div class="bg-white rounded-2xl p-5 shadow-sm border border-ink/8 flex flex-col gap-3">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="text-lg mr-1">${s.type_icon || '📌'}</span>
-                <span class="text-[11px] font-bold text-ink-3 bg-ink/6 rounded px-1.5 py-0.5">${s.type}</span>
-              </div>
-              <span class="text-[10px] text-ink-3 opacity-50 shrink-0">${new Date(s.created_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric'})}</span>
-            </div>
-            <h3 class="font-display text-xl leading-tight">${s.title}</h3>
-            ${s.time_str || s.place ? `<div class="flex flex-wrap gap-x-3 gap-y-1 text-sm text-ink-2">
-              ${s.time_str ? `<span>⏰ ${s.time_str.replace(':','시 ')}분</span>` : ''}
-              ${s.place ? `<span>📍 ${s.place}</span>` : ''}
-            </div>` : ''}
-            ${s.addr ? `<div class="text-xs text-ink-3">🏠 ${s.addr}</div>` : ''}
-            ${s.memo ? `<div class="text-xs text-ink-3 italic">📝 ${s.memo}</div>` : ''}
-            ${dates ? `<div class="flex flex-wrap gap-1.5">${dates}</div>` : ''}
-            ${mapBtn ? `<div>${mapBtn}</div>` : ''}
-          </div>`;
-        }).join('');
-      }
-
-      // 페이지 로드 시 실행
-      loadProposed();
     </script>
 
     <script>
