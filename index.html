@@ -182,6 +182,16 @@
         </ul>
 
         <div class="flex items-center gap-2">
+          <!-- 로그인 상태 -->
+          <div id="auth-area" class="flex items-center gap-2">
+            <!-- 비로그인 -->
+            <button id="auth-login-btn" onclick="openAuthModal()" class="hidden text-xs font-bold px-3 py-1.5 rounded-full bg-ink text-white hover:bg-ink/80 transition">로그인</button>
+            <!-- 로그인 후 -->
+            <button id="auth-user-btn" onclick="openAuthModal()" class="hidden items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-line-y/20 hover:bg-line-y/30 transition">
+              <span id="auth-user-name" class="font-bold text-ink"></span>
+              <span class="text-ink/40 text-[10px]">▾</span>
+            </button>
+          </div>
           <button id="menuBtn" class="md:hidden p-2 -mr-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
@@ -1857,6 +1867,44 @@
     </div>
 
 <!-- ===== RSVP 이름 선택 (참석/불참 버튼 첫 클릭 시) ===== -->
+    <!-- ===== 로그인 / 회원가입 모달 ===== -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-ink/60 z-[400] flex items-center justify-center px-4" onclick="if(event.target===this)closeAuthModal()">
+      <div class="bg-white rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden">
+        <!-- 탭 -->
+        <div class="flex border-b border-ink/10">
+          <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-3.5 text-sm font-bold border-b-2 border-ink transition">로그인</button>
+          <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-3.5 text-sm font-bold border-b-2 border-transparent text-ink/40 transition">회원가입</button>
+        </div>
+        <!-- 로그인 폼 -->
+        <div id="auth-form-login" class="p-5 space-y-3">
+          <input id="auth-login-username" type="text" placeholder="아이디" autocomplete="username"
+            class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"/>
+          <input id="auth-login-password" type="password" placeholder="비밀번호" autocomplete="current-password"
+            class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"
+            onkeydown="if(event.key==='Enter')submitLogin()"/>
+          <p id="auth-login-err" class="text-xs text-red-500 hidden"></p>
+          <button onclick="submitLogin()" class="w-full py-3.5 bg-ink text-white font-bold rounded-xl text-sm hover:bg-ink/80 transition">로그인</button>
+        </div>
+        <!-- 회원가입 폼 -->
+        <div id="auth-form-signup" class="hidden p-5 space-y-3">
+          <input id="auth-signup-name" type="text" placeholder="이름 (실명)" autocomplete="name"
+            class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"/>
+          <input id="auth-signup-username" type="text" placeholder="아이디" autocomplete="username"
+            class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"/>
+          <input id="auth-signup-password" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"
+            class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"
+            onkeydown="if(event.key==='Enter')submitSignup()"/>
+          <p id="auth-signup-err" class="text-xs text-red-500 hidden"></p>
+          <button onclick="submitSignup()" class="w-full py-3.5 bg-ink text-white font-bold rounded-xl text-sm hover:bg-ink/80 transition">가입하기</button>
+        </div>
+        <!-- 로그아웃 (로그인 상태일 때) -->
+        <div id="auth-form-user" class="hidden p-5">
+          <p class="text-sm text-center text-ink-3 mb-4"><span id="auth-modal-username" class="font-bold text-ink"></span> 님으로 로그인 중</p>
+          <button onclick="submitLogout()" class="w-full py-3 bg-ink/8 text-ink font-bold rounded-xl text-sm hover:bg-ink/15 transition">로그아웃</button>
+        </div>
+      </div>
+    </div>
+
     <div id="rsvp-picker" class="hidden fixed inset-0 bg-ink/50 z-[300] flex items-end justify-center" onclick="if(event.target===this)closeRsvpPicker()">
       <div class="bg-white rounded-t-2xl w-full max-w-sm">
         <div class="px-5 pt-5 pb-3">
@@ -2402,6 +2450,115 @@
       const MAP_COLORS = { kakao: '#FEE500', naver: '#03C75A', tmap: '#1a6dff' };
       const MAP_LABELS = { kakao: '카카오맵', naver: '네이버지도', tmap: '티맵' };
       const MAP_TEXT   = { kakao: '#3C1E1E', naver: '#fff', tmap: '#fff' };
+
+      /* ── Auth ── */
+      function openAuthModal() {
+        const session = _authSession;
+        document.getElementById('auth-form-login').classList.toggle('hidden', !!session);
+        document.getElementById('auth-form-signup').classList.add('hidden');
+        document.getElementById('auth-form-user').classList.toggle('hidden', !session);
+        if (session) {
+          document.getElementById('auth-modal-username').textContent =
+            session.user.user_metadata?.name || session.user.user_metadata?.username || '';
+          document.getElementById('auth-tab-login').classList.add('hidden');
+          document.getElementById('auth-tab-signup').classList.add('hidden');
+        } else {
+          document.getElementById('auth-tab-login').classList.remove('hidden');
+          document.getElementById('auth-tab-signup').classList.remove('hidden');
+          switchAuthTab('login');
+        }
+        document.getElementById('auth-modal').classList.remove('hidden');
+      }
+
+      function closeAuthModal() {
+        document.getElementById('auth-modal').classList.add('hidden');
+      }
+
+      function switchAuthTab(tab) {
+        document.getElementById('auth-form-login').classList.toggle('hidden', tab !== 'login');
+        document.getElementById('auth-form-signup').classList.toggle('hidden', tab !== 'signup');
+        document.getElementById('auth-tab-login').className =
+          'flex-1 py-3.5 text-sm font-bold border-b-2 transition ' + (tab === 'login' ? 'border-ink' : 'border-transparent text-ink/40');
+        document.getElementById('auth-tab-signup').className =
+          'flex-1 py-3.5 text-sm font-bold border-b-2 transition ' + (tab === 'signup' ? 'border-ink' : 'border-transparent text-ink/40');
+      }
+
+      async function submitLogin() {
+        const username = document.getElementById('auth-login-username').value.trim().toLowerCase();
+        const password = document.getElementById('auth-login-password').value;
+        const err = document.getElementById('auth-login-err');
+        err.classList.add('hidden');
+        if (!username || !password) { err.textContent = '아이디와 비밀번호를 입력해주세요.'; err.classList.remove('hidden'); return; }
+        const { error } = await sb.auth.signInWithPassword({
+          email: username + '@choigang-elec.app',
+          password
+        });
+        if (error) { err.textContent = '아이디 또는 비밀번호가 틀렸어요.'; err.classList.remove('hidden'); return; }
+        closeAuthModal();
+        showToast('로그인됐어요 👋');
+      }
+
+      async function submitSignup() {
+        const name     = document.getElementById('auth-signup-name').value.trim();
+        const username = document.getElementById('auth-signup-username').value.trim().toLowerCase();
+        const password = document.getElementById('auth-signup-password').value;
+        const err = document.getElementById('auth-signup-err');
+        err.classList.add('hidden');
+        if (!name || !username || !password) { err.textContent = '모든 항목을 입력해주세요.'; err.classList.remove('hidden'); return; }
+        if (password.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 해요.'; err.classList.remove('hidden'); return; }
+        const { error } = await sb.auth.signUp({
+          email: username + '@choigang-elec.app',
+          password,
+          options: { data: { name, username } }
+        });
+        if (error) {
+          err.textContent = error.message.includes('already') ? '이미 사용 중인 아이디예요.' : '가입 중 오류가 발생했어요.';
+          err.classList.remove('hidden'); return;
+        }
+        closeAuthModal();
+        showToast('가입 완료! 환영해요 🎉');
+      }
+
+      async function submitLogout() {
+        await sb.auth.signOut();
+        closeAuthModal();
+        showToast('로그아웃됐어요.');
+      }
+
+      let _authSession = null;
+      sb.auth.onAuthStateChange((event, session) => {
+        _authSession = session;
+        const loginBtn = document.getElementById('auth-login-btn');
+        const userBtn  = document.getElementById('auth-user-btn');
+        const userName = document.getElementById('auth-user-name');
+        if (session) {
+          const name = session.user.user_metadata?.name || session.user.user_metadata?.username || '';
+          loginBtn.classList.add('hidden'); loginBtn.classList.remove('flex');
+          userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
+          userName.textContent = name;
+          localStorage.setItem('rsvpName', name);
+        } else {
+          loginBtn.classList.remove('hidden');
+          userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
+          loginBtn.classList.add('hidden'); // 초기엔 숨김, 세션 확인 후 표시
+        }
+      });
+
+      // 초기 세션 확인
+      sb.auth.getSession().then(({ data: { session } }) => {
+        _authSession = session;
+        const loginBtn = document.getElementById('auth-login-btn');
+        const userBtn  = document.getElementById('auth-user-btn');
+        const userName = document.getElementById('auth-user-name');
+        if (session) {
+          const name = session.user.user_metadata?.name || session.user.user_metadata?.username || '';
+          userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
+          userName.textContent = name;
+          localStorage.setItem('rsvpName', name);
+        } else {
+          loginBtn.classList.remove('hidden');
+        }
+      });
     </script>
 
     <script>
