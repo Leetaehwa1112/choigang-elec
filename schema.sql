@@ -54,6 +54,8 @@ create index if not exists comments_target_idx on comments (target, created_at);
 alter table comments enable row level security;
 create policy "cmt_read"   on comments for select using (true);
 create policy "cmt_insert" on comments for insert with check (true);
+create policy "cmt_update" on comments for update using (true);
+create policy "cmt_delete" on comments for delete using (true);
 
 -- ============================================================
 -- [LIVE] 3. PHOTO_MEMORIES  ─ 추억 사진·영상
