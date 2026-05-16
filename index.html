@@ -182,11 +182,6 @@
         </ul>
 
         <div class="flex items-center gap-2">
-          <button id="nav-login-btn" onclick="openLogin()" class="hidden sm:inline-flex wago-btn font-bold text-xs px-3 py-2 rounded">로그인</button>
-          <div id="nav-user" class="hidden items-center gap-2">
-            <span id="nav-user-name" class="hidden sm:inline text-xs font-bold text-ink-2"></span>
-            <button onclick="doLogout()" class="hidden sm:inline-flex text-xs font-mono text-ink-3 hover:text-line-l px-2 py-1">로그아웃</button>
-          </div>
           <button id="menuBtn" class="md:hidden p-2 -mr-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
@@ -257,7 +252,7 @@
             <span class="led-blink w-2 h-2 rounded-full bg-line-e text-line-e flex-shrink-0"></span>
             <div class="text-sm min-w-0">
               <div class="font-mono text-[10px] text-ink-3">입장</div>
-              <div id="greeting-text" class="font-bold truncate">확인 중...</div>
+              <div id="greeting-text" class="font-bold truncate">최강전기 동창회</div>
             </div>
           </div>
         </div>
@@ -790,23 +785,6 @@
       </div>
     </footer>
 
-    <!-- ===== 로그인 모달 ===== -->
-    <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4">
-      <div class="bg-panel rounded-xl shadow-2xl p-6 w-full max-w-sm">
-        <div class="flex items-center justify-between mb-5">
-          <div>
-            <h3 class="font-display text-2xl">최강전기 입장</h3>
-            <p class="text-xs text-ink-3 mt-0.5">카카오 계정으로 1초 로그인</p>
-          </div>
-          <button onclick="closeLogin()" class="text-ink-3 hover:text-ink text-2xl leading-none">✕</button>
-        </div>
-        <button onclick="loginWithKakao()" class="w-full flex items-center justify-center gap-2 font-bold text-base py-3.5 rounded-xl" style="background:#FEE500;color:#391b1b;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#391b1b"><path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.565 1.521 4.83 3.845 6.196-.169.63-.611 2.281-.7 2.634-.11.43.157.424.33.309.136-.09 2.16-1.47 3.035-2.07.483.067.977.101 1.49.101 5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/></svg>
-          카카오로 로그인
-        </button>
-        <p id="login-error" class="text-xs text-line-l text-center mt-3 hidden"></p>
-      </div>
-    </div>
 
     <!-- ===== 플로팅 도움 요청 ===== -->
     <button class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
@@ -832,87 +810,6 @@
         '김건우': '전기과 멤버',
       };
 
-      // ── 모달 열기/닫기 ──
-      function openLogin()  { document.getElementById('login-modal').classList.remove('hidden'); }
-      function closeLogin() {
-        document.getElementById('login-modal').classList.add('hidden');
-        document.getElementById('login-error').classList.add('hidden');
-      }
-      document.getElementById('login-modal').addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeLogin();
-      });
-
-      // ── 카카오 로그인 ──
-      async function loginWithKakao() {
-        const errEl = document.getElementById('login-error');
-        errEl.classList.add('hidden');
-        const { error } = await sb.auth.signInWithOAuth({
-          provider: 'kakao',
-          options: { redirectTo: window.location.href.split('#')[0], scopes: 'profile_nickname profile_image' }
-        });
-        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
-      }
-
-      // ── 로그아웃 ──
-      async function doLogout() {
-        await sb.auth.signOut();
-        location.reload();
-      }
-
-      // ── UI 업데이트 ──
-      function applySession(session) {
-        const textEl    = document.getElementById('greeting-text');
-        const loginBtn  = document.getElementById('nav-login-btn');
-        const userDiv   = document.getElementById('nav-user');
-        const userLabel = document.getElementById('nav-user-name');
-
-        if (!session) {
-          textEl.innerHTML = '<span class="text-ink-3 font-normal text-xs">로그인하면 인사해드려요</span>';
-          loginBtn.classList.remove('hidden');
-          userDiv.classList.add('hidden');
-          return;
-        }
-
-        const name  = session.user.user_metadata?.name ?? '멤버';
-        const title = MEMBER_TITLES[name] ?? '전기과 멤버';
-        textEl.textContent = `${title}님이 입장하셨습니다.`;
-        loginBtn.classList.add('hidden');
-        userDiv.classList.remove('hidden');
-        userDiv.classList.add('flex');
-        userLabel.textContent = name;
-        closeLogin();
-      }
-
-      // ── 초기 세션 확인 ──
-      (async () => {
-        const { data: { session } } = await sb.auth.getSession();
-        applySession(session);
-
-        // 로그인 직후 members 테이블에 auth_id 연결
-        if (session) {
-          const name = session.user.user_metadata?.name;
-          if (name) {
-            await sb.from('members')
-              .update({ auth_id: session.user.id })
-              .eq('name', name)
-              .is('auth_id', null);
-          }
-        }
-      })();
-
-      // ── 인증 상태 변경 감지 ──
-      sb.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN') {
-          const name = session.user.user_metadata?.name;
-          if (name) {
-            await sb.from('members')
-              .update({ auth_id: session.user.id })
-              .eq('name', name)
-              .is('auth_id', null);
-          }
-          applySession(session);
-        }
-      });
     </script>
   </body>
 </html>
