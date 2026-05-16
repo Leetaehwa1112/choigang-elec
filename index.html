@@ -10,6 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Pretendard:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme {
@@ -360,7 +361,14 @@
     </section>
 
     <script>
-      // ── RSVP 목업 상태 (Supabase 연동 전 로컬 상태) ──
+      // ── Supabase 클라이언트 ──
+      const { createClient } = supabase;
+      const sb = createClient(
+        'https://mspwdasiewqtwfyngdhy.supabase.co',
+        'sb_publishable_VhU_zhguD5UkIaMqGdLQCQ_cBjQI3yG'
+      );
+
+      // ── RSVP 상태 ──
       const MEMBERS = ['이태화','나준민','한동명','이은준','김상현','김하람'];
       const rsvpState = {}; // { 이름: 'attend'|'decline'|null }
       MEMBERS.forEach(n => rsvpState[n] = null);
