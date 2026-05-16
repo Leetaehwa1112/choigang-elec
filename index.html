@@ -263,6 +263,11 @@
           <!-- 좌우 터치 영역 -->
           <button onclick="heroGo(heroCur-1)" class="absolute left-0 top-0 h-full w-1/4 z-10 opacity-0"></button>
           <button onclick="heroGo(heroCur+1)" class="absolute right-0 top-0 h-full w-1/4 z-10 opacity-0"></button>
+          <!-- 소리 힌트: 영상 슬라이드 진입 시 표시, 첫 탭/클릭 때 사라짐 -->
+          <div id="hero-sound-hint" style="position:absolute;bottom:42px;right:12px;opacity:0;transition:opacity 0.4s;pointer-events:none;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;z-index:20">
+            <span style="font-size:14px">🔇</span>
+            <span style="font-size:11px;color:#fff;font-weight:600;letter-spacing:-0.3px">탭하면 소리 켜져요</span>
+          </div>
         </div>
         <script>
           const HERO_SLIDES = [
@@ -278,16 +283,36 @@
             const dotsEl = document.getElementById('hero-dots');
             window.heroCur = 0;
             let heroTimer;
+            let heroUnmuted = false;
 
-            function heroAutoUnmute(iframe) {
-              iframe.addEventListener('load', function() {
-                setTimeout(() => {
-                  try {
-                    iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'unMute',args:[]}), '*');
-                    iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'setVolume',args:[100]}), '*');
-                  } catch(e) {}
-                }, 1500);
-              });
+            // 현재 슬라이드 iframe에 소리 켜기 postMessage
+            function heroSendUnmute() {
+              const activeSlide = document.getElementById('hslide-' + heroCur);
+              if (!activeSlide) return;
+              const iframe = activeSlide.querySelector('iframe');
+              if (!iframe) return;
+              try {
+                iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'unMute',args:''}), 'https://www.youtube.com');
+                iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'setVolume',args:[100]}), 'https://www.youtube.com');
+              } catch(e) {}
+            }
+
+            // 첫 상호작용 시 소리 켜기
+            function heroTryUnmute() {
+              if (heroUnmuted) return;
+              heroUnmuted = true;
+              heroSendUnmute();
+              const hint = document.getElementById('hero-sound-hint');
+              if (hint) { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 400); }
+            }
+
+            // 페이지 어디든 첫 터치/클릭 때 소리 켜기
+            document.addEventListener('click', heroTryUnmute, { once: true });
+            document.addEventListener('touchend', heroTryUnmute, { once: true });
+
+            function ytSrc(id, autoplay) {
+              const mute = heroUnmuted ? 0 : 1;
+              return `https://www.youtube.com/embed/${id}?autoplay=${autoplay}&mute=${mute}&loop=1&playlist=${id}&controls=0&playsinline=1&enablejsapi=1`;
             }
 
             function buildSlide(s, i) {
@@ -295,12 +320,11 @@
               wrap.style.cssText = 'position:absolute;inset:0;opacity:0;transition:opacity 0.7s;background:#000;display:flex;align-items:center;justify-content:center;';
               wrap.id = 'hslide-' + i;
               if (s.type === 'youtube') {
-                const embedSrc = `https://www.youtube.com/embed/${s.ytId}?autoplay=0&mute=1&loop=1&playlist=${s.ytId}&controls=0&playsinline=1&enablejsapi=1`;
                 const badge = s.isShort ? '▼ Shorts' : '▶ 영상';
                 const iframeStyle = s.isShort
                   ? 'height:100%;width:auto;aspect-ratio:9/16;pointer-events:none;display:block;'
                   : 'width:100%;height:100%;pointer-events:none;display:block;';
-                wrap.innerHTML = `<iframe src="${embedSrc}" style="${iframeStyle}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                wrap.innerHTML = `<iframe src="${ytSrc(s.ytId, 0)}" style="${iframeStyle}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
                   <span style="position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;background:rgba(0,0,0,0.6);color:#fff;padding:2px 7px;border-radius:4px">${badge}</span>`;
               } else {
                 wrap.innerHTML = `<img src="${s.src}" style="width:100%;height:100%;object-fit:cover;">`;
@@ -324,14 +348,13 @@
               });
 
               container.children[0].style.opacity = '1';
-              // 첫 슬라이드가 유튜브면 바로 자동재생 후 소리 켜기
               if (HERO_SLIDES[0] && HERO_SLIDES[0].type === 'youtube') {
                 const id = HERO_SLIDES[0].ytId;
                 const iframe = container.children[0].querySelector('iframe');
-                if (iframe) {
-                  iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&enablejsapi=1`;
-                  heroAutoUnmute(iframe);
-                }
+                if (iframe) iframe.src = ytSrc(id, 1);
+                // 소리 힌트 표시
+                const hint = document.getElementById('hero-sound-hint');
+                if (hint && !heroUnmuted) hint.style.opacity = '1';
               }
               heroSetHeight();
               heroResetTimer();
@@ -342,7 +365,6 @@
               const isShorts = s.type === 'youtube' && s.isShort;
               const slider = document.getElementById('hero-slider');
               if (isShorts) {
-                // PC: 80vh 최대 620px, 모바일: 480px
                 slider.style.height = window.innerWidth >= 640 ? Math.min(window.innerHeight * 0.8, 620) + 'px' : '480px';
               } else {
                 slider.style.height = '320px';
@@ -360,11 +382,7 @@
               dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white scale-125';
               if (HERO_SLIDES[heroCur].type === 'youtube') {
                 const iframe = slides[heroCur].querySelector('iframe');
-                if (iframe) {
-                  const id = HERO_SLIDES[heroCur].ytId;
-                  iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&enablejsapi=1`;
-                  heroAutoUnmute(iframe);
-                }
+                if (iframe) iframe.src = ytSrc(HERO_SLIDES[heroCur].ytId, 1);
               }
               heroSetHeight();
               heroResetTimer();
