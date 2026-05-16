@@ -2,8 +2,34 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+    />
     <title>최강전기 · 동창회</title>
+
+    <!-- ===== PWA / 모바일 앱 메타 ===== -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#2b3140" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1d24" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="최강전기" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -145,6 +171,121 @@
         z-index: 30;
         box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       }
+
+      /* ===== 모바일/PWA 최적화 ===== */
+      :root {
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+        --tabbar-height: 60px;
+      }
+
+      html, body {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        overscroll-behavior-y: contain;
+      }
+
+      body {
+        padding-left: var(--safe-left);
+        padding-right: var(--safe-right);
+      }
+
+      /* iOS standalone 모드에서 상단 safe-area 채우기 */
+      @media (display-mode: standalone) {
+        body { padding-top: var(--safe-top); }
+        nav.sticky { top: var(--safe-top); }
+      }
+
+      /* 터치 영역 최소 44x44 (Apple HIG) */
+      button, a, [role="button"] { touch-action: manipulation; }
+
+      /* iOS input zoom 방지 (16px 이상) */
+      input, select, textarea {
+        font-size: 16px;
+      }
+
+      /* 모바일 스크롤 부드럽게 */
+      * { -webkit-overflow-scrolling: touch; }
+
+      /* 가로 스크롤 차단 */
+      html, body { overflow-x: hidden; }
+
+      /* 텍스트 선택 비활성 (UI 요소만) */
+      nav, .tabbar, button { -webkit-user-select: none; user-select: none; }
+
+      /* ===== 하단 탭바 (모바일 전용) ===== */
+      .tabbar {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 45;
+        display: none;
+        background: rgba(244, 239, 226, 0.96);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(43, 49, 64, 0.12);
+        padding-bottom: var(--safe-bottom);
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+      }
+      @media (max-width: 768px) {
+        .tabbar { display: flex; }
+        body { padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom)); }
+        .fab { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 12px) !important; }
+      }
+      .tabbar-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 100%;
+        height: var(--tabbar-height);
+      }
+      .tabbar a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: #7a8090;
+        text-decoration: none;
+        font-size: 10px;
+        font-weight: 700;
+        transition: color 0.15s, transform 0.1s;
+        padding: 6px 4px;
+        min-height: 44px;
+      }
+      .tabbar a:active { transform: scale(0.92); }
+      .tabbar a.active { color: #d12c2c; }
+      .tabbar a.active svg { stroke: #d12c2c; }
+      .tabbar svg { width: 22px; height: 22px; stroke: #4b5160; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+      /* PWA 설치 배너 */
+      .install-banner {
+        position: fixed;
+        left: 12px; right: 12px;
+        bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 12px);
+        z-index: 48;
+        background: linear-gradient(135deg, #2b3140 0%, #1a1d24 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 12px 14px;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+        animation: slideUp 0.3s ease;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .install-banner.show { display: flex; }
+      @media (min-width: 769px) {
+        .install-banner { bottom: 20px; left: auto; right: 20px; max-width: 360px; }
+      }
+
+      /* iOS Pull-to-refresh 차단 (선택적) */
+      body { overscroll-behavior-y: none; }
     </style>
   </head>
   <body>
@@ -3018,6 +3159,144 @@
           const n = counts[w.dataset.target];
           if (n) w.querySelector('.cmt-count').textContent = n;
         });
+      })();
+    </script>
+
+    <!-- ===== 모바일 하단 탭바 ===== -->
+    <nav class="tabbar" aria-label="하단 네비게이션">
+      <div class="tabbar-grid">
+        <a href="#home" data-tab="home">
+          <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+          <span>홈</span>
+        </a>
+        <a href="#meet" data-tab="meet">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2 2-3.5 4-3.5s2 1 2 1"/></svg>
+          <span>모임</span>
+        </a>
+        <a href="#calendar" data-tab="calendar">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+          <span>캘린더</span>
+        </a>
+        <a href="#status" data-tab="status">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+          <span>멤버</span>
+        </a>
+        <a href="#memory" data-tab="memory">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6"/></svg>
+          <span>추억</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- ===== PWA 설치 배너 ===== -->
+    <div id="installBanner" class="install-banner" role="dialog" aria-label="앱 설치">
+      <div style="font-size:24px">⚡</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">홈 화면에 추가</div>
+        <div style="font-size:11px;opacity:0.75">앱처럼 빠르게 실행해요</div>
+      </div>
+      <button id="installAccept" style="background:#f5b400;color:#1a1d24;font-weight:700;font-size:12px;padding:8px 14px;border-radius:10px;border:none">설치</button>
+      <button id="installDismiss" aria-label="닫기" style="background:transparent;color:#fff;opacity:0.6;font-size:18px;padding:4px 8px;border:none">×</button>
+    </div>
+
+    <!-- ===== PWA 등록 + 탭바 활성화 + 설치 프롬프트 ===== -->
+    <script>
+      // Service Worker 등록
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch((err) => {
+            console.warn('[SW] 등록 실패:', err);
+          });
+        });
+      }
+
+      // 하단 탭바 활성 상태 동기화
+      (function () {
+        const tabs = document.querySelectorAll('.tabbar a[data-tab]');
+        const sections = ['home', 'meet', 'calendar', 'status', 'memory']
+          .map((id) => document.getElementById(id))
+          .filter(Boolean);
+
+        function setActive(id) {
+          tabs.forEach((a) => {
+            a.classList.toggle('active', a.dataset.tab === id);
+          });
+        }
+
+        // 해시 변경 시 즉시 동기화
+        function syncFromHash() {
+          const id = (location.hash || '#home').slice(1);
+          if (id) setActive(id);
+        }
+        window.addEventListener('hashchange', syncFromHash);
+        syncFromHash();
+
+        // 스크롤 위치 기반 동기화 (IntersectionObserver)
+        if ('IntersectionObserver' in window && sections.length) {
+          const io = new IntersectionObserver(
+            (entries) => {
+              const visible = entries
+                .filter((e) => e.isIntersecting)
+                .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+              if (visible) setActive(visible.target.id);
+            },
+            { rootMargin: '-40% 0px -50% 0px', threshold: [0, 0.25, 0.5, 1] }
+          );
+          sections.forEach((s) => io.observe(s));
+        }
+      })();
+
+      // PWA 설치 프롬프트 (Chrome/Edge/Android)
+      (function () {
+        let deferredPrompt = null;
+        const banner = document.getElementById('installBanner');
+        const accept = document.getElementById('installAccept');
+        const dismiss = document.getElementById('installDismiss');
+        const STORAGE_KEY = 'pwa-install-dismissed';
+
+        function showBanner() {
+          if (localStorage.getItem(STORAGE_KEY)) return;
+          if (window.matchMedia('(display-mode: standalone)').matches) return;
+          banner.classList.add('show');
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          showBanner();
+        });
+
+        accept?.addEventListener('click', async () => {
+          banner.classList.remove('show');
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') localStorage.setItem(STORAGE_KEY, '1');
+          deferredPrompt = null;
+        });
+
+        dismiss?.addEventListener('click', () => {
+          banner.classList.remove('show');
+          localStorage.setItem(STORAGE_KEY, '1');
+        });
+
+        window.addEventListener('appinstalled', () => {
+          banner.classList.remove('show');
+          localStorage.setItem(STORAGE_KEY, '1');
+        });
+
+        // iOS Safari (beforeinstallprompt 미지원) — 안내만 표시
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone =
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true;
+        if (isIOS && !isStandalone && !localStorage.getItem(STORAGE_KEY)) {
+          accept.textContent = '방법';
+          accept.onclick = () => {
+            alert('Safari 하단 공유 버튼 → "홈 화면에 추가"를 눌러 설치하세요.');
+          };
+          setTimeout(showBanner, 2000);
+        }
       })();
     </script>
   </body>
