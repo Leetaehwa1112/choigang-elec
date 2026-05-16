@@ -460,3 +460,31 @@ comment on table instagram_tokens is '멤버별 인스타그램 OAuth 토큰 (Ed
 -- create policy "own ig token"
 --   on instagram_tokens for all
 --   using (auth.uid() = (select auth_id from members where id = member_id));
+
+-- ============================================================
+-- 15. 일정잡기 (schedule_dates + schedule_votes)
+-- ============================================================
+create table if not exists schedule_dates (
+  id         bigserial primary key,
+  date_str   text not null unique,   -- "2026-07-05"
+  date_label text not null,          -- "7/5 (일)"
+  created_at timestamptz default now()
+);
+alter table schedule_dates enable row level security;
+create policy "public read"   on schedule_dates for select using (true);
+create policy "public insert" on schedule_dates for insert with check (true);
+create policy "public delete" on schedule_dates for delete using (true);
+
+create table if not exists schedule_votes (
+  id          bigserial primary key,
+  date_str    text not null,
+  member_name text not null,
+  status      text not null check (status in ('available','unavailable')),
+  updated_at  timestamptz default now(),
+  constraint schedule_votes_unique unique (date_str, member_name)
+);
+alter table schedule_votes enable row level security;
+create policy "public read"   on schedule_votes for select using (true);
+create policy "public insert" on schedule_votes for insert with check (true);
+create policy "public update" on schedule_votes for update using (true);
+create policy "public delete" on schedule_votes for delete using (true);

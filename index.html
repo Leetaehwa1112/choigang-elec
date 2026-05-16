@@ -1427,37 +1427,48 @@
           </div>
         </div>
         <div>
-          <div class="font-mono text-[10px] text-ink-3 mb-2">비상연락망</div>
-          <ul class="space-y-1">
-            <li class="flex items-center justify-between gap-3 text-xs">
-              <span class="text-white/70">이태화</span>
-              <a href="tel:01041960532" class="font-mono text-line-y">010-4196-0532</a>
-            </li>
-            <li class="flex items-center justify-between gap-3 text-xs">
-              <span class="text-white/70">나준민</span>
-              <a href="tel:01080741639" class="font-mono text-line-y">010-8074-1639</a>
-            </li>
-            <li class="flex items-center justify-between gap-3 text-xs">
-              <span class="text-white/70">한동명</span>
-              <a href="tel:01030113744" class="font-mono text-line-y">010-3011-3744</a>
-            </li>
-            <li class="flex items-center justify-between gap-3 text-xs">
-              <span class="text-white/70">이은준</span>
-              <a href="tel:01026231118" class="font-mono text-line-y">010-2623-1118</a>
-            </li>
-            <li class="flex items-center justify-between gap-3 text-xs">
-              <span class="text-white/70">김상현</span>
-              <a href="tel:01028422400" class="font-mono text-line-y">010-2842-2400</a>
-            </li>
-          </ul>
-          <div class="text-xs text-ink-3 mt-3 font-mono">© 2026 · CHOIGANG ELEC</div>
+          <div class="text-xs text-ink-3 font-mono">© 2026 · CHOIGANG ELEC</div>
         </div>
       </div>
     </footer>
 
 
-    <!-- ===== 플로팅 도움 요청 ===== -->
-    <button class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
+    <!-- ===== 일정잡기 모달 ===== -->
+    <div id="schedule-modal" class="fixed inset-0 z-[60] bg-ink/60 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)closeSchedule()">
+      <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl">
+        <!-- 헤더 -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-ink/10 flex-shrink-0">
+          <div>
+            <div class="label-tape inline-block px-2 py-0.5 text-[11px] mb-1">일정잡기</div>
+            <h2 class="font-display text-xl">언제 모일까요?</h2>
+          </div>
+          <button onclick="closeSchedule()" class="w-8 h-8 rounded-full bg-ink/8 flex items-center justify-center text-ink-3 hover:bg-ink/15 transition">✕</button>
+        </div>
+
+        <!-- 내 이름 선택 -->
+        <div class="px-5 py-3 border-b border-ink/10 flex-shrink-0">
+          <div class="font-mono text-[10px] text-ink-3 mb-2">내 이름을 선택하면 편집할 수 있어요</div>
+          <div class="flex gap-2 flex-wrap" id="schedule-member-btns"></div>
+        </div>
+
+        <!-- 그리드 -->
+        <div class="flex-1 overflow-y-auto px-5 py-4" id="schedule-grid-wrap">
+          <div class="text-center text-ink-3 text-sm py-8">불러오는 중...</div>
+        </div>
+
+        <!-- 날짜 추가 -->
+        <div class="px-5 py-3 border-t border-ink/10 flex-shrink-0 bg-ink/3">
+          <div class="font-mono text-[10px] text-ink-3 mb-2">후보 날짜 추가</div>
+          <div class="flex gap-2">
+            <input type="date" id="schedule-new-date" class="flex-1 border border-ink/20 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-line-l">
+            <button onclick="addScheduleDate()" class="wago-btn font-bold px-4 py-2 rounded-lg text-sm">추가</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 플로팅 일정잡기 버튼 ===== -->
+    <button onclick="openSchedule()" class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
       <span class="text-xl">⚡</span>
       <span class="hidden sm:inline">일정잡기</span>
     </button>
@@ -1480,6 +1491,121 @@
         '김건우': '전기과 멤버',
       };
 
+    </script>
+
+    <script>
+      // ── 일정잡기 ──
+      let schedDates = [];   // [{date_str, date_label}]
+      let schedVotes = {};   // { "2026-07-05": { "이태화": "available"|"unavailable" } }
+      let schedMe = null;
+
+      const DAYS = ['일','월','화','수','목','금','토'];
+
+      function openSchedule() {
+        document.getElementById('schedule-modal').classList.replace('hidden','flex');
+        loadScheduleData();
+      }
+      function closeSchedule() {
+        document.getElementById('schedule-modal').classList.replace('flex','hidden');
+      }
+
+      async function loadScheduleData() {
+        document.getElementById('schedule-grid-wrap').innerHTML = '<div class="text-center text-ink-3 text-sm py-8">불러오는 중...</div>';
+        const [{ data: dates }, { data: votes }] = await Promise.all([
+          sb.from('schedule_dates').select('*').order('date_str'),
+          sb.from('schedule_votes').select('*'),
+        ]);
+        schedDates = dates || [];
+        schedVotes = {};
+        (votes || []).forEach(v => {
+          if (!schedVotes[v.date_str]) schedVotes[v.date_str] = {};
+          schedVotes[v.date_str][v.member_name] = v.status;
+        });
+        renderScheduleMemberBtns();
+        renderScheduleGrid();
+      }
+
+      function renderScheduleMemberBtns() {
+        const el = document.getElementById('schedule-member-btns');
+        el.innerHTML = MEMBERS.map(m => {
+          const char = m[1];
+          const color = MEMBER_COLORS[m] || 'bg-ink text-white';
+          const sel = schedMe === m ? 'ring-2 ring-offset-1 ring-line-e scale-110' : 'opacity-60';
+          return `<button onclick="selectSchedMe('${m}')" class="w-10 h-10 rounded-full ${color} ${sel} font-display text-base flex items-center justify-center transition hover:scale-105 hover:opacity-100">${char}</button>`;
+        }).join('');
+      }
+
+      function selectSchedMe(name) {
+        schedMe = schedMe === name ? null : name;
+        renderScheduleMemberBtns();
+        renderScheduleGrid();
+      }
+
+      function renderScheduleGrid() {
+        const wrap = document.getElementById('schedule-grid-wrap');
+        if (!schedDates.length) {
+          wrap.innerHTML = '<div class="text-center text-ink-3 py-10 text-sm">아직 후보 날짜가 없어요<br><span class="text-xs opacity-60">아래에서 날짜를 추가해주세요</span></div>';
+          return;
+        }
+
+        // 헤더
+        let html = '<div class="overflow-x-auto -mx-1"><table class="w-full text-center text-xs border-collapse"><thead><tr>';
+        html += '<th class="text-left pb-2 pr-2 font-mono text-[10px] text-ink-3 whitespace-nowrap">날짜</th>';
+        MEMBERS.forEach(m => {
+          const char = m[1];
+          const color = MEMBER_COLORS[m] || 'bg-ink text-white';
+          const sel = schedMe === m ? 'ring-2 ring-offset-1 ring-line-e' : '';
+          html += `<th class="pb-2 px-0.5"><div class="w-7 h-7 rounded-full ${color} ${sel} font-display text-sm flex items-center justify-center mx-auto">${char}</div></th>`;
+        });
+        html += '<th class="pb-2 pl-1 font-mono text-[10px] text-ink-3">가능</th></tr></thead><tbody>';
+
+        schedDates.forEach(d => {
+          const votes = schedVotes[d.date_str] || {};
+          const availCount = Object.values(votes).filter(s => s === 'available').length;
+          const countColor = availCount >= 5 ? 'text-line-e font-extrabold' : availCount >= 3 ? 'text-line-y font-bold' : 'text-ink-3';
+          html += `<tr class="border-t border-ink/8"><td class="text-left py-2.5 pr-2 font-mono text-[11px] font-bold whitespace-nowrap">${d.date_label}</td>`;
+          MEMBERS.forEach(m => {
+            const status = votes[m] || 'none';
+            const isMe = schedMe === m;
+            const cell = status === 'available' ? '✓' : status === 'unavailable' ? '✗' : '·';
+            const bg = status === 'available' ? 'bg-line-e/15 text-line-e' : status === 'unavailable' ? 'bg-ink/10 text-ink/25' : 'bg-ink/5 text-ink/20';
+            const cursor = isMe ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-default';
+            html += `<td class="py-1 px-0.5"><button onclick="schedToggle('${d.date_str}','${m}')" class="w-7 h-7 rounded-full ${bg} ${cursor} transition-transform font-bold flex items-center justify-center mx-auto text-sm">${cell}</button></td>`;
+          });
+          html += `<td class="py-2.5 pl-1 font-bold text-sm ${countColor}">${availCount}<span class="text-[9px] font-normal opacity-60">/7</span></td></tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        wrap.innerHTML = html;
+      }
+
+      async function schedToggle(dateStr, memberName) {
+        if (schedMe !== memberName) return;
+        const cur = (schedVotes[dateStr] || {})[memberName] || 'none';
+        const next = cur === 'none' ? 'available' : cur === 'available' ? 'unavailable' : 'none';
+        if (!schedVotes[dateStr]) schedVotes[dateStr] = {};
+        if (next === 'none') {
+          delete schedVotes[dateStr][memberName];
+          await sb.from('schedule_votes').delete().eq('date_str', dateStr).eq('member_name', memberName);
+        } else {
+          schedVotes[dateStr][memberName] = next;
+          await sb.from('schedule_votes').upsert({ date_str: dateStr, member_name: memberName, status: next }, { onConflict: 'date_str,member_name' });
+        }
+        renderScheduleGrid();
+      }
+
+      async function addScheduleDate() {
+        const input = document.getElementById('schedule-new-date');
+        const dateStr = input.value;
+        if (!dateStr) return;
+        const d = new Date(dateStr + 'T12:00:00+09:00');
+        const label = `${d.getMonth()+1}/${d.getDate()} (${DAYS[d.getDay()]})`;
+        const { error } = await sb.from('schedule_dates').insert({ date_str: dateStr, date_label: label });
+        if (!error) {
+          input.value = '';
+          await loadScheduleData();
+        }
+      }
     </script>
 
     <script>
