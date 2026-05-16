@@ -1887,8 +1887,11 @@
         </div>
         <!-- 회원가입 폼 -->
         <div id="auth-form-signup" class="hidden p-5 space-y-3">
-          <input id="auth-signup-name" type="text" placeholder="이름 (실명)" autocomplete="name"
-            class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"/>
+          <select id="auth-signup-name" class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60 bg-white text-ink">
+            <option value="">본인 이름 선택 (실명)</option>
+            <option>이태화</option><option>나준민</option><option>한동명</option>
+            <option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option>
+          </select>
           <input id="auth-signup-username" type="text" placeholder="아이디" autocomplete="username"
             class="w-full border border-ink/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-ink/60"/>
           <input id="auth-signup-password" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"
@@ -2505,6 +2508,7 @@
         const err = document.getElementById('auth-signup-err');
         err.classList.add('hidden');
         if (!name || !username || !password) { err.textContent = '모든 항목을 입력해주세요.'; err.classList.remove('hidden'); return; }
+        if (!MEMBER_LIST.find(m => m.name === name)) { err.textContent = '목록에서 본인 이름을 선택해주세요.'; err.classList.remove('hidden'); return; }
         if (password.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 해요.'; err.classList.remove('hidden'); return; }
         const { error } = await sb.auth.signUp({
           email: username + '@choigang-elec.app',
