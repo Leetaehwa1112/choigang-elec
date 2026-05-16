@@ -743,11 +743,10 @@
                 </div>
                 <div class="p-5 sm:p-6">
                   <!-- 장소 -->
-                  ${s.place||s.addr?`<div class="flex items-start gap-3 pb-4 border-b border-dashed border-ink/15">
+                  ${s.place||mapLinks?`<div class="flex items-start gap-3 pb-4 border-b border-dashed border-ink/15">
                     <div class="text-xl flex-shrink-0 mt-0.5">📍</div>
                     <div>
                       ${s.place?`<div class="font-bold text-sm">${s.place}</div>`:''}
-                      ${s.addr?`<div class="text-xs text-ink-3 mt-0.5">${s.addr}</div>`:''}
                       ${mapLinks?`<div class="flex gap-2 mt-2 flex-wrap">${mapLinks}</div>`:''}
                     </div>
                   </div>`:''}
@@ -1750,14 +1749,7 @@
               <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center">📍</span>
                 <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">장소</span>
-                <input id="sched-place" type="text" placeholder="예) 르한스" oninput="saveSchedDetail()"
-                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
-              </label>
-              <!-- 주소 -->
-              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
-                <span class="text-lg w-6 text-center">🏠</span>
-                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">주소</span>
-                <input id="sched-addr" type="text" placeholder="예) 서울 성북구 정릉로10길 127" oninput="saveSchedDetail()"
+                <input id="sched-place" type="text" placeholder="예) 르한스, 서울 성북구 정릉로10길 127" oninput="saveSchedDetail()"
                   class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
               </label>
               <!-- 지도 링크 (붙여넣기) -->
@@ -1860,8 +1852,7 @@
           const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
           set('sched-title',        session.title);
           set('sched-time',         session.time_str || '18:00');
-          set('sched-place',        session.place);
-          set('sched-addr',         session.addr);
+          set('sched-place',        [session.place, session.addr].filter(Boolean).join(' '));
           set('sched-map',          session.map_url);
           set('sched-memo',         session.memo);
           set('sched-action-label', session.action_label);
@@ -1993,7 +1984,7 @@
         const g = id => document.getElementById(id)?.value || '';
         localStorage.setItem('schedDetail', JSON.stringify({
           title: g('sched-title'), time: g('sched-time'), place: g('sched-place'),
-          addr: g('sched-addr'), map: g('sched-map'), memo: g('sched-memo'),
+          map: g('sched-map'), memo: g('sched-memo'),
           actionLabel: g('sched-action-label'), actionUrl: g('sched-action-url'),
         }));
       }
@@ -2004,7 +1995,6 @@
           set('sched-title', d.title || '');
           set('sched-time',  d.time  || '18:00');
           set('sched-place', d.place || '');
-          set('sched-addr',  d.addr  || '');
           set('sched-map',   d.map   || '');
           set('sched-memo',  d.memo  || '');
           set('sched-action-label', d.actionLabel || '');
@@ -2039,7 +2029,6 @@
         const title = document.getElementById('sched-title')?.value.trim() || '';
         const time  = document.getElementById('sched-time')?.value  || '';
         const place = document.getElementById('sched-place')?.value.trim() || '';
-        const addr  = document.getElementById('sched-addr')?.value.trim()  || '';
         const mapUrl = document.getElementById('sched-map')?.value.trim()  || '';
         const memo  = document.getElementById('sched-memo')?.value.trim()  || '';
         const typeIcon = SCHED_TYPES.find(t => t.key === schedType)?.icon || '📌';
@@ -2058,7 +2047,7 @@
           type_icon: typeIcon,
           time_str: time,
           place,
-          addr,
+          addr: null,
           map_url: mapUrl || null,
           map_provider: mapProvider,
           memo: memo || null,
