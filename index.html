@@ -813,9 +813,7 @@
         localStorage.setItem(STORAGE_KEY, now);
 
         if (!lastVisit) {
-          // 첫 방문
-          labelEl.textContent = '처음 오셨네요 👋';
-          textEl.textContent  = '최강전기에 온 걸 환영해요!';
+          textEl.textContent = '새 소식이 없어요';
           return;
         }
 
