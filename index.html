@@ -2575,7 +2575,7 @@
         if (!name || !username || !password) { err.textContent = '모든 항목을 입력해주세요.'; err.classList.remove('hidden'); return; }
         if (!MEMBER_LIST.find(m => m.name === name)) { err.textContent = '목록에서 본인 이름을 선택해주세요.'; err.classList.remove('hidden'); return; }
         if (password.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 해요.'; err.classList.remove('hidden'); return; }
-        const { error } = await sb.auth.signUp({
+        const { data: signUpData, error } = await sb.auth.signUp({
           email: username + '@choigang-elec.app',
           password,
           options: { data: { name, username } }
@@ -2590,6 +2590,9 @@
             err.textContent = msg || '가입 중 오류가 발생했어요.';
           }
           err.classList.remove('hidden'); return;
+        }
+        if (signUpData?.user?.id) {
+          await sb.from('profiles').upsert({ id: signUpData.user.id, name }, { onConflict: 'id' });
         }
         closeAuthModal();
         showToast('가입 완료! 환영해요 🎉');
@@ -2628,7 +2631,6 @@
         } else {
           loginBtn.classList.remove('hidden');
           userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
-          loginBtn.classList.add('hidden'); // 초기엔 숨김, 세션 확인 후 표시
         }
         updateCmtAuthUI();
       });
@@ -2840,12 +2842,6 @@
         }
         inputEl.value = '';
         await loadCmt(widget);
-        // 카운트 sync
-        const countEl = widget.querySelector('.cmt-count');
-        if (countEl) {
-          const cur = parseInt(countEl.textContent) || 0;
-          countEl.textContent = cur + 1;
-        }
       }
 
       // 페이지 로드 시 모든 위젯 댓글 수 표시
