@@ -210,8 +210,9 @@
       /* 모바일 스크롤 부드럽게 */
       * { -webkit-overflow-scrolling: touch; }
 
-      /* 가로 스크롤 차단 */
-      html, body { overflow-x: hidden; }
+      /* 가로 스크롤 차단 — `clip` 사용 (hidden은 overflow-y를 auto로 승격시켜
+         이중 스크롤 컨테이너가 되고 데스크톱 마우스 휠이 안 먹음) */
+      body { overflow-x: clip; }
 
       /* 텍스트 선택 비활성 (UI 요소만) */
       nav, .tabbar, button { -webkit-user-select: none; user-select: none; }
@@ -3073,6 +3074,7 @@
           showAuthGate();
         }
         updateCmtAuthUI();
+        updateAdminUI();
       });
 
       // 초기 세션 확인
@@ -3093,6 +3095,7 @@
         }
         highlightRegisteredMembers();
         updateCmtAuthUI();
+        updateAdminUI();
       });
 
       /* ── 게이트 핸들러 ── */
@@ -3185,6 +3188,123 @@
           return;
         }
         alert('Chrome/Edge 주소창 우측 설치 아이콘(⊕) 또는 메뉴 → "앱 설치"를 눌러주세요.');
+      }
+
+      /* ── 어드민(이태화 전용) 푸시 패널 ── */
+      const ADMIN_NAMES = new Set(['이태화']);
+      function currentMemberName() {
+        const s = _authSession;
+        return s?.user?.user_metadata?.name || s?.user?.user_metadata?.username || '';
+      }
+      function isAdmin() { return ADMIN_NAMES.has(currentMemberName()); }
+
+      function updateAdminUI() {
+        const btn = document.getElementById('adminPushBtn');
+        if (!btn) return;
+        btn.style.display = isAdmin() ? 'inline-flex' : 'none';
+        if (isAdmin()) btn.onclick = openAdminPush;
+      }
+
+      async function openAdminPush() {
+        if (!isAdmin()) return;
+        document.getElementById('adminPushModal').style.display = 'flex';
+        // 기본 날짜=오늘
+        const t = new Date();
+        const kst = new Date(t.getTime() + 9 * 60 * 60 * 1000);
+        document.getElementById('apDate').value = kst.toISOString().slice(0, 10);
+        await reloadAdminPushList();
+      }
+      function closeAdminPush() {
+        document.getElementById('adminPushModal').style.display = 'none';
+      }
+
+      async function reloadAdminPushList() {
+        const wrap = document.getElementById('apList');
+        wrap.innerHTML = '<div style="font-size:11px;color:#4b5160">불러오는 중...</div>';
+        const { data, error } = await sb.from('scheduled_pushes')
+          .select('id, title, body, send_at, sent, sent_count, sent_at')
+          .order('send_at', { ascending: false })
+          .limit(20);
+        if (error) { wrap.innerHTML = '<div style="font-size:11px;color:#d12c2c">불러오기 실패</div>'; return; }
+        if (!data?.length) { wrap.innerHTML = '<div style="font-size:11px;color:#4b5160">예약된 푸시가 없어요.</div>'; return; }
+        wrap.innerHTML = data.map(p => {
+          const sendKst = new Date(p.send_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+          const status = p.sent
+            ? `<span style="color:#16a34a">발송완료 · ${p.sent_count}명</span>`
+            : `<span style="color:#d4a017">예약</span>`;
+          return `<div style="background:#fff;border:1px solid rgba(26,29,36,.1);border-radius:11px;padding:10px">
+            <div style="display:flex;justify-content:space-between;gap:8px">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.title)}</div>
+                <div style="font-size:11px;color:#4b5160;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.body)}</div>
+                <div style="font-size:10px;color:#4b5160;margin-top:4px">${sendKst} · ${status}</div>
+              </div>
+              <button onclick="adminDeletePush(${p.id})" aria-label="삭제" style="background:transparent;border:none;color:#d12c2c;font-size:18px;cursor:pointer;align-self:flex-start">×</button>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+      async function adminSchedulePush() {
+        if (!isAdmin()) return;
+        const msg = document.getElementById('apMsg');
+        msg.textContent = '';
+        const title = document.getElementById('apTitle').value.trim();
+        const body  = document.getElementById('apBody').value.trim();
+        const date  = document.getElementById('apDate').value;
+        const time  = document.getElementById('apTime').value || '09:00';
+        const url   = document.getElementById('apUrl').value.trim() || null;
+        if (!title || !body || !date) { msg.textContent = '제목/본문/날짜를 입력해주세요.'; return; }
+        // KST 입력값을 UTC로 변환
+        const sendAtKst = new Date(`${date}T${time}:00+09:00`);
+        if (isNaN(sendAtKst.getTime())) { msg.textContent = '날짜/시간 형식 오류'; return; }
+        const { error } = await sb.from('scheduled_pushes').insert({
+          title, body, url,
+          send_at: sendAtKst.toISOString(),
+          created_by: currentMemberName(),
+        });
+        if (error) { msg.textContent = '저장 실패: ' + error.message; return; }
+        document.getElementById('apTitle').value = '';
+        document.getElementById('apBody').value = '';
+        document.getElementById('apUrl').value = '';
+        msg.style.color = '#16a34a';
+        msg.textContent = '예약 등록 완료';
+        setTimeout(() => { msg.textContent = ''; msg.style.color = '#d12c2c'; }, 1800);
+        await reloadAdminPushList();
+      }
+
+      async function adminSendNow() {
+        if (!isAdmin()) return;
+        const msg = document.getElementById('apMsg');
+        msg.textContent = '';
+        const title = document.getElementById('apTitle').value.trim();
+        const body  = document.getElementById('apBody').value.trim();
+        const url   = document.getElementById('apUrl').value.trim() || null;
+        if (!title || !body) { msg.textContent = '제목/본문을 입력해주세요.'; return; }
+        if (!confirm('지금 즉시 전체에게 발송할까요?')) return;
+        const { data: row, error } = await sb.from('scheduled_pushes').insert({
+          title, body, url,
+          send_at: new Date().toISOString(),
+          created_by: currentMemberName(),
+        }).select('id').single();
+        if (error || !row) { msg.textContent = '저장 실패'; return; }
+        // 즉시 호출 — 사용자의 anon 세션 토큰으로는 Edge Function 호출 불가, cron이 5분 내 처리
+        msg.style.color = '#16a34a';
+        msg.textContent = '등록 완료 · 곧 발송됩니다 (최대 5분)';
+        setTimeout(() => { msg.textContent = ''; msg.style.color = '#d12c2c'; }, 3000);
+        document.getElementById('apTitle').value = '';
+        document.getElementById('apBody').value = '';
+        document.getElementById('apUrl').value = '';
+        await reloadAdminPushList();
+      }
+
+      async function adminDeletePush(id) {
+        if (!isAdmin()) return;
+        if (!confirm('이 예약을 삭제할까요?')) return;
+        const { error } = await sb.from('scheduled_pushes').delete().eq('id', id);
+        if (error) { alert('삭제 실패: ' + error.message); return; }
+        await reloadAdminPushList();
       }
 
       // 가입완료 멤버 카드 강조
@@ -3489,6 +3609,46 @@
         </a>
       </div>
     </nav>
+
+    <!-- ===== 어드민(이태화) 푸시 패널 ===== -->
+    <button id="adminPushBtn" type="button" aria-label="푸시 어드민"
+      style="display:none;position:fixed;right:14px;bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px);z-index:60;background:#1a1d24;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:10px 14px;font-weight:700;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer">
+      📣 푸시 관리
+    </button>
+
+    <div id="adminPushModal" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px">
+      <div style="width:100%;max-width:420px;max-height:88vh;overflow-y:auto;background:#f4efe2;border-radius:18px;padding:18px;box-shadow:0 30px 60px rgba(0,0,0,.4)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:800;font-size:15px">📣 푸시 알림 관리</div>
+          <button onclick="closeAdminPush()" aria-label="닫기" style="background:transparent;border:none;font-size:22px;line-height:1;color:#1a1d24;cursor:pointer">×</button>
+        </div>
+        <div style="font-size:11px;color:#4b5160;margin-bottom:14px">이태화 어드민 · 등록한 시간에 전체 발송</div>
+
+        <div style="background:#fff;border:1px solid rgba(26,29,36,.1);border-radius:14px;padding:12px;margin-bottom:14px">
+          <div style="font-weight:700;font-size:12px;margin-bottom:8px">새 푸시 예약</div>
+          <input id="apTitle" type="text" placeholder="제목 (예: 🍻 오늘 번개!)" maxlength="40"
+            style="width:100%;padding:9px 10px;border:1px solid rgba(26,29,36,.15);border-radius:9px;font-size:13px;margin-bottom:8px;box-sizing:border-box" />
+          <textarea id="apBody" placeholder="본문 (예: 7시 강남역 6번 출구, 늦으면 인당 만원)" maxlength="120" rows="3"
+            style="width:100%;padding:9px 10px;border:1px solid rgba(26,29,36,.15);border-radius:9px;font-size:13px;margin-bottom:8px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <input id="apDate" type="date"
+              style="flex:1;padding:9px 10px;border:1px solid rgba(26,29,36,.15);border-radius:9px;font-size:13px;box-sizing:border-box" />
+            <input id="apTime" type="time" value="09:00"
+              style="width:110px;padding:9px 10px;border:1px solid rgba(26,29,36,.15);border-radius:9px;font-size:13px;box-sizing:border-box" />
+          </div>
+          <input id="apUrl" type="text" placeholder="이동 URL (선택)"
+            style="width:100%;padding:9px 10px;border:1px solid rgba(26,29,36,.15);border-radius:9px;font-size:12px;margin-bottom:10px;box-sizing:border-box" />
+          <div style="display:flex;gap:6px">
+            <button onclick="adminSchedulePush()" style="flex:1;background:#1a1d24;color:#fff;border:none;border-radius:9px;padding:10px;font-weight:700;font-size:12px;cursor:pointer">예약 등록</button>
+            <button onclick="adminSendNow()" style="background:#d12c2c;color:#fff;border:none;border-radius:9px;padding:10px 12px;font-weight:700;font-size:12px;cursor:pointer">즉시 발송</button>
+          </div>
+          <div id="apMsg" style="font-size:11px;color:#d12c2c;margin-top:6px;min-height:14px"></div>
+        </div>
+
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">예약 목록</div>
+        <div id="apList" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
 
     <!-- ===== 알림 권한 배너 (로그인 후) ===== -->
     <div id="notifBanner" class="install-banner" role="dialog" aria-label="알림 받기" style="bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px)">

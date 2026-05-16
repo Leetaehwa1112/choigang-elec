@@ -60,8 +60,11 @@ Deno.serve(async (req) => {
     ? null
     : ymd(new Date(now.getTime() + 24 * 60 * 60 * 1000));
 
-  // 알림 발송 대상: candidate_dates에 오늘/내일 포함 + is_active
-  const targets: { sessionId: number; kind: 'd_day' | 'd_1'; date: string; row: any }[] = [];
+  // D-3 날짜 계산
+  const in3days = forceDate ? null : ymd(new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000));
+
+  // 알림 발송 대상: candidate_dates에 오늘/내일/3일후 포함 + is_active
+  const targets: { sessionId: number; kind: 'd_day' | 'd_1' | 'd_3'; date: string; row: any }[] = [];
   const { data: sessions, error } = await supabase
     .from('schedule_sessions')
     .select('id, title, type, type_icon, time_str, place, candidate_dates, is_active')
@@ -75,6 +78,8 @@ Deno.serve(async (req) => {
     if (dates.includes(today)) targets.push({ sessionId: s.id, kind: 'd_day', date: today, row: s });
     if (tomorrow && dates.includes(tomorrow))
       targets.push({ sessionId: s.id, kind: 'd_1', date: tomorrow, row: s });
+    if (in3days && dates.includes(in3days))
+      targets.push({ sessionId: s.id, kind: 'd_3', date: in3days, row: s });
   }
 
   if (targets.length === 0) {
@@ -111,7 +116,10 @@ Deno.serve(async (req) => {
 
     const isToday = t.kind === 'd_day';
     const icon = t.row.type_icon || '📌';
-    const titleHead = isToday ? '오늘 모임 있어요' : '내일 모임 있어요';
+    const titleHead =
+      t.kind === 'd_day' ? '오늘 모임 있어요'
+      : t.kind === 'd_1' ? '내일 모임 있어요'
+      : '3일 뒤 모임 있어요';
     const timePart = t.row.time_str ? ` · ${t.row.time_str}` : '';
     const placePart = t.row.place ? ` @ ${t.row.place}` : '';
     const payload = JSON.stringify({

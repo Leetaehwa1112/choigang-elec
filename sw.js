@@ -1,6 +1,6 @@
 // 최강전기 PWA Service Worker
 // 정적 리소스만 캐시 - Supabase/Cloudinary 등 외부 API는 네트워크 우선
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.1';
 const STATIC_CACHE = `choigang-static-${VERSION}`;
 const RUNTIME_CACHE = `choigang-runtime-${VERSION}`;
 

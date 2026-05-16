@@ -211,6 +211,33 @@ create policy "notif_log_read" on notification_log for select using (true);
 -- INSERT/UPDATE는 서비스 롤만 (Edge Function)
 
 -- ============================================================
+-- [LIVE] 7. SCHEDULED_PUSHES  ─ 어드민 수동 푸시 예약
+-- ============================================================
+-- 이태화/나준민이 어드민 패널에서 등록한 수동 푸시
+-- send_at 도달하면 Edge Function이 발송하고 sent=true로 변경
+create table if not exists scheduled_pushes (
+  id          bigserial primary key,
+  title       text not null,
+  body        text not null,
+  url         text,                                              -- 클릭 시 열릴 URL (없으면 SITE_URL)
+  send_at     timestamptz not null,                              -- UTC 발송 시각
+  created_by  text,                                              -- 'admin' 이태화/나준민
+  sent        boolean not null default false,
+  sent_at     timestamptz,
+  sent_count  int not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists scheduled_pushes_pending_idx
+  on scheduled_pushes (send_at) where sent = false;
+
+alter table scheduled_pushes enable row level security;
+create policy "sp_read"   on scheduled_pushes for select using (true);
+create policy "sp_insert" on scheduled_pushes for insert with check (auth.uid() is not null);
+create policy "sp_update_own" on scheduled_pushes for update using (auth.uid() is not null);
+create policy "sp_delete_own" on scheduled_pushes for delete using (auth.uid() is not null);
+
+-- ============================================================
 -- [CRON] pg_cron으로 매일 Edge Function 호출
 -- ============================================================
 -- 1) 확장 활성화 (Supabase Dashboard → Database → Extensions에서 pg_cron, pg_net 켜기)
