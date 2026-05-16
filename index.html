@@ -796,39 +796,15 @@
         <div class="flex items-center justify-between mb-5">
           <div>
             <h3 class="font-display text-2xl">최강전기 입장</h3>
-            <p class="text-xs text-ink-3 mt-0.5">이메일로 링크 받고 클릭하면 끝</p>
+            <p class="text-xs text-ink-3 mt-0.5">카카오 계정으로 1초 로그인</p>
           </div>
           <button onclick="closeLogin()" class="text-ink-3 hover:text-ink text-2xl leading-none">✕</button>
         </div>
-        <div id="login-form">
-          <div class="mb-3">
-            <label class="text-xs font-bold text-ink-2 mb-1.5 block">이름</label>
-            <select id="login-name" class="w-full border-2 border-ink/15 rounded-lg px-3 py-2.5 text-sm bg-white font-bold focus:border-line-y outline-none">
-              <option value="">-- 선택 --</option>
-              <option>이태화</option>
-              <option>나준민</option>
-              <option>한동명</option>
-              <option>이은준</option>
-              <option>김상현</option>
-              <option>김하람</option>
-              <option>김건우</option>
-            </select>
-          </div>
-          <div class="mb-5">
-            <label class="text-xs font-bold text-ink-2 mb-1.5 block">이메일</label>
-            <input id="login-email" type="email" placeholder="your@email.com"
-              class="w-full border-2 border-ink/15 rounded-lg px-3 py-2.5 text-sm focus:border-line-y outline-none"/>
-          </div>
-          <button onclick="sendMagicLink()" class="wago-btn w-full font-display text-lg py-3 rounded-lg">
-            ⚡ 로그인 링크 받기
-          </button>
-          <p id="login-error" class="text-xs text-line-l text-center mt-2 hidden"></p>
-        </div>
-        <div id="login-sent" class="hidden text-center py-4">
-          <div class="text-5xl mb-3">📩</div>
-          <div class="font-display text-xl">이메일 확인하세요!</div>
-          <p class="text-sm text-ink-3 mt-2">링크 클릭하면 자동으로 입장돼요.</p>
-        </div>
+        <button onclick="loginWithKakao()" class="w-full flex items-center justify-center gap-2 font-bold text-base py-3.5 rounded-xl" style="background:#FEE500;color:#391b1b;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#391b1b"><path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.565 1.521 4.83 3.845 6.196-.169.63-.611 2.281-.7 2.634-.11.43.157.424.33.309.136-.09 2.16-1.47 3.035-2.07.483.067.977.101 1.49.101 5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/></svg>
+          카카오로 로그인
+        </button>
+        <p id="login-error" class="text-xs text-line-l text-center mt-3 hidden"></p>
       </div>
     </div>
 
@@ -860,35 +836,21 @@
       function openLogin()  { document.getElementById('login-modal').classList.remove('hidden'); }
       function closeLogin() {
         document.getElementById('login-modal').classList.add('hidden');
-        document.getElementById('login-form').classList.remove('hidden');
-        document.getElementById('login-sent').classList.add('hidden');
         document.getElementById('login-error').classList.add('hidden');
       }
       document.getElementById('login-modal').addEventListener('click', e => {
         if (e.target === e.currentTarget) closeLogin();
       });
 
-      // ── 매직링크 발송 ──
-      async function sendMagicLink() {
-        const name  = document.getElementById('login-name').value;
-        const email = document.getElementById('login-email').value.trim();
+      // ── 카카오 로그인 ──
+      async function loginWithKakao() {
         const errEl = document.getElementById('login-error');
         errEl.classList.add('hidden');
-
-        if (!name)  { errEl.textContent = '이름을 선택해주세요'; errEl.classList.remove('hidden'); return; }
-        if (!email) { errEl.textContent = '이메일을 입력해주세요'; errEl.classList.remove('hidden'); return; }
-
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: window.location.href.split('#')[0],
-            data: { name }
-          }
+        const { error } = await sb.auth.signInWithOAuth({
+          provider: 'kakao',
+          options: { redirectTo: window.location.href.split('#')[0] }
         });
-
-        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
-        document.getElementById('login-form').classList.add('hidden');
-        document.getElementById('login-sent').classList.remove('hidden');
+        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
       }
 
       // ── 로그아웃 ──
