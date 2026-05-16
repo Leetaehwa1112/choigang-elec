@@ -81,7 +81,33 @@ create policy "pm_insert" on photo_memories for insert with check (true);
 create policy "pm_delete" on photo_memories for delete using (true);
 
 -- ============================================================
--- [PLANNED] 4. MEMBERS  ─ 회원 프로필 (로그인 구현 후 활성화)
+-- [LIVE] 4. EVENT_RSVPS  ─ 참석/불참
+-- ============================================================
+-- session_id references schedule_sessions(id)
+-- member_name: 이태화·나준민·한동명·이은준·김상현·김하람·김건우
+-- status: 'attend' | 'decline'
+-- unique(session_id, member_name) → upsert 가능
+create table if not exists event_rsvps (
+  id          bigserial primary key,
+  session_id  bigint not null references schedule_sessions(id) on delete cascade,
+  member_name text not null,
+  status      text not null check (status in ('attend','decline')),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  unique(session_id, member_name)
+);
+
+alter table event_rsvps enable row level security;
+create policy "rsvp_read"   on event_rsvps for select using (true);
+create policy "rsvp_insert" on event_rsvps for insert with check (true);
+create policy "rsvp_update" on event_rsvps for update using (true);
+create policy "rsvp_delete" on event_rsvps for delete using (true);
+
+-- schedule_sessions.cover_url (ALTER 별도 실행)
+-- ALTER TABLE schedule_sessions ADD COLUMN IF NOT EXISTS cover_url text;
+
+-- ============================================================
+-- [PLANNED] 5. MEMBERS  ─ 회원 프로필 (로그인 구현 후 활성화)
 -- ============================================================
 -- create table members (
 --   id              uuid primary key default uuid_generate_v4(),

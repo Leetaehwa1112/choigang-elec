@@ -686,6 +686,12 @@
 
       loadRsvp();
 
+      /* ── 멤버 목록 ── */
+      const MEMBER_LIST = [
+        {name:'이태화',ch:'태'},{name:'나준민',ch:'준'},{name:'한동명',ch:'동'},
+        {name:'이은준',ch:'은'},{name:'김상현',ch:'상'},{name:'김하람',ch:'하'},{name:'김건우',ch:'건'},
+      ];
+
       /* ── 다음 모임 슬라이더 ── */
       const TYPE_GRAD = {
         '경조사':'linear-gradient(135deg,#4a0505,#9b1c1c)',
@@ -703,37 +709,49 @@
         while (meetSlides.children.length > 1) meetSlides.removeChild(meetSlides.lastChild);
         meetTotal = 1; meetCur = Math.min(meetCur, 0); updateMeetArrows();
 
-        const { data } = await sb.from('schedule_sessions')
-          .select('*').eq('is_active', true).order('created_at', { ascending: true });
+        const [{ data }, { data: rsvps }] = await Promise.all([
+          sb.from('schedule_sessions').select('*').eq('is_active', true).order('created_at', { ascending: true }),
+          sb.from('event_rsvps').select('session_id, member_name, status')
+        ]);
         const extras = (data || []).filter(s => s.title !== '이은준 결혼식');
         if (!extras.length) return;
         const DOW = ['일','월','화','수','목','금','토'];
-        const MEMBER_LIST = [
-          {name:'이태화',ch:'태'},{name:'나준민',ch:'준'},{name:'한동명',ch:'동'},
-          {name:'이은준',ch:'은'},{name:'김상현',ch:'상'},{name:'김하람',ch:'하'},{name:'김건우',ch:'건'},
-        ];
+        const myName = localStorage.getItem('rsvpName') || '';
         meetSlides.insertAdjacentHTML('beforeend', extras.map(s => {
           const fd = s.candidate_dates?.[0];
           const diff = fd?Math.ceil((new Date(fd+'T00:00:00+09:00')-new Date())/86400000):null;
           const dday = diff===null?'':diff===0?'D-DAY':diff>0?'D-'+diff:'D+'+Math.abs(diff);
           const grad = TYPE_GRAD[s.type]||'linear-gradient(135deg,#1a1d24,#374151)';
+          const coverStyle = s.cover_url
+            ? `background:${grad};background-image:url(${s.cover_url});background-size:cover;background-position:center`
+            : `background:${grad}`;
           const dl = fd?(()=>{const dt=new Date(fd+'T00:00:00');return `${dt.getMonth()+1}.${String(dt.getDate()).padStart(2,'0')} ${DOW[dt.getDay()]}`})():'';
           const tl = s.time_str?(()=>{const[h,m]=s.time_str.split(':').map(Number);return(h<12?'오전 ':'오후 ')+(h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시')})():'';
           const mapLinks = [
             s.map_url&&s.map_provider?`<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]}</a>`:''
           ].filter(Boolean).join('');
-          const avatars = MEMBER_LIST.map(m =>
-            `<div class="flex flex-col items-center gap-1">
-              <div class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center">${m.ch}</div>
+          // RSVP
+          const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
+          const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
+          const declining = sRsvps.filter(r => r.status === 'decline').map(r => r.member_name);
+          const myRsvp = sRsvps.find(r => r.member_name === myName)?.status || '';
+          const attendPct = Math.round(attending.length / MEMBER_LIST.length * 100);
+          const avatars = MEMBER_LIST.map(m => {
+            const isA = attending.includes(m.name), isD = declining.includes(m.name);
+            const cls = isA ? 'bg-green-100 text-green-700 ring-2 ring-green-400' : isD ? 'bg-ink/8 text-ink/20' : 'bg-ink/15 text-ink/40';
+            return `<div class="flex flex-col items-center gap-1">
+              <div class="relative w-10 h-10 rounded-full ${cls} font-display text-base flex items-center justify-center">
+                ${m.ch}${isA?'<span class="absolute -bottom-0.5 -right-0.5 text-[9px]">✓</span>':''}
+              </div>
               <span class="text-[9px] font-mono text-ink-3">${m.name}</span>
-            </div>`
-          ).join('');
+            </div>`;
+          }).join('');
           const actionLink = s.action_url?`<a href="${s.action_url}" target="_blank" rel="noopener" class="text-line-l underline font-mono text-xs">↗ ${s.action_label||'링크'}</a>`:'';
           return `<div class="shrink-0 w-full">
             <div class="distribution rounded-xl p-3 sm:p-4">
               <div class="metal-panel rounded-lg overflow-hidden">
                 <!-- 커버 -->
-                <div class="relative" style="height:220px;background:${grad}">
+                <div class="relative" style="height:220px;${coverStyle}">
                   <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent"></div>
                   <div class="absolute bottom-0 left-0 p-4 text-white">
                     <div class="font-mono text-[10px] opacity-70 mb-1">${s.type_icon} ${s.type}${dl?' · '+dl:''}${tl?' · '+tl:''}</div>
@@ -754,13 +772,18 @@
                   ${s.memo?`<p class="text-xs text-ink-3 italic mt-3 border-l-2 border-ink/10 pl-3">${s.memo}</p>`:''}
                   <!-- 멤버 아바타 -->
                   <div class="mt-4">
-                    <div class="bg-ink/10 rounded h-2 overflow-hidden"><div class="h-full bg-line-e" style="width:0%"></div></div>
-                    <div class="mt-3 grid grid-cols-7 gap-2">${avatars}</div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-[10px] font-mono text-ink-3">참석 ${attending.length}/${MEMBER_LIST.length}</span>
+                    </div>
+                    <div class="bg-ink/10 rounded h-1.5 overflow-hidden mb-3"><div class="h-full bg-green-400 transition-all" style="width:${attendPct}%"></div></div>
+                    <div class="grid grid-cols-7 gap-1">${avatars}</div>
                   </div>
                   <!-- 참석/불참 -->
                   <div class="mt-5 grid grid-cols-2 gap-3">
-                    <button class="wago-btn font-display text-xl py-4 rounded-lg">참석 ✓</button>
-                    <button class="bg-white border-2 border-ink/20 font-display text-xl py-4 rounded-lg">불참</button>
+                    <button onclick="submitRsvp(${s.id},'attend')"
+                      class="font-display text-xl py-4 rounded-lg transition ${myRsvp==='attend'?'bg-green-500 text-white':'wago-btn'}">참석 ✓</button>
+                    <button onclick="submitRsvp(${s.id},'decline')"
+                      class="font-display text-xl py-4 rounded-lg transition ${myRsvp==='decline'?'bg-ink/40 text-white':'bg-white border-2 border-ink/20'}">불참</button>
                   </div>
                   ${actionLink?`<div class="mt-4 pt-4 border-t border-dashed border-ink/15">${actionLink}</div>`:''}
                 </div>
@@ -844,10 +867,11 @@
       /* ── 이벤트 로드 ── */
       async function loadEvents() {
         const el = document.getElementById('event-list');
-        const { data, error } = await sb.from('schedule_sessions')
-          .select('*').eq('is_active', true).order('created_at', { ascending: true });
+        const [{ data, error }, { data: rsvps }] = await Promise.all([
+          sb.from('schedule_sessions').select('*').eq('is_active', true).order('created_at', { ascending: true }),
+          sb.from('event_rsvps').select('session_id, member_name, status')
+        ]);
 
-        // 달력 데이터 재구성
         calEvents = {};
         if (data) {
           data.forEach(s => {
@@ -863,6 +887,7 @@
           return;
         }
 
+        const myName = localStorage.getItem('rsvpName') || '';
         el.innerHTML = data.map(s => {
           const dates = s.candidate_dates || [];
           const firstDate = dates[0] ? new Date(dates[0] + 'T00:00:00') : null;
@@ -893,10 +918,30 @@
                 class="inline-flex items-center gap-1 text-xs text-ink-3 hover:text-ink transition whitespace-nowrap">📍 지도 보기</a>`
             : '';
 
+          // RSVP
+          const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
+          const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
+          const declining = sRsvps.filter(r => r.status === 'decline').map(r => r.member_name);
+          const myRsvp = sRsvps.find(r => r.member_name === myName)?.status || '';
+          const attendPct = Math.round(attending.length / MEMBER_LIST.length * 100);
+          const attendAvatars = MEMBER_LIST.map(m => {
+            const isA = attending.includes(m.name), isD = declining.includes(m.name);
+            const cls = isA ? 'bg-green-100 text-green-700 ring-2 ring-green-400' : isD ? 'bg-ink/8 text-ink/25' : 'bg-ink/10 text-ink/40';
+            return `<div class="flex flex-col items-center gap-1">
+              <div class="relative w-9 h-9 rounded-full ${cls} font-display text-sm flex items-center justify-center">
+                ${m.ch}${isA ? '<span class="absolute -bottom-0.5 -right-0.5 text-[9px]">✓</span>' : ''}
+              </div>
+              <span class="text-[9px] font-mono text-ink-3 truncate w-8 text-center">${m.name.slice(0,2)}</span>
+            </div>`;
+          }).join('');
+
+          const coverBg = s.cover_url ? `<div class="relative h-28 overflow-hidden"><img src="${s.cover_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/60"></div></div>` : '';
+
           return `<div class="rounded-2xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-ink/8">
+            ${coverBg}
             <div class="flex">
               <!-- 날짜 패널 -->
-              ${firstDate ? `<div class="bg-ink text-white flex flex-col items-center justify-center px-5 py-6 flex-shrink-0 min-w-[72px]">
+              ${firstDate ? `<div class="${s.cover_url?'bg-ink/80':'bg-ink'} text-white flex flex-col items-center justify-center px-5 py-6 flex-shrink-0 min-w-[72px]">
                 <span class="font-mono text-[10px] opacity-50 tracking-widest uppercase">${firstDate.getMonth()+1}월</span>
                 <span class="font-display text-4xl leading-none my-1">${firstDate.getDate()}</span>
                 <span class="font-mono text-[10px] opacity-50">${DOW_FULL[firstDate.getDay()]}</span>
@@ -913,7 +958,25 @@
                 <h4 class="font-display text-xl leading-tight text-ink">${s.title}</h4>
                 ${s.place||timeDisplay ? `<p class="text-xs text-ink-3">${[s.place, timeDisplay].filter(Boolean).join('  ·  ')}</p>` : ''}
                 ${candidateChips}
-                ${actionBtn||mapLink ? `<div class="flex flex-wrap items-center gap-2 pt-2 mt-auto border-t border-ink/6">
+                <!-- RSVP 아바타 -->
+                <div class="pt-2 border-t border-ink/6">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-mono text-ink-3">참석 ${attending.length}/${MEMBER_LIST.length}</span>
+                  </div>
+                  <div class="flex gap-1.5 flex-wrap">${attendAvatars}</div>
+                </div>
+                <!-- 참석/불참 버튼 -->
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                  <button onclick="submitRsvp(${s.id},'attend')"
+                    class="py-2.5 rounded-xl font-bold text-sm transition ${myRsvp==='attend' ? 'bg-green-500 text-white' : 'bg-green-50 text-green-700 hover:bg-green-100'}">
+                    참석 ✓
+                  </button>
+                  <button onclick="submitRsvp(${s.id},'decline')"
+                    class="py-2.5 rounded-xl font-bold text-sm transition ${myRsvp==='decline' ? 'bg-ink/40 text-white' : 'bg-ink/6 text-ink-2 hover:bg-ink/12'}">
+                    불참
+                  </button>
+                </div>
+                ${actionBtn||mapLink ? `<div class="flex flex-wrap items-center gap-2 pt-2 border-t border-ink/6">
                   ${actionBtn}
                   ${mapLink}
                 </div>` : ''}
@@ -1732,6 +1795,23 @@
           <div class="px-5 py-4 pb-6">
             <div class="font-mono text-[10px] text-ink-3 mb-3">세부 사항</div>
             <div class="space-y-2">
+              <!-- 커버 사진 -->
+              <div class="bg-ink/4 rounded-xl overflow-hidden cursor-pointer" id="sched-cover-wrap" onclick="document.getElementById('sched-cover-file').click()">
+                <div class="relative flex items-center justify-center min-h-[72px]">
+                  <img id="sched-cover-preview" class="hidden w-full max-h-44 object-cover">
+                  <div id="sched-cover-hint" class="flex items-center gap-3 px-4 py-4 text-ink-3 pointer-events-none">
+                    <span class="text-2xl">🖼️</span>
+                    <span class="text-xs font-bold">커버 사진 추가 (선택)</span>
+                  </div>
+                  <button id="sched-cover-remove" type="button" onclick="event.stopPropagation();removeCoverPhoto()"
+                    class="hidden absolute top-2 right-2 w-7 h-7 rounded-full bg-ink/60 text-white text-base flex items-center justify-center">×</button>
+                </div>
+                <div id="sched-cover-progress-wrap" class="hidden">
+                  <div id="sched-cover-progress" class="h-1 bg-line-l" style="width:0%;transition:width 0.3s"></div>
+                </div>
+                <input id="sched-cover-file" type="file" accept="image/*" class="hidden" onchange="onCoverSelected(this)">
+                <input type="hidden" id="sched-cover-url">
+              </div>
               <!-- 모임 이름 -->
               <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center">✏️</span>
@@ -1796,6 +1876,17 @@
       </div>
     </div>
 
+    <!-- ===== RSVP 이름 선택 ===== -->
+    <div id="rsvp-picker" class="hidden fixed inset-0 bg-ink/50 z-[300] flex items-end justify-center" onclick="if(event.target===this)closeRsvpPicker()">
+      <div class="bg-white rounded-t-2xl w-full max-w-sm">
+        <div class="px-5 pt-5 pb-3">
+          <p class="font-bold text-sm text-center mb-4">참석 여부를 남길 이름을 선택해주세요</p>
+          <div id="rsvp-picker-names" class="grid grid-cols-2 gap-2 mb-2"></div>
+        </div>
+        <button onclick="closeRsvpPicker()" class="w-full py-4 text-sm text-ink-3 border-t border-ink/10">취소</button>
+      </div>
+    </div>
+
     <!-- ===== 플로팅 일정잡기 버튼 ===== -->
     <button onclick="openSchedule()" class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
       <span class="text-xl">⚡</span>
@@ -1837,6 +1928,65 @@
       let schedCalM  = new Date().getMonth();
 
       let editingEventId = null;
+      let _coverFile = null;
+
+      function onCoverSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+        _coverFile = file;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = document.getElementById('sched-cover-preview');
+          img.src = ev.target.result;
+          img.classList.remove('hidden');
+          document.getElementById('sched-cover-hint').classList.add('hidden');
+          document.getElementById('sched-cover-remove').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function removeCoverPhoto() {
+        _coverFile = null;
+        document.getElementById('sched-cover-preview').classList.add('hidden');
+        document.getElementById('sched-cover-hint').classList.remove('hidden');
+        document.getElementById('sched-cover-remove').classList.add('hidden');
+        document.getElementById('sched-cover-url').value = '';
+        document.getElementById('sched-cover-file').value = '';
+      }
+
+      function resetCoverUI() {
+        _coverFile = null;
+        document.getElementById('sched-cover-preview').classList.add('hidden');
+        document.getElementById('sched-cover-preview').src = '';
+        document.getElementById('sched-cover-hint').classList.remove('hidden');
+        document.getElementById('sched-cover-remove').classList.add('hidden');
+        document.getElementById('sched-cover-url').value = '';
+        document.getElementById('sched-cover-file').value = '';
+      }
+
+      async function uploadCoverIfNeeded() {
+        if (!_coverFile) return document.getElementById('sched-cover-url')?.value.trim() || null;
+        const formData = new FormData();
+        formData.append('file', _coverFile);
+        formData.append('upload_preset', 'ml_default');
+        const bar = document.getElementById('sched-cover-progress');
+        const barWrap = document.getElementById('sched-cover-progress-wrap');
+        barWrap?.classList.remove('hidden');
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = e => {
+            if (e.lengthComputable && bar) bar.style.width = Math.round(e.loaded/e.total*100) + '%';
+          };
+          xhr.onload = () => {
+            const r = JSON.parse(xhr.responseText);
+            barWrap?.classList.add('hidden');
+            r.secure_url ? resolve(r.secure_url) : reject(r.error?.message || '업로드 실패');
+          };
+          xhr.onerror = () => reject('네트워크 오류');
+          xhr.open('POST', 'https://api.cloudinary.com/v1_1/dhk87y1nb/image/upload');
+          xhr.send(formData);
+        });
+      }
 
       function openSchedule(session = null) {
         editingEventId = session ? session.id : null;
@@ -1864,10 +2014,20 @@
           set('sched-memo',         session.memo);
           set('sched-action-label', session.action_label);
           set('sched-action-url',   session.action_url);
+          // 커버 사진
+          resetCoverUI();
+          if (session.cover_url) {
+            const img = document.getElementById('sched-cover-preview');
+            img.src = session.cover_url; img.classList.remove('hidden');
+            document.getElementById('sched-cover-hint').classList.add('hidden');
+            document.getElementById('sched-cover-remove').classList.remove('hidden');
+            document.getElementById('sched-cover-url').value = session.cover_url;
+          }
           renderMapPreview();
         } else {
           renderSchedTypeBtns();
           renderSchedCal();
+          resetCoverUI();
           loadScheduleData();
           loadSchedDetail();
         }
@@ -1891,6 +2051,7 @@
       function closeSchedule() {
         document.getElementById('schedule-modal').classList.replace('flex','hidden');
         editingEventId = null;
+        resetCoverUI();
       }
 
       /* ── 모임 종류 ── */
@@ -2122,9 +2283,12 @@
         if (!schedDates.length) { alert('후보 날짜를 하나 이상 선택해주세요.'); return; }
 
         const mapProvider = detectMapProvider(mapUrl)?.key || null;
-
         const actionLabel = document.getElementById('sched-action-label')?.value.trim() || null;
         const actionUrl   = document.getElementById('sched-action-url')?.value.trim()   || null;
+
+        let coverUrl;
+        try { coverUrl = await uploadCoverIfNeeded(); }
+        catch(e) { alert('커버 사진 업로드 실패: ' + e); return; }
 
         const payload = {
           title,
@@ -2135,6 +2299,7 @@
           addr: addr || null,
           map_url: mapUrl || null,
           map_provider: mapProvider,
+          cover_url: coverUrl || null,
           memo: memo || null,
           action_url: actionUrl,
           action_label: actionLabel,
@@ -2160,6 +2325,52 @@
 
         closeSchedule();
         showToast(isEdit ? '수정됐어요! ✏️' : '일정이 등록됐어요! 🎉');
+        loadEvents();
+        meetCur = 0;
+        document.getElementById('meet-slides').style.transform = 'translateX(0)';
+        initMeetSlider();
+      }
+
+      /* ── RSVP ── */
+      let _pendingRsvp = null;
+
+      function submitRsvp(sessionId, status) {
+        const name = localStorage.getItem('rsvpName') || '';
+        if (!name || !MEMBER_LIST.find(m => m.name === name)) {
+          _pendingRsvp = { sessionId, status };
+          const namesDiv = document.getElementById('rsvp-picker-names');
+          namesDiv.innerHTML = MEMBER_LIST.map(m =>
+            `<button onclick="pickRsvpName('${m.name}')"
+              class="py-3 rounded-xl bg-ink/6 hover:bg-ink/12 font-bold text-sm transition">${m.name}</button>`
+          ).join('');
+          document.getElementById('rsvp-picker').classList.remove('hidden');
+          return;
+        }
+        doRsvp(sessionId, status, name);
+      }
+
+      function closeRsvpPicker() {
+        document.getElementById('rsvp-picker').classList.add('hidden');
+        _pendingRsvp = null;
+      }
+
+      async function pickRsvpName(name) {
+        localStorage.setItem('rsvpName', name);
+        document.getElementById('rsvp-picker').classList.add('hidden');
+        if (_pendingRsvp) {
+          const { sessionId, status } = _pendingRsvp;
+          _pendingRsvp = null;
+          await doRsvp(sessionId, status, name);
+        }
+      }
+
+      async function doRsvp(sessionId, status, name) {
+        const { error } = await sb.from('event_rsvps').upsert(
+          { session_id: Number(sessionId), member_name: name, status, updated_at: new Date().toISOString() },
+          { onConflict: 'session_id,member_name' }
+        );
+        if (error) { alert('오류: ' + error.message); return; }
+        showToast(status === 'attend' ? `${name} 참석 ✓` : `${name} 불참`);
         loadEvents();
         meetCur = 0;
         document.getElementById('meet-slides').style.transform = 'translateX(0)';
