@@ -1259,27 +1259,41 @@
         renderMemoryGrid();
       }
 
-      // DB에서 사용자 추가 사진 로드
+      // DB에서 추가된 사진/영상 로드 (중복 방지: 매번 하드코딩 기준으로 리셋)
       async function loadDbMemories() {
         try {
-          const { data, error } = await sb.from('photo_memories').select('*').order('created_at', { ascending: true });
-          if (error || !data || !data.length) return;
+          const { data, error } = await sb.from('photo_memories')
+            .select('id, type, src, label, group_name, is_short')
+            .order('created_at', { ascending: true });
+          if (error) { console.warn('photo_memories load failed', error.message); return; }
+          if (!data || !data.length) return;
+
+          // 하드코딩된 src 목록 (중복 삽입 방지)
+          const hardcodedSrcs = new Set(HARDCODED_MEMORIES.map(m => m.src));
+
+          // MEMORIES를 하드코딩 기준으로 리셋 후 DB 항목 추가
+          MEMORIES = [...HARDCODED_MEMORIES];
           let heroUpdated = false;
+
           data.forEach(row => {
             if (row.type === 'youtube') {
-              const m = { type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name };
-              MEMORIES.push(m);
-              // 메인 슬라이더에도 추가 (중복 방지, Shorts는 맨 앞으로)
+              // YouTube ID는 정확히 11자 영숫자+_-
+              if (!/^[A-Za-z0-9_-]{11}$/.test(row.src)) return;
+              if (MEMORIES.some(m => m.type === 'youtube' && m.ytId === row.src)) return;
+              MEMORIES.push({ type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name, dbId: row.id });
               if (!HERO_SLIDES.some(s => s.type === 'youtube' && s.ytId === row.src)) {
-                const heroSlide = { type: 'youtube', ytId: row.src, isShort: row.is_short };
-                if (row.is_short) HERO_SLIDES.unshift(heroSlide);
-                else HERO_SLIDES.push(heroSlide);
+                const slide = { type: 'youtube', ytId: row.src, isShort: row.is_short };
+                row.is_short ? HERO_SLIDES.unshift(slide) : HERO_SLIDES.push(slide);
                 heroUpdated = true;
               }
             } else {
-              MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name });
+              // 사진 src는 https:// 로 시작하는 URL이어야 함
+              if (!row.src.startsWith('https://')) return;
+              if (hardcodedSrcs.has(row.src)) return;
+              MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name, dbId: row.id });
             }
           });
+
           if (heroUpdated && typeof heroInit === 'function') heroInit();
           rebuildAndRender();
         } catch(e) { console.warn('photo_memories load failed', e); }
