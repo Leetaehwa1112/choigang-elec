@@ -262,7 +262,7 @@
             <span class="led-blink w-2 h-2 rounded-full bg-line-e text-line-e flex-shrink-0"></span>
             <div class="text-sm min-w-0">
               <div class="font-mono text-[10px] text-ink-3">입장</div>
-              <div id="greeting-text" class="font-bold truncate">최강전기 동창회</div>
+              <div id="greeting-text" class="font-bold truncate"></div>
             </div>
           </div>
         </div>
@@ -454,7 +454,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-display text-2xl sm:text-3xl flex items-center gap-2">
             다음 이벤트
-            <span class="new-badge dday-badge">D-43</span>
+            <span class="new-badge dday-badge"></span>
           </h2>
           <a href="#calendar" class="text-sm text-ink-3 hover:text-line-l">전체 일정 →</a>
         </div>
@@ -503,7 +503,7 @@
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.8c0 3.1 1.7 5.84 4.3 7.54L5.2 22l4.34-2.17C10.26 20.1 11.12 20.2 12 20.2c5.52 0 10-3.92 10-8.8S17.52 2 12 2z"/></svg>
                       카카오맵
                     </a>
-                    <a href="https://map.naver.com/v5/search/서울+성북구+정릉로10길+127+르한스" target="_blank"
+                    <a href="https://map.naver.com/p/search/서울+성북구+정릉로10길+127+르한스" target="_blank"
                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold text-white"
                        style="background:#03C75A">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>
@@ -701,13 +701,22 @@
       }
 
       async function submitRsvp(status) {
-        const myName = localStorage.getItem('rsvpName') || '이태화';
+        const myName = (typeof _authSession !== 'undefined' && _authSession?.user?.user_metadata?.name)
+          || localStorage.getItem('rsvpName') || '';
         rsvpState[myName] = status;
         refreshRsvpUI();
         const msg = document.getElementById('rsvp-msg');
+        if (!myName) {
+          msg.textContent = '먼저 로그인해주세요.';
+          msg.className = 'text-center text-sm mt-3 text-warn';
+          setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 3000);
+          msg.classList.remove('hidden');
+          return;
+        }
         msg.textContent = status === 'attend' ? '✓ 참석으로 등록됐어요!' : '불참으로 등록됐어요.';
         msg.className = 'text-center text-sm mt-3 ' + (status === 'attend' ? 'text-ok' : 'text-ink-3');
-        setTimeout(() => { msg.textContent = ''; }, 3000);
+        msg.classList.remove('hidden');
+        setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 3000);
         if (!currentEventId) return;
         await sb.from('event_rsvps').upsert(
           { session_id: Number(currentEventId), member_name: myName, status, updated_at: new Date().toISOString() },
@@ -765,7 +774,7 @@
             s.map_url
               ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>`
               : '',
-            `<a href="https://map.naver.com/v5/search/${_q}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#03C75A;color:#fff;">네이버지도</a>`,
+            `<a href="https://map.naver.com/p/search/${_q}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#03C75A;color:#fff;">네이버지도</a>`,
             `<a href="tmap://search?name=${_pn}" class="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#1a6dff;color:#fff;">티맵</a>`,
           ].filter(Boolean).join('') : '';
           const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
@@ -951,7 +960,7 @@
           const _spa = (s.addr||'').replace(/ /g,'+');
           const mapLink = (s.place||s.addr) ? [
             s.map_url ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>` : '',
-            `<a href="https://map.naver.com/v5/search/${_sq}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#03C75A;color:#fff;">네이버지도</a>`,
+            `<a href="https://map.naver.com/p/search/${_sq}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#03C75A;color:#fff;">네이버지도</a>`,
             `<a href="tmap://search?name=${_spn}" class="sm:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#1a6dff;color:#fff;">티맵</a>`,
           ].filter(Boolean).join('') : '';
 
