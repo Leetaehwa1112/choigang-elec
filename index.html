@@ -822,31 +822,39 @@
       // ── 추억 미디어 데이터 ──
       // type: 'photo' | 'youtube'
       // photo → src (이미지 URL)
-      // youtube → ytId (유튜브 영상 ID)
+      // type: 'photo' | 'youtube'
+      // group 이 바뀔 때마다 섹션 헤더가 자동으로 삽입됩니다
       const MEMORIES = [
-        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg', label: "'26.05.16 이은준 청모", badge: 'NEW' },
-        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778865110/ozzfmaepada6r6wsljne.jpg', label: "이은준 청첩장" },
-        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png', label: "고등학교 시절" },
-        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg', label: "고등학교 시절" },
-        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg', label: "고등학교 시절" },
-        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg', label: "고등학교 시절" },
-        // 유튜브 예시: { type: 'youtube', ytId: 'VIDEO_ID', label: "영상 제목" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg', label: "'26.05.16 청모", group: "이은준 결혼 💍", badge: 'NEW' },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778865110/ozzfmaepada6r6wsljne.jpg', label: "이은준 결혼", group: "이은준 결혼 💍" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png', label: "고등학교 시절", group: "고등학교 시절 📸" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg', label: "고등학교 시절", group: "고등학교 시절 📸" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg', label: "고등학교 시절", group: "고등학교 시절 📸" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg', label: "고등학교 시절", group: "고등학교 시절 📸" },
+        // 유튜브: { type: 'youtube', ytId: 'VIDEO_ID', label: "제목", group: "그룹명" },
       ];
 
       const ROTATIONS = ['-1deg','2deg','-2deg','1.5deg','-1deg','2.5deg','-1.5deg','1deg'];
 
       function renderMemoryGrid() {
         const grid = document.getElementById('memory-grid');
-        grid.innerHTML = MEMORIES.map((m, i) => {
-          const rot = ROTATIONS[i % ROTATIONS.length];
-          const thumb = m.type === 'youtube'
-            ? `https://img.youtube.com/vi/${m.ytId}/hqdefault.jpg`
-            : m.src;
+        let currentGroup = null;
+        let rotIdx = 0;
+        let html = '';
+
+        MEMORIES.forEach((m, i) => {
+          if (m.group !== currentGroup) {
+            currentGroup = m.group;
+            html += `<div class="col-span-full pt-4 pb-1 first:pt-0">
+              <span class="label-tape inline-block px-2 py-0.5 text-[11px]">${currentGroup}</span>
+            </div>`;
+          }
+          const rot = ROTATIONS[rotIdx++ % ROTATIONS.length];
+          const thumb = m.type === 'youtube' ? `https://img.youtube.com/vi/${m.ytId}/hqdefault.jpg` : m.src;
           const playIcon = m.type === 'youtube'
-            ? `<div class="absolute inset-0 flex items-center justify-center"><div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div>`
-            : '';
+            ? `<div class="absolute inset-0 flex items-center justify-center"><div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div>` : '';
           const badge = m.badge ? `<span class="absolute top-2 right-2 text-[8px] font-bold bg-line-l text-white px-1 rounded">${m.badge}</span>` : '';
-          return `
+          html += `
             <div class="bg-white p-1.5 pb-5 shadow-md cursor-pointer hover:scale-105 hover:z-10 relative transition-transform duration-200"
                  style="rotate:${rot}" onclick="lbOpen(${i})">
               <div class="relative aspect-square overflow-hidden">
@@ -856,11 +864,13 @@
               <div class="font-mono text-[9px] text-ink-3 text-center mt-2 leading-tight px-1">${m.label}</div>
               ${badge}
             </div>`;
-        }).join('') + `
-          <div class="bg-white/70 p-1.5 pb-5 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition">
-            <div class="aspect-square w-full flex items-center justify-center text-2xl text-ink-3">＋</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">추가</div>
-          </div>`;
+        });
+
+        html += `<div class="bg-white/70 p-1.5 pb-5 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition">
+          <div class="aspect-square w-full flex items-center justify-center text-2xl text-ink-3">＋</div>
+          <div class="font-mono text-[9px] text-ink-3 text-center mt-2">추가</div>
+        </div>`;
+        grid.innerHTML = html;
       }
 
       // ── 라이트박스 ──
