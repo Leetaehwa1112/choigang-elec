@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="42" fill="#f5b400"/>
+  <!-- 카메라 바디 -->
+  <rect x="28" y="68" width="136" height="96" rx="14" fill="#1a1d24"/>
+  <!-- 렌즈 -->
+  <circle cx="96" cy="116" r="32" fill="#f5b400"/>
+  <circle cx="96" cy="116" r="20" fill="#1a1d24"/>
+  <circle cx="96" cy="116" r="10" fill="#f5b400"/>
+  <!-- 뷰파인더 -->
+  <rect x="70" y="52" width="36" height="22" rx="8" fill="#1a1d24"/>
+  <!-- 플래시 -->
+  <circle cx="148" cy="84" r="8" fill="#f5b400"/>
+</svg>
