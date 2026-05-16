@@ -280,6 +280,25 @@ create policy "sp_delete_admin" on scheduled_pushes for delete using (public.is_
 -- );
 
 -- ============================================================
+-- [UTIL] 가입된 멤버 이름 목록 반환 (멤버 카드 상태 표시용)
+-- ============================================================
+create or replace function public.get_registered_members()
+returns text[]
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(array_agg(
+    coalesce(raw_user_meta_data->>'name', raw_user_meta_data->>'username')
+  ) filter (
+    where coalesce(raw_user_meta_data->>'name', raw_user_meta_data->>'username') is not null
+  ), '{}')
+  from auth.users;
+$$;
+grant execute on function public.get_registered_members() to anon, authenticated;
+
+-- ============================================================
 -- [INSTANT PUSH] scheduled_pushes INSERT 시 Edge Function 즉시 호출
 -- ============================================================
 -- 어드민이 "즉시 발송" 누르면 cron(5분) 안 기다리고 바로 발송되게 하는 트리거

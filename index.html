@@ -1356,7 +1356,7 @@
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
           <!-- 나준민 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="나준민">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-line-l text-white font-display text-xl flex items-center justify-center flex-shrink-0">준</div>
               <div>
@@ -1373,7 +1373,7 @@
           </div>
 
           <!-- 한동명 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="한동명">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-line-y text-ink font-display text-xl flex items-center justify-center flex-shrink-0">동</div>
               <div>
@@ -1390,7 +1390,7 @@
           </div>
 
           <!-- 이은준 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="이은준">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-line-e text-white font-display text-xl flex items-center justify-center flex-shrink-0">은</div>
               <div>
@@ -1407,7 +1407,7 @@
           </div>
 
           <!-- 김하람 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="김하람">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-panel-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0">하</div>
               <div>
@@ -1424,7 +1424,7 @@
           </div>
 
           <!-- 김상현 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="김상현">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-board-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0">상</div>
               <div>
@@ -1441,7 +1441,7 @@
           </div>
 
           <!-- 김건우 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="김건우">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-line-n text-white font-display text-xl flex items-center justify-center flex-shrink-0">건</div>
               <div>
@@ -1458,7 +1458,7 @@
           </div>
 
           <!-- 이태화 -->
-          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="이태화">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-ink text-line-y font-display text-xl flex items-center justify-center flex-shrink-0">태</div>
               <div>
@@ -3821,6 +3821,23 @@
       })();
 
       // 이미 권한 허용된 사용자도 구독 갱신 (브라우저 데이터 삭제 대비)
+      // 멤버 가입 상태 카드 테두리 표시
+      (async function updateMemberBorders() {
+        try {
+          const { data: names } = await sb.rpc('get_registered_members');
+          const registered = new Set(names || []);
+          document.querySelectorAll('[data-member]').forEach((card) => {
+            const name = card.dataset.member;
+            card.classList.remove('border-board');
+            if (registered.has(name)) {
+              card.classList.add('border-emerald-400');
+            } else {
+              card.classList.add('border-red-400');
+            }
+          });
+        } catch (_) {}
+      })();
+
       window.addEventListener('load', async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
         if (Notification.permission !== 'granted') return;
