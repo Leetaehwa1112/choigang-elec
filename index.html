@@ -257,7 +257,7 @@
           </div>
         </div>
         <!-- 메인 슬라이드 (사진 + 유튜브 지원) -->
-        <div class="mt-6 rounded-xl overflow-hidden shadow-lg bg-ink relative" style="height:320px" id="hero-slider">
+        <div class="mt-6 rounded-xl overflow-hidden shadow-lg bg-ink relative" style="height:320px;transition:height 0.5s ease" id="hero-slider">
           <div id="hero-slides" class="absolute inset-0"></div>
           <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="hero-dots"></div>
           <!-- 좌우 터치 영역 -->
@@ -313,8 +313,21 @@
               });
 
               container.children[0].style.opacity = '1';
+              heroSetHeight();
               heroResetTimer();
             };
+
+            function heroSetHeight() {
+              const s = HERO_SLIDES[heroCur];
+              const isShorts = s.type === 'youtube' && s.isShort;
+              const slider = document.getElementById('hero-slider');
+              if (isShorts) {
+                // PC: 80vh 최대 620px, 모바일: 480px
+                slider.style.height = window.innerWidth >= 640 ? Math.min(window.innerHeight * 0.8, 620) + 'px' : '480px';
+              } else {
+                slider.style.height = '320px';
+              }
+            }
 
             window.heroGo = function(n) {
               const total = HERO_SLIDES.length;
@@ -332,6 +345,7 @@
                   iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1`;
                 }
               }
+              heroSetHeight();
               heroResetTimer();
             };
 
