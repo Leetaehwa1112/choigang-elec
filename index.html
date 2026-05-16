@@ -786,7 +786,8 @@
               <span class="text-[10px] font-mono ${isA?'text-green-500 font-bold':'text-ink-3'}">${m.name.slice(-2)}</span>
             </button>`;
           }).join('');
-          const actionLink = s.action_url?`<a href="${s.action_url}" target="_blank" rel="noopener" class="text-line-l underline font-mono text-xs">↗ ${s.action_label||'링크'}</a>`:'';
+          const _au = s.action_url ? (s.action_url.match(/^https?:\/\//) ? s.action_url : 'https://'+s.action_url) : null;
+          const actionLink = _au?`<a href="${_au}" target="_blank" rel="noopener" class="text-line-l underline font-mono text-xs">↗ ${s.action_label||'링크'}</a>`:'';
           return `<div class="shrink-0 w-full">
             <div class="distribution rounded-xl p-3 sm:p-4">
               <div class="metal-panel rounded-lg overflow-hidden">
@@ -939,8 +940,9 @@
                 return `<span class="text-[11px] font-bold px-2 py-1 rounded-lg ${isWe?'bg-warn/10 text-warn':'bg-ink/6 text-ink-2'}">${dt.getMonth()+1}/${dt.getDate()} (${DOW_KR[dt.getDay()]})</span>`;
               }).join('')}</div>` : '';
 
-          const actionBtn = s.action_url
-            ? `<a href="${s.action_url}" target="_blank" rel="noopener"
+          const _sau = s.action_url ? (s.action_url.match(/^https?:\/\//) ? s.action_url : 'https://'+s.action_url) : null;
+          const actionBtn = _sau
+            ? `<a href="${_sau}" target="_blank" rel="noopener"
                 class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-ink text-white hover:bg-ink/85 transition whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
             : '';
 
@@ -2360,7 +2362,8 @@
 
         const mapProvider = detectMapProvider(mapUrl)?.key || null;
         const actionLabel = document.getElementById('sched-action-label')?.value.trim() || null;
-        const actionUrl   = document.getElementById('sched-action-url')?.value.trim()   || null;
+        const rawActionUrl = document.getElementById('sched-action-url')?.value.trim() || null;
+        const actionUrl = rawActionUrl ? (rawActionUrl.match(/^https?:\/\//) ? rawActionUrl : 'https://' + rawActionUrl) : null;
 
         let coverUrl;
         try { coverUrl = await uploadCoverIfNeeded(); }
