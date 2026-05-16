@@ -285,6 +285,35 @@
         .install-banner { bottom: 20px; left: auto; right: 20px; max-width: 360px; }
       }
 
+      /* 카카오 인앱브라우저 배너 */
+      #kakaoBanner {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 9999;
+        background: #FAE300;
+        color: #1a1d24;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 700;
+        gap: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      }
+      #kakaoBanner.show { display: flex; }
+      #kakaoBanner button {
+        background: #1a1d24;
+        color: #FAE300;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
       /* iOS Pull-to-refresh 차단 (선택적) */
       body { overscroll-behavior-y: none; }
 
@@ -3683,6 +3712,12 @@
     </div>
 
     <!-- ===== 알림 권한 배너 (로그인 후) ===== -->
+    <!-- 카카오 인앱브라우저 감지 배너 -->
+    <div id="kakaoBanner">
+      <span>⚡ 최강전기 앱으로 열기</span>
+      <button id="kakaoOpenBtn">앱으로 열기 →</button>
+    </div>
+
     <div id="notifBanner" class="install-banner" role="dialog" aria-label="알림 받기" style="bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px)">
       <div style="font-size:24px">🔔</div>
       <div style="flex:1;min-width:0">
@@ -3706,6 +3741,22 @@
 
     <!-- ===== PWA 등록 + 탭바 활성화 + 설치 프롬프트 ===== -->
     <script>
+      // 카카오 인앱브라우저 감지 → 외부 앱으로 열기 배너
+      (function () {
+        const ua = navigator.userAgent || '';
+        const isKakao = /KAKAOTALK/i.test(ua);
+        if (!isKakao) return;
+        document.getElementById('kakaoBanner').classList.add('show');
+        document.getElementById('kakaoOpenBtn').addEventListener('click', () => {
+          const url = location.href;
+          // Android: 크롬으로 강제 오픈
+          const intentUrl = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
+          location.href = intentUrl;
+          // iOS 폴백: 300ms 후에도 안 열리면 그냥 새 탭
+          setTimeout(() => { window.open(url, '_blank'); }, 300);
+        });
+      })();
+
       // Service Worker 등록
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
