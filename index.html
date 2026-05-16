@@ -509,8 +509,8 @@
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>
                       네이버맵
                     </a>
-                    <a href="https://tmap.life/search?name=르한스&address=서울+성북구+정릉로10길+127" target="_blank"
-                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold text-white"
+                    <a href="tmap://search?name=르한스&address=서울+성북구+정릉로10길+127"
+                       class="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold text-white"
                        style="background:#1a6dff">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                       티맵
@@ -766,7 +766,7 @@
               ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>`
               : '',
             `<a href="https://map.naver.com/v5/search/${_q}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#03C75A;color:#fff;">네이버지도</a>`,
-            `<a href="https://tmap.life/search?name=${_pn}&address=${_pa}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#1a6dff;color:#fff;">티맵</a>`,
+            `<a href="tmap://search?name=${_pn}" class="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#1a6dff;color:#fff;">티맵</a>`,
           ].filter(Boolean).join('') : '';
           const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
           const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
@@ -952,7 +952,7 @@
           const mapLink = (s.place||s.addr) ? [
             s.map_url ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>` : '',
             `<a href="https://map.naver.com/v5/search/${_sq}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#03C75A;color:#fff;">네이버지도</a>`,
-            `<a href="https://tmap.life/search?name=${_spn}&address=${_spa}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#1a6dff;color:#fff;">티맵</a>`,
+            `<a href="tmap://search?name=${_spn}" class="sm:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#1a6dff;color:#fff;">티맵</a>`,
           ].filter(Boolean).join('') : '';
 
           const coverBg = s.cover_url ? `<div class="relative h-28 overflow-hidden"><img src="${s.cover_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/60"></div></div>` : '';
