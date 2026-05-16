@@ -249,13 +249,13 @@
             <p class="font-bold text-ink-2 mt-1">전기과 짱</p>
           </div>
           <!-- 최근 활동 요약 (마지막 방문 이후) -->
-          <div class="bg-panel-dark text-white rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 max-w-full">
+          <div id="since-last-visit" class="bg-panel-dark text-white rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 max-w-full">
             <span class="led-blink w-2 h-2 rounded-full bg-line-l text-line-l flex-shrink-0"></span>
             <div class="text-sm min-w-0">
-              <div class="font-mono text-[10px] text-ink-3">지난 방문 이후</div>
-              <div class="font-bold truncate">새 활동 5건 · 새 모임 1건</div>
+              <div id="since-label" class="font-mono text-[10px] text-ink-3">지난 방문 이후</div>
+              <div id="since-text" class="font-bold truncate">확인 중...</div>
             </div>
-            <button class="text-xs underline text-line-y whitespace-nowrap">보기 →</button>
+            <a href="#meet" class="text-xs underline text-line-y whitespace-nowrap">보기 →</a>
           </div>
         </div>
         <!-- 메인 사진 -->
@@ -798,6 +798,73 @@
       const menu = document.getElementById('mobileMenu');
       btn?.addEventListener('click', () => menu.classList.toggle('hidden'));
       menu?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.add('hidden')));
+    </script>
+
+    <script>
+      (async function() {
+        const STORAGE_KEY = 'choigang_last_visit';
+        const lastVisit = localStorage.getItem(STORAGE_KEY);
+        const now = new Date().toISOString();
+
+        const labelEl = document.getElementById('since-label');
+        const textEl  = document.getElementById('since-text');
+
+        // 이번 방문 시각 저장
+        localStorage.setItem(STORAGE_KEY, now);
+
+        if (!lastVisit) {
+          // 첫 방문
+          labelEl.textContent = '처음 오셨네요 👋';
+          textEl.textContent  = '최강전기에 온 걸 환영해요!';
+          return;
+        }
+
+        // 마지막 방문 이후 경과 시간 표시
+        const diff = Date.now() - new Date(lastVisit).getTime();
+        const days  = Math.floor(diff / 86400000);
+        const hours = Math.floor(diff / 3600000);
+        const mins  = Math.floor(diff / 60000);
+        const agoText = days  > 0 ? `${days}일 전 방문` :
+                        hours > 0 ? `${hours}시간 전 방문` :
+                        mins  > 0 ? `${mins}분 전 방문` : '방금 전 방문';
+        labelEl.textContent = agoText;
+
+        try {
+          // 새 이벤트 (is_published=true, created_at > lastVisit)
+          const { data: newEvents } = await sb
+            .from('events')
+            .select('id', { count: 'exact', head: true })
+            .eq('is_published', true)
+            .gt('created_at', lastVisit);
+
+          // 새 RSVP 응답 (responded_at > lastVisit)
+          const { count: newRsvps } = await sb
+            .from('event_rsvps')
+            .select('*', { count: 'exact', head: true })
+            .gt('responded_at', lastVisit);
+
+          // 새 근황 (created_at > lastVisit)
+          const { count: newPosts } = await sb
+            .from('status_posts')
+            .select('*', { count: 'exact', head: true })
+            .gt('created_at', lastVisit);
+
+          const eventCount = newEvents?.length ?? 0;
+          const total = (newRsvps || 0) + (newPosts || 0);
+
+          if (eventCount === 0 && total === 0) {
+            textEl.textContent = '새 소식이 없어요';
+          } else {
+            const parts = [];
+            if (eventCount > 0) parts.push(`새 모임 ${eventCount}건`);
+            if (newRsvps  > 0) parts.push(`RSVP ${newRsvps}건`);
+            if (newPosts  > 0) parts.push(`근황 ${newPosts}건`);
+            textEl.textContent = parts.join(' · ');
+          }
+        } catch(e) {
+          textEl.textContent = '새 소식 확인 중 오류';
+        }
+      })();
     </script>
   </body>
 </html>
