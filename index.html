@@ -449,7 +449,18 @@
           <a href="#calendar" class="text-sm text-ink-3 hover:text-line-l">전체 일정 →</a>
         </div>
 
-        <!-- 큰 RSVP 카드 -->
+        <!-- 슬라이더 -->
+        <div class="relative">
+          <!-- 왼쪽 화살표 -->
+          <button id="meet-prev" onclick="meetNav(-1)"
+            class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 z-20 w-10 h-10 rounded-full bg-ink text-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 opacity-0 pointer-events-none"
+            style="transition:opacity .3s,transform .15s">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <!-- 슬라이드 트랙 -->
+          <div class="overflow-hidden rounded-xl">
+            <div id="meet-slides" class="flex transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <div class="shrink-0 w-full">
         <div class="distribution rounded-xl p-3 sm:p-4">
           <div class="metal-panel rounded-lg overflow-hidden">
 
@@ -570,6 +581,18 @@
           </div>
         </div>
 
+              </div><!-- /슬라이드 0 -->
+              <div id="meet-extra" class="contents"></div>
+            </div><!-- /meet-slides -->
+          </div><!-- /트랙 -->
+          <!-- 오른쪽 화살표 -->
+          <button id="meet-next" onclick="meetNav(1)"
+            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 z-20 w-10 h-10 rounded-full bg-ink text-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 opacity-0 pointer-events-none"
+            style="transition:opacity .3s,transform .15s">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div><!-- /relative -->
+
         <!-- 상태 메시지 -->
         <p id="rsvp-msg" class="text-center text-sm text-ink-3 mt-3 hidden"></p>
       </div>
@@ -663,6 +686,69 @@
       }
 
       loadRsvp();
+
+      /* ── 다음 모임 슬라이더 ── */
+      const TYPE_GRAD = {
+        '경조사':'linear-gradient(135deg,#4a0505,#9b1c1c)',
+        '술자리':'linear-gradient(135deg,#1c1917,#57534e)',
+        '밥자리':'linear-gradient(135deg,#431407,#c2410c)',
+        '번개':'linear-gradient(135deg,#0f172a,#1d4ed8)',
+        '정기모임':'linear-gradient(135deg,#0f172a,#1e3a5f)',
+        '야외활동':'linear-gradient(135deg,#052e16,#15803d)',
+      };
+      let meetTotal = 1, meetCur = 0;
+
+      async function initMeetSlider() {
+        const { data } = await sb.from('schedule_sessions')
+          .select('*').eq('is_active', true).order('created_at', { ascending: true });
+        const extras = (data || []).filter(s => s.title !== '이은준 결혼식');
+        if (!extras.length) return;
+        const DOW = ['일','월','화','수','목','금','토'];
+        document.getElementById('meet-extra').innerHTML = extras.map(s => {
+          const fd = s.candidate_dates?.[0];
+          const diff = fd ? Math.ceil((new Date(fd+'T00:00:00+09:00') - new Date()) / 86400000) : null;
+          const dday = diff===null?'':diff===0?'D-DAY':diff>0?'D-'+diff:'D+'+Math.abs(diff);
+          const grad = TYPE_GRAD[s.type]||'linear-gradient(135deg,#1a1d24,#374151)';
+          const dl = fd?(()=>{const dt=new Date(fd+'T00:00:00');return `${dt.getMonth()+1}.${String(dt.getDate()).padStart(2,'0')} ${DOW[dt.getDay()]}`})():'';
+          const tl = s.time_str?(()=>{const [h,m]=s.time_str.split(':').map(Number);return (h<12?'오전 ':'오후 ')+(h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시')})():'';
+          const ab = s.action_url?`<a href="${s.action_url}" target="_blank" rel="noopener" class="inline-flex items-center px-4 py-2 rounded-xl bg-ink text-white text-sm font-bold">${s.action_label||'링크 ↗'}</a>`:'';
+          const mb = s.map_url&&s.map_provider?`<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>`:'';
+          return `<div class="shrink-0 w-full">
+            <div class="rounded-xl overflow-hidden shadow-md">
+              <div class="p-6 pb-8" style="background:${grad}">
+                <div class="flex items-start justify-between mb-8">
+                  <span class="text-[11px] font-bold tracking-widest text-white/60">${s.type_icon} ${s.type}</span>
+                  ${dday?`<span class="new-badge font-mono text-xs">${dday}</span>`:''}
+                </div>
+                <h3 class="font-display text-3xl sm:text-4xl text-white leading-tight">${s.title}</h3>
+                ${dl||tl?`<p class="font-mono text-[11px] text-white/60 mt-2">${[dl,tl].filter(Boolean).join(' · ')}</p>`:''}
+              </div>
+              <div class="bg-white p-5 flex flex-col gap-3">
+                ${s.place||s.addr?`<div class="flex items-start gap-2.5"><span>📍</span><div>${s.place?`<div class="font-bold text-sm">${s.place}</div>`:''} ${s.addr?`<div class="text-xs text-ink-3">${s.addr}</div>`:''}</div></div>`:''}
+                ${s.memo?`<p class="text-xs text-ink-3 italic border-l-2 border-ink/10 pl-3">${s.memo}</p>`:''}
+                ${ab||mb?`<div class="flex flex-wrap gap-2 pt-2 border-t border-ink/8">${ab}${mb}</div>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+        meetTotal = 1 + extras.length;
+        updateMeetArrows();
+      }
+
+      function meetNav(dir) {
+        meetCur = Math.max(0, Math.min(meetTotal-1, meetCur+dir));
+        document.getElementById('meet-slides').style.transform = `translateX(-${meetCur*100}%)`;
+        updateMeetArrows();
+      }
+
+      function updateMeetArrows() {
+        const prev = document.getElementById('meet-prev');
+        const next = document.getElementById('meet-next');
+        if (prev) { prev.style.opacity = meetCur===0?'0':'1'; prev.style.pointerEvents = meetCur===0?'none':'auto'; }
+        if (next) { next.style.opacity = meetCur>=meetTotal-1?'0':'1'; next.style.pointerEvents = meetCur>=meetTotal-1?'none':'auto'; }
+      }
+
+      initMeetSlider();
     </script>
 
     <!-- ===== 이벤트 ===== -->
