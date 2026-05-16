@@ -1700,7 +1700,7 @@
           <div class="flex items-center gap-3">
             <div id="sched-type-icon" class="text-2xl">⚡</div>
             <div>
-              <div class="font-mono text-[10px] text-ink-3 leading-none mb-0.5">일정잡기</div>
+              <div class="font-mono text-[10px] text-ink-3 leading-none mb-0.5">이벤트 생성</div>
               <h2 id="sched-modal-title" class="font-display text-xl leading-tight">언제 모일까요?</h2>
             </div>
           </div>
@@ -1769,7 +1769,7 @@
               <!-- 링크 (청첩장 등) -->
               <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center">🔖</span>
-                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">링크</span>
+                <span class="text-xs font-bold text-ink-3 flex-shrink-0" style="width:5.5rem">외부링크(모청 등)</span>
                 <input id="sched-action-label" type="text" placeholder="버튼 이름 (예: 📩 청첩장)" maxlength="15" oninput="saveSchedDetail()"
                   class="w-28 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none border-r border-ink/15 pr-3 mr-1 flex-shrink-0">
                 <input id="sched-action-url" type="url" placeholder="URL 붙여넣기" oninput="saveSchedDetail()"
@@ -1799,7 +1799,7 @@
     <!-- ===== 플로팅 일정잡기 버튼 ===== -->
     <button onclick="openSchedule()" class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
       <span class="text-xl">⚡</span>
-      <span class="hidden sm:inline">일정잡기</span>
+      <span class="hidden sm:inline">이벤트 생성</span>
     </button>
 
     <script>
