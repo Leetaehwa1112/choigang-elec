@@ -1795,21 +1795,42 @@
         }
         if (!confirm('이 미디어를 삭제할까요?')) return;
 
-        // Cloudinary 삭제 (사진인 경우만, fire-and-forget)
+        const delBtn = document.getElementById('lb-delete-btn');
+        if (delBtn) { delBtn.disabled = true; delBtn.style.opacity = '.5'; }
+
+        // Cloudinary public_id 추출 (사진인 경우만)
+        let publicId = null;
         if (m.type === 'photo' && m.src?.includes('cloudinary.com')) {
-          const match = m.src.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
-          const publicId = match?.[1];
-          if (publicId) {
-            fetch('/api/delete-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ publicId })
-            }).catch(e => console.warn('Cloudinary delete failed:', e));
-          }
+          const match = m.src.match(/\/upload\/(?:[^/]+\/)*?v\d+\/(.+)\.[^.]+$/);
+          publicId = match?.[1] || null;
         }
 
-        const { error } = await sb.from('photo_memories').delete().eq('id', m.dbId);
-        if (error) { showToast('삭제 실패 😢'); return; }
+        // 서버에서 원자적으로: 인증 → 오너십 → Cloudinary → DB 삭제
+        try {
+          const resp = await fetch('/api/delete-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${_authSession.access_token}`
+            },
+            body: JSON.stringify({ dbId: m.dbId, publicId })
+          });
+          if (!resp.ok) {
+            const errBody = await resp.json().catch(() => ({}));
+            // 로컬 dev 환경(api 라우트 없음)에서는 fallback: DB만 직접 삭제
+            if (resp.status === 404 && location.hostname === 'localhost') {
+              const { error } = await sb.from('photo_memories').delete().eq('id', m.dbId);
+              if (error) throw new Error(error.message);
+            } else {
+              throw new Error(errBody.error || `HTTP ${resp.status}`);
+            }
+          }
+        } catch (e) {
+          if (delBtn) { delBtn.disabled = false; delBtn.style.opacity = ''; }
+          showToast('삭제 실패 😢 ' + (e.message || ''));
+          return;
+        }
+
         const memIdx = MEMORIES.findIndex(x => x.dbId === m.dbId);
         if (memIdx >= 0) MEMORIES.splice(memIdx, 1);
         lbItems = lbItems.filter(x => x.dbId !== m.dbId);
@@ -1819,6 +1840,7 @@
           lbIdx = Math.min(lbIdx, lbItems.length - 1);
           lbRender();
         }
+        if (delBtn) { delBtn.disabled = false; delBtn.style.opacity = ''; }
         rebuildAndRender();
         loadLatestUpdates();
         showToast('삭제됐어요 🗑️');
