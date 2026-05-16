@@ -755,7 +755,7 @@
           sb.from('event_rsvps').select('session_id, member_name, status')
         ]);
         const extras = (data || []).filter(s => s.title !== '이은준 결혼식');
-        if (!extras.length) return;
+        if (!extras.length) { updateMeetArrows(); return; }
         const DOW = ['일','월','화','수','목','금','토'];
         meetSlides.insertAdjacentHTML('beforeend', extras.map(s => {
           const fd = s.candidate_dates?.[0];
@@ -781,7 +781,7 @@
           const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
           const declining = sRsvps.filter(r => r.status === 'decline').map(r => r.member_name);
           const attendPct = Math.round(attending.length / MEMBER_LIST.length * 100);
-          const myName = localStorage.getItem('rsvpName') || '';
+          const myName = _authSession?.user?.user_metadata?.name || localStorage.getItem('rsvpName') || '';
           const myStatus = sRsvps.find(r => r.member_name === myName)?.status || '';
           const avatars = MEMBER_LIST.map(m => {
             const isA = attending.includes(m.name);
@@ -2459,7 +2459,7 @@
 
       let _pendingMyRsvp = null;
       function setMyDbRsvp(sessionId, status) {
-        const name = localStorage.getItem('rsvpName') || '';
+        const name = _authSession?.user?.user_metadata?.name || localStorage.getItem('rsvpName') || '';
         if (!name || !MEMBER_LIST.find(m => m.name === name)) {
           _pendingMyRsvp = { sessionId, status };
           const namesDiv = document.getElementById('rsvp-picker-names');
