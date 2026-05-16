@@ -2512,7 +2512,14 @@
           options: { data: { name, username } }
         });
         if (error) {
-          err.textContent = error.message.includes('already') ? '이미 사용 중인 아이디예요.' : '가입 중 오류가 발생했어요.';
+          const msg = error.message || '';
+          if (msg.includes('already') || msg.includes('duplicate') || msg.includes('unique')) {
+            err.textContent = '이미 사용 중인 아이디예요.';
+          } else if (msg.includes('Password')) {
+            err.textContent = '비밀번호는 6자 이상이어야 해요.';
+          } else {
+            err.textContent = msg || '가입 중 오류가 발생했어요.';
+          }
           err.classList.remove('hidden'); return;
         }
         closeAuthModal();
