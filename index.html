@@ -1449,6 +1449,10 @@
         document.getElementById('upload-photo-area').classList.toggle('hidden', tab !== 'photo');
         document.getElementById('upload-yt-area').classList.toggle('hidden', tab !== 'yt');
         document.getElementById('upload-submit').disabled = true;
+        // 탭 전환 시 사진 미리보기 초기화
+        document.getElementById('upload-preview').classList.add('hidden');
+        document.getElementById('upload-drop-hint').classList.remove('hidden');
+        document.getElementById('upload-file').value = '';
       }
 
       function onYtUrlInput(url) {
@@ -1469,6 +1473,7 @@
       }
 
       function openUploadModal(groupName) {
+        if (!_authSession) { showToast('먼저 로그인해주세요 🔒'); return; }
         _uploadGroupName = groupName;
         _uploadFile = null;
         _ytId = null;
@@ -1478,6 +1483,7 @@
         document.getElementById('upload-preview').classList.add('hidden');
         document.getElementById('upload-drop-hint').classList.remove('hidden');
         document.getElementById('upload-progress').classList.add('hidden');
+        document.getElementById('upload-progress-bar').style.width = '0%';
         document.getElementById('upload-submit').disabled = true;
         document.getElementById('upload-yt-url').value = '';
         document.getElementById('yt-preview').classList.add('hidden');
