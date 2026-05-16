@@ -1114,26 +1114,7 @@
         <!-- 미디어 그리드 -->
         <div id="memory-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
 
-        <!-- 댓글 위젯 -->
-        <div class="cmt-widget mt-6 pt-5 border-t border-dashed border-ink/20" data-target="memory">
-          <button class="cmt-toggle flex items-center gap-2 text-sm text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)">
-            <span>💬</span>
-            <span class="cmt-label">댓글</span>
-            <span class="cmt-count font-mono text-xs opacity-60"></span>
-          </button>
-          <div class="cmt-body hidden mt-3">
-            <div class="cmt-list space-y-2 mb-3 max-h-40 overflow-y-auto"></div>
-            <div class="flex gap-1.5">
-              <select class="cmt-name-sel text-xs border border-ink/20 rounded px-1.5 py-1 bg-white text-ink flex-shrink-0">
-                <option value="">이름</option>
-                <option>이태화</option><option>나준민</option><option>한동명</option>
-                <option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option>
-              </select>
-              <input type="text" placeholder="추억 한마디..." maxlength="80" class="cmt-input flex-1 text-xs border border-ink/20 rounded px-2 py-1 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))">
-              <button onclick="submitCmt(this.closest('.cmt-widget'))" class="cmt-submit text-xs font-bold px-2.5 py-1 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button>
-            </div>
-          </div>
-        </div>
+        <p class="text-[11px] text-ink-3/60 mt-4 font-mono">사진을 탭하면 댓글을 남길 수 있어요 💬</p>
       </div>
     </section>
 
@@ -1217,16 +1198,38 @@
 
     <!-- ===== 라이트박스 모달 ===== -->
     <div id="lb-overlay" class="fixed inset-0 z-50 hidden flex-col bg-black/95" onclick="lbClose(event)">
+      <!-- 헤더 -->
       <div class="flex items-center justify-between px-4 py-3 flex-shrink-0">
         <span id="lb-label" class="text-white/70 font-mono text-xs"></span>
         <button onclick="lbClose()" class="text-white/60 hover:text-white text-2xl leading-none px-2">✕</button>
       </div>
-      <div class="flex-1 flex items-center justify-center relative min-h-0 px-12">
+      <!-- 미디어 -->
+      <div class="flex-1 flex items-center justify-center relative min-h-0 px-12" style="min-height:0">
         <button onclick="lbMove(-1)" class="absolute left-2 text-white/60 hover:text-white text-3xl font-bold px-3 py-6 z-10">‹</button>
         <div id="lb-media" class="w-full h-full flex items-center justify-center"></div>
         <button onclick="lbMove(1)" class="absolute right-2 text-white/60 hover:text-white text-3xl font-bold px-3 py-6 z-10">›</button>
       </div>
-      <div id="lb-dots" class="flex justify-center gap-1.5 py-4 flex-shrink-0"></div>
+      <!-- 점 인디케이터 -->
+      <div id="lb-dots" class="flex justify-center gap-1.5 py-2 flex-shrink-0"></div>
+      <!-- 댓글 패널 -->
+      <div class="flex-shrink-0 border-t border-white/10 bg-white/5 px-4 pt-3 pb-4" onclick="event.stopPropagation()">
+        <!-- 댓글 목록 -->
+        <div id="lb-cmt-list" class="space-y-1.5 mb-2.5 max-h-24 overflow-y-auto"></div>
+        <!-- 입력 -->
+        <div class="flex gap-1.5">
+          <select id="lb-cmt-name" class="text-xs border border-white/20 rounded px-1.5 py-1 bg-white/10 text-white flex-shrink-0 min-w-0" onchange="saveCmtName(this.value)">
+            <option value="" class="text-ink">이름</option>
+            <option class="text-ink">이태화</option><option class="text-ink">나준민</option>
+            <option class="text-ink">한동명</option><option class="text-ink">이은준</option>
+            <option class="text-ink">김상현</option><option class="text-ink">김하람</option>
+            <option class="text-ink">김건우</option>
+          </select>
+          <input id="lb-cmt-input" type="text" placeholder="사진에 한마디…" maxlength="80"
+            class="flex-1 text-xs border border-white/20 rounded px-2 py-1 bg-white/10 text-white placeholder-white/40 min-w-0"
+            onkeydown="if(event.key==='Enter')lbSubmitCmt()">
+          <button onclick="lbSubmitCmt()" class="text-xs font-bold px-2.5 py-1 bg-white text-ink rounded hover:bg-line-y transition flex-shrink-0">↑</button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -1533,6 +1536,14 @@
       const lbDots = document.getElementById('lb-dots');
       const lbLabel = document.getElementById('lb-label');
 
+      // 미디어별 고유 target key
+      function mediaTarget(m) {
+        if (m.type === 'youtube') return 'mem-yt-' + m.ytId;
+        const parts = m.src.split('/');
+        const file = parts[parts.length - 1].replace(/\.[^.]+$/, '');
+        return 'mem-' + file;
+      }
+
       function lbOpenGroup(gi, itemIdx) {
         lbItems = MEM_GROUPS[gi].items;
         lbIdx = itemIdx;
@@ -1548,6 +1559,9 @@
         lbOv.classList.remove('flex');
         document.body.style.overflow = '';
         lbMedia.innerHTML = '';
+        _lbCmtTarget = '';
+        const list = document.getElementById('lb-cmt-list');
+        if (list) list.innerHTML = '';
       }
 
       function lbMove(dir) {
@@ -1555,20 +1569,78 @@
         lbRender();
       }
 
+      let _lbCmtTarget = '';
+
       function lbRender() {
         const m = lbItems[lbIdx];
-        lbLabel.textContent = m.label;
+        lbLabel.textContent = (m.label || '') + (lbItems.length > 1 ? `  ${lbIdx+1}/${lbItems.length}` : '');
         if (m.type === 'youtube') {
           const iframeClass = m.isShort
-            ? 'h-full max-h-[75vh] w-auto aspect-[9/16] rounded-lg'
+            ? 'h-full max-h-[55vh] w-auto aspect-[9/16] rounded-lg'
             : 'w-full max-w-2xl aspect-video rounded-lg';
           lbMedia.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.ytId}?autoplay=1" class="${iframeClass}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
         } else {
-          lbMedia.innerHTML = `<img src="${m.src}" class="max-w-full max-h-full object-contain rounded-lg" style="max-height:calc(100vh - 140px)"/>`;
+          lbMedia.innerHTML = `<img src="${m.src}" class="max-w-full max-h-full object-contain rounded-lg" style="max-height:calc(100vh - 220px)"/>`;
         }
         lbDots.innerHTML = lbItems.map((_, i) =>
           `<div class="w-1.5 h-1.5 rounded-full transition-all ${i === lbIdx ? 'bg-white' : 'bg-white/30'}"></div>`
         ).join('');
+
+        // 댓글 로드
+        _lbCmtTarget = mediaTarget(m);
+        lbLoadCmt();
+
+        // 저장된 이름 반영
+        const sel = document.getElementById('lb-cmt-name');
+        const saved = getCmtName();
+        if (sel && saved) sel.value = saved;
+      }
+
+      async function lbLoadCmt() {
+        const target = _lbCmtTarget;
+        const list = document.getElementById('lb-cmt-list');
+        if (!list) return;
+        list.innerHTML = '<div class="text-[10px] text-white/40 py-1">불러오는 중…</div>';
+        const { data, error } = await sb.from('comments')
+          .select('author, content, created_at')
+          .eq('target', target)
+          .order('created_at', { ascending: true })
+          .limit(30);
+        if (target !== _lbCmtTarget) return; // 사진이 바뀐 경우 무시
+        if (error || !data || !data.length) {
+          list.innerHTML = '<div class="text-[10px] text-white/30 py-1">첫 댓글을 남겨보세요 💬</div>';
+          return;
+        }
+        list.innerHTML = data.map(c =>
+          `<div class="flex gap-1.5 text-xs leading-snug">
+            <span class="font-mono text-[10px] font-bold text-white/80 flex-shrink-0 whitespace-nowrap">${escHtml(c.author)}</span>
+            <span class="text-white/70 flex-1 break-all">${escHtml(c.content)}</span>
+            <span class="text-[9px] text-white/30 flex-shrink-0 font-mono whitespace-nowrap">${timeAgo(c.created_at)}</span>
+          </div>`
+        ).join('');
+        list.scrollTop = list.scrollHeight;
+      }
+
+      async function lbSubmitCmt() {
+        const nameEl = document.getElementById('lb-cmt-name');
+        const inputEl = document.getElementById('lb-cmt-input');
+        const name = nameEl?.value.trim();
+        const content = inputEl?.value.trim();
+        if (!name) {
+          nameEl?.classList.add('ring-2','ring-yellow-400');
+          setTimeout(() => nameEl?.classList.remove('ring-2','ring-yellow-400'), 1500);
+          return;
+        }
+        if (!content) { inputEl?.focus(); return; }
+        saveCmtName(name);
+        inputEl.value = '';
+        const { error } = await sb.from('comments').insert({
+          target: _lbCmtTarget,
+          author: name,
+          content
+        });
+        if (!error) lbLoadCmt();
+        else showToast('댓글 등록 실패 😢');
       }
 
       document.addEventListener('keydown', e => {
