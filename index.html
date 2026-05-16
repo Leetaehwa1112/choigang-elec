@@ -804,6 +804,59 @@
       </div>
     </section>
 
+    <!-- ===== 사진 업로드 모달 ===== -->
+    <div id="upload-modal" class="fixed inset-0 z-[60] hidden items-end sm:items-center justify-center bg-black/70" onclick="closeUploadModal(event)">
+      <div class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 mx-0 sm:mx-4" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+          <h3 id="upload-modal-title" class="font-bold text-ink text-base">📷 사진 추가</h3>
+          <button onclick="closeUploadModal()" class="text-ink-3 hover:text-ink text-xl leading-none">✕</button>
+        </div>
+
+        <!-- 앨범 선택 (그룹 지정 없을 때 표시) -->
+        <div id="upload-group-row" class="mb-3">
+          <label class="text-[11px] text-ink-3 mb-1 block font-mono">앨범 선택</label>
+          <select id="upload-group-sel" onchange="onGroupSelChange(this)" class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l"></select>
+        </div>
+
+        <!-- 새 앨범 이름 입력 -->
+        <div id="upload-new-album-row" class="mb-3 hidden">
+          <label class="text-[11px] text-ink-3 mb-1 block font-mono">새 앨범 이름</label>
+          <input id="upload-new-album" type="text" placeholder="예) MT 2024 🏕️" maxlength="30" class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l">
+        </div>
+
+        <!-- 사진 설명 -->
+        <div class="mb-3">
+          <label class="text-[11px] text-ink-3 mb-1 block font-mono">설명 <span class="opacity-50">(선택)</span></label>
+          <input id="upload-label" type="text" placeholder="예) '26.05.15 청모" maxlength="40" class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l">
+        </div>
+
+        <!-- 파일 드롭 영역 -->
+        <div id="upload-drop" class="border-2 border-dashed border-ink/25 rounded-xl flex flex-col items-center justify-center p-5 mb-4 cursor-pointer hover:border-line-l transition-colors min-h-[100px]" onclick="document.getElementById('upload-file').click()">
+          <div id="upload-preview" class="hidden w-full flex justify-center">
+            <img id="upload-preview-img" class="max-h-28 rounded-lg object-contain">
+          </div>
+          <div id="upload-drop-hint" class="text-center pointer-events-none">
+            <div class="text-3xl mb-1">📷</div>
+            <div class="text-xs text-ink-3">탭해서 사진 선택<br><span class="opacity-60">또는 드래그 앤 드롭</span></div>
+          </div>
+        </div>
+        <input id="upload-file" type="file" accept="image/*" class="hidden" onchange="onFileSelected(this)">
+
+        <!-- 업로드 진행 -->
+        <div id="upload-progress" class="hidden mb-3">
+          <div class="h-1.5 bg-ink/10 rounded-full overflow-hidden">
+            <div id="upload-progress-bar" class="h-full bg-line-l transition-all duration-300" style="width:0%"></div>
+          </div>
+          <div id="upload-status" class="text-[11px] text-ink-3 text-center mt-1.5 font-mono">업로드 중...</div>
+        </div>
+
+        <button id="upload-submit" onclick="submitUpload()" disabled
+          class="w-full bg-ink text-white font-bold py-2.5 rounded-xl text-sm disabled:opacity-30 hover:bg-line-l transition-colors">
+          추가하기
+        </button>
+      </div>
+    </div>
+
     <!-- ===== 라이트박스 모달 ===== -->
     <div id="lb-overlay" class="fixed inset-0 z-50 hidden flex-col bg-black/95" onclick="lbClose(event)">
       <div class="flex items-center justify-between px-4 py-3 flex-shrink-0">
@@ -819,30 +872,44 @@
     </div>
 
     <script>
-      // ── 추억 미디어 데이터 ──
-      // group이 같은 항목끼리 하나의 스택 카드로 묶임
-      const MEMORIES = [
+      // ── 추억 미디어 데이터 (기본값) ──
+      const HARDCODED_MEMORIES = [
         { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg', label: "'26.05.15 청모", group: "이은준 청모 🍺", badge: 'NEW' },
         { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png', label: "고등학교 시절", group: "고등학교 시절 📸" },
         { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg', label: "고등학교 시절", group: "고등학교 시절 📸" },
         { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg', label: "고등학교 시절", group: "고등학교 시절 📸" },
         { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg', label: "고등학교 시절", group: "고등학교 시절 📸" },
-        // 유튜브: { type: 'youtube', ytId: 'VIDEO_ID', label: "제목", group: "그룹명" },
       ];
+      let MEMORIES = [...HARDCODED_MEMORIES];
+      let MEM_GROUPS = [];
 
-      // 연속된 같은 group끼리 묶기
-      function buildGroups() {
-        const groups = [];
-        MEMORIES.forEach(m => {
-          if (!groups.length || groups[groups.length-1].name !== m.group)
-            groups.push({ name: m.group, items: [] });
-          groups[groups.length-1].items.push(m);
+      // 같은 group name끼리 묶기 (삽입 순서 유지)
+      function buildGroups(memories) {
+        const map = new Map();
+        memories.forEach(m => {
+          if (!map.has(m.group)) map.set(m.group, { name: m.group, items: [] });
+          map.get(m.group).items.push(m);
         });
-        return groups;
+        return [...map.values()];
       }
-      const MEM_GROUPS = buildGroups();
 
-      // 폴라로이드 스택 뒷장 회전 오프셋
+      function rebuildAndRender() {
+        MEM_GROUPS = buildGroups(MEMORIES);
+        renderMemoryGrid();
+      }
+
+      // DB에서 사용자 추가 사진 로드
+      async function loadDbMemories() {
+        try {
+          const { data, error } = await sb.from('photo_memories').select('*').order('created_at', { ascending: true });
+          if (error || !data || !data.length) return;
+          data.forEach(row => {
+            MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name });
+          });
+          rebuildAndRender();
+        } catch(e) { console.warn('photo_memories load failed', e); }
+      }
+
       const BACK_ROTS = ['6deg','-5deg','3deg','-7deg'];
 
       function thumbOf(m) {
@@ -856,7 +923,6 @@
         MEM_GROUPS.forEach((g, gi) => {
           const first = g.items[0];
           const count = g.items.length;
-          // 뒷장: 최대 3장, 뒤집어서 z-index 낮은 순으로
           const backs = g.items.slice(1).reverse().slice(0, 3);
           const backCards = backs.map((b, bi) => {
             const rot = BACK_ROTS[bi];
@@ -869,11 +935,12 @@
             ? `<div class="absolute inset-0 flex items-center justify-center"><div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div>` : '';
           const badge = first.badge ? `<span class="absolute top-2 left-2 text-[8px] font-bold bg-line-l text-white px-1.5 py-0.5 rounded">${first.badge}</span>` : '';
           const countBadge = count > 1 ? `<span class="absolute bottom-7 right-2 text-[8px] font-mono bg-ink/75 text-white px-1.5 py-0.5 rounded">${count}장</span>` : '';
+          const groupNameEsc = g.name.replace(/'/g, "\\'");
 
           html += `
-            <div class="relative cursor-pointer" style="padding:10px 12px 0 0" onclick="lbOpenGroup(${gi},0)">
+            <div class="relative" style="padding:10px 12px 0 0">
               ${backCards}
-              <div class="relative bg-white p-1.5 pb-6 shadow-md hover:scale-105 transition-transform duration-200 overflow-hidden" style="rotate:-1.5deg;z-index:10">
+              <div class="relative bg-white p-1.5 pb-6 shadow-md hover:scale-105 transition-transform duration-200 overflow-hidden cursor-pointer" style="rotate:-1.5deg;z-index:10" onclick="lbOpenGroup(${gi},0)">
                 <div class="relative aspect-square overflow-hidden">
                   <img src="${thumbOf(first)}" alt="${first.label}" class="w-full h-full object-cover"/>
                   ${playIcon}
@@ -882,14 +949,183 @@
                 </div>
                 <div class="font-mono text-[9px] text-ink-3 text-center mt-2 leading-tight px-1">${g.name}</div>
               </div>
+              <button onclick="event.stopPropagation();openUploadModal('${groupNameEsc}')"
+                class="absolute top-0 right-0 w-6 h-6 rounded-full bg-ink text-white text-sm font-bold flex items-center justify-center shadow hover:bg-line-l transition z-20 leading-none"
+                title="${g.name}에 사진 추가">+</button>
             </div>`;
         });
 
-        html += `<div class="bg-white/70 p-1.5 pb-5 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition" style="margin-top:10px">
+        html += `<div onclick="openUploadModal('')" class="bg-white/70 p-1.5 pb-5 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition" style="margin-top:10px">
           <div class="aspect-square w-full flex items-center justify-center text-2xl text-ink-3">＋</div>
-          <div class="font-mono text-[9px] text-ink-3 text-center mt-2">추가</div>
+          <div class="font-mono text-[9px] text-ink-3 text-center mt-2">새 앨범 추가</div>
         </div>`;
         grid.innerHTML = html;
+      }
+
+      // ── 업로드 모달 ──
+      let _uploadGroupName = '';
+      let _uploadFile = null;
+
+      function openUploadModal(groupName) {
+        _uploadGroupName = groupName;
+        _uploadFile = null;
+        const modal = document.getElementById('upload-modal');
+        const groupRow = document.getElementById('upload-group-row');
+        const groupSel = document.getElementById('upload-group-sel');
+        const labelInput = document.getElementById('upload-label');
+        const preview = document.getElementById('upload-preview');
+        const hint = document.getElementById('upload-drop-hint');
+        const progress = document.getElementById('upload-progress');
+        const submitBtn = document.getElementById('upload-submit');
+        const fileInput = document.getElementById('upload-file');
+
+        fileInput.value = '';
+        labelInput.value = '';
+        preview.classList.add('hidden');
+        hint.classList.remove('hidden');
+        progress.classList.add('hidden');
+        submitBtn.disabled = true;
+
+        // 그룹 셀렉터 구성
+        const existingGroups = MEM_GROUPS.map(g => g.name);
+        groupSel.innerHTML = existingGroups.map(n =>
+          `<option value="${n}" ${n === groupName ? 'selected' : ''}>${n}</option>`
+        ).join('') + '<option value="__new__">+ 새 앨범 만들기</option>';
+
+        if (groupName) {
+          document.getElementById('upload-modal-title').textContent = `📷 ${groupName}에 추가`;
+          groupRow.classList.add('hidden');
+        } else {
+          document.getElementById('upload-modal-title').textContent = '📷 사진 추가';
+          groupRow.classList.remove('hidden');
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeUploadModal(e) {
+        if (e && e.target !== document.getElementById('upload-modal')) return;
+        document.getElementById('upload-modal').classList.add('hidden');
+        document.getElementById('upload-modal').classList.remove('flex');
+      }
+
+      function onFileSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+        _uploadFile = file;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          document.getElementById('upload-preview-img').src = ev.target.result;
+          document.getElementById('upload-preview').classList.remove('hidden');
+          document.getElementById('upload-drop-hint').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+        document.getElementById('upload-submit').disabled = false;
+      }
+
+      // 드래그 앤 드롭
+      document.addEventListener('DOMContentLoaded', () => {
+        const drop = document.getElementById('upload-drop');
+        if (!drop) return;
+        drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('border-line-l'); });
+        drop.addEventListener('dragleave', () => drop.classList.remove('border-line-l'));
+        drop.addEventListener('drop', e => {
+          e.preventDefault();
+          drop.classList.remove('border-line-l');
+          const file = e.dataTransfer.files[0];
+          if (!file || !file.type.startsWith('image/')) return;
+          _uploadFile = file;
+          document.getElementById('upload-file').files = e.dataTransfer.files;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            document.getElementById('upload-preview-img').src = ev.target.result;
+            document.getElementById('upload-preview').classList.remove('hidden');
+            document.getElementById('upload-drop-hint').classList.add('hidden');
+          };
+          reader.readAsDataURL(file);
+          document.getElementById('upload-submit').disabled = false;
+        });
+      });
+
+      async function submitUpload() {
+        if (!_uploadFile) return;
+        const submitBtn = document.getElementById('upload-submit');
+        const progress = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('upload-progress-bar');
+        const statusText = document.getElementById('upload-status');
+        const groupSel = document.getElementById('upload-group-sel');
+        const labelInput = document.getElementById('upload-label');
+        const newAlbumRow = document.getElementById('upload-new-album-row');
+        const newAlbumInput = document.getElementById('upload-new-album');
+
+        // 그룹명 결정
+        let groupName = _uploadGroupName || groupSel.value;
+        if (groupName === '__new__') {
+          groupName = newAlbumInput ? newAlbumInput.value.trim() : '';
+          if (!groupName) { alert('앨범 이름을 입력해주세요.'); return; }
+        }
+        const label = labelInput.value.trim() || groupName;
+
+        submitBtn.disabled = true;
+        progress.classList.remove('hidden');
+        progressBar.style.width = '20%';
+        statusText.textContent = 'Cloudinary에 업로드 중...';
+
+        try {
+          // 1. Cloudinary 업로드 (unsigned preset)
+          const formData = new FormData();
+          formData.append('file', _uploadFile);
+          formData.append('upload_preset', 'ml_default');
+
+          const xhr = new XMLHttpRequest();
+          const cloudUrl = await new Promise((resolve, reject) => {
+            xhr.upload.onprogress = e => {
+              if (e.lengthComputable) {
+                progressBar.style.width = Math.round(20 + (e.loaded/e.total)*60) + '%';
+              }
+            };
+            xhr.onload = () => {
+              const res = JSON.parse(xhr.responseText);
+              if (res.secure_url) resolve(res.secure_url);
+              else reject(res.error?.message || '업로드 실패');
+            };
+            xhr.onerror = () => reject('네트워크 오류');
+            xhr.open('POST', 'https://api.cloudinary.com/v1_1/dhk87y1nb/image/upload');
+            xhr.send(formData);
+          });
+
+          progressBar.style.width = '80%';
+          statusText.textContent = 'Supabase에 저장 중...';
+
+          // 2. Supabase에 저장
+          const { error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName });
+          if (error) throw error.message;
+
+          progressBar.style.width = '100%';
+          statusText.textContent = '완료! ✅';
+
+          // 3. 메모리에 추가 후 재렌더
+          MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName });
+          rebuildAndRender();
+
+          setTimeout(() => {
+            document.getElementById('upload-modal').classList.add('hidden');
+            document.getElementById('upload-modal').classList.remove('flex');
+          }, 800);
+
+        } catch(err) {
+          statusText.textContent = '오류: ' + err;
+          progressBar.style.width = '0%';
+          submitBtn.disabled = false;
+        }
+      }
+
+      // 새 앨범 선택 시 입력란 표시
+      function onGroupSelChange(sel) {
+        const newRow = document.getElementById('upload-new-album-row');
+        if (sel.value === '__new__') newRow.classList.remove('hidden');
+        else newRow.classList.add('hidden');
       }
 
       // ── 라이트박스 (그룹 내부만 탐색) ──
@@ -942,7 +1178,8 @@
         if (e.key === 'ArrowRight') lbMove(1);
       });
 
-      renderMemoryGrid();
+      rebuildAndRender();
+      loadDbMemories();
     </script>
 
     <!-- ===== FOOTER ===== -->
