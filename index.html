@@ -438,20 +438,25 @@
     </section>
 
 
-    <!-- ===== ⭐ 다음 모임 (RSVP 큰 카드) ===== -->
+    <!-- ===== ⭐ 다음 모임 슬라이더 ===== -->
     <section id="meet" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-display text-2xl sm:text-3xl flex items-center gap-2">
             다음 모임
-            <span class="new-badge dday-badge">D-43</span>
+            <span id="meet-dday" class="new-badge dday-badge"></span>
           </h2>
           <a href="#calendar" class="text-sm text-ink-3 hover:text-line-l">전체 일정 →</a>
         </div>
 
-        <!-- 큰 RSVP 카드 -->
-        <div class="distribution rounded-xl p-3 sm:p-4">
-          <div class="metal-panel rounded-lg overflow-hidden">
+        <!-- 슬라이더 -->
+        <div class="relative">
+          <div id="meet-slider" class="flex overflow-x-auto gap-4 snap-x snap-mandatory scroll-smooth" style="scrollbar-width:none;-ms-overflow-style:none;">
+            <div class="snap-center shrink-0 w-full flex items-center justify-center py-10 text-ink-3 text-sm opacity-50">불러오는 중…</div>
+          </div>
+          <div id="meet-dots" class="flex justify-center gap-2 mt-4"></div>
+        </div>
+        <div style="display:none"><div>
 
             <!-- 커플 사진 -->
             <div class="relative" style="height:220px">
@@ -570,99 +575,107 @@
           </div>
         </div>
 
-        <!-- 상태 메시지 -->
-        <p id="rsvp-msg" class="text-center text-sm text-ink-3 mt-3 hidden"></p>
       </div>
     </section>
 
     <script>
-      // ── Supabase 클라이언트 ──
       const { createClient } = supabase;
       const sb = createClient(
         'https://mspwdasiewqtwfyngdhy.supabase.co',
         'sb_publishable_VhU_zhguD5UkIaMqGdLQCQ_cBjQI3yG'
       );
 
-      // ── D-day 동적 계산 ──
-      const WEDDING_DATE = new Date('2026-06-28T00:00:00+09:00');
-      function getDday() {
-        const diff = Math.ceil((WEDDING_DATE - new Date()) / (1000 * 60 * 60 * 24));
-        return diff > 0 ? 'D-' + diff : diff === 0 ? 'D-DAY' : 'D+' + Math.abs(diff);
-      }
-      document.querySelectorAll('.dday-badge').forEach(el => el.textContent = getDday());
-
-      // ── RSVP 상태 ──
-      const MEMBERS = ['이태화','나준민','한동명','이은준','김상현','김하람','김건우'];
-      const rsvpState = {};
-      MEMBERS.forEach(n => rsvpState[n] = null);
-      rsvpState['이은준'] = 'attend';
-
-      const MEMBER_COLORS = {
-        '이태화': 'bg-ink text-line-y',
-        '나준민': 'bg-line-l text-white',
-        '한동명': 'bg-line-y text-ink',
-        '이은준': 'bg-line-e text-white',
-        '김상현': 'bg-board-dark text-white',
-        '김하람': 'bg-panel-dark text-white',
-        '김건우': 'bg-line-n text-white',
+      const TYPE_GRAD = {
+        '경조사':  'linear-gradient(135deg,#4a0505,#9b1c1c)',
+        '술자리':  'linear-gradient(135deg,#1c1917,#57534e)',
+        '밥자리':  'linear-gradient(135deg,#431407,#c2410c)',
+        '번개':    'linear-gradient(135deg,#0f172a,#1d4ed8)',
+        '정기모임':'linear-gradient(135deg,#0f172a,#1e3a5f)',
+        '야외활동':'linear-gradient(135deg,#052e16,#15803d)',
       };
 
-      let currentEventId = null;
+      function meetDday(dateStr) {
+        if (!dateStr) return '';
+        const diff = Math.ceil((new Date(dateStr + 'T00:00:00+09:00') - new Date()) / 86400000);
+        return diff === 0 ? 'D-DAY' : diff > 0 ? 'D-' + diff : 'D+' + Math.abs(diff);
+      }
 
-      // DB에서 RSVP 불러오기
-      async function loadRsvp() {
-        const { data: event } = await sb.from('next_event_card').select('*').single();
-        if (!event) return;
-        currentEventId = event.id;
+      let meetSessions = [], meetIdx = 0;
 
-        const { data: rsvps } = await sb
-          .from('event_rsvps')
-          .select('status, members(name)')
-          .eq('event_id', event.id);
+      async function loadMeet() {
+        const { data } = await sb.from('schedule_sessions')
+          .select('*').eq('is_active', true).order('created_at', { ascending: true });
+        meetSessions = data || [];
+        renderMeet();
+      }
 
-        if (rsvps) {
-          rsvps.forEach(r => {
-            const name = r.members?.name;
-            if (name && MEMBERS.includes(name)) rsvpState[name] = r.status;
-          });
+      function renderMeet() {
+        const slider = document.getElementById('meet-slider');
+        const dots   = document.getElementById('meet-dots');
+        if (!meetSessions.length) {
+          slider.innerHTML = '<div class="snap-center shrink-0 w-full flex items-center justify-center py-16 text-ink-3 text-sm opacity-50">등록된 일정이 없어요</div>';
+          dots.innerHTML = '';
+          return;
         }
-        refreshRsvpUI();
+        const DOW = ['일','월','화','수','목','금','토'];
+        slider.innerHTML = meetSessions.map((s, i) => {
+          const firstDate = s.candidate_dates?.[0] || null;
+          const dday = meetDday(firstDate);
+          const grad = TYPE_GRAD[s.type] || 'linear-gradient(135deg,#1a1d24,#374151)';
+          const dateLabel = firstDate ? (() => { const dt = new Date(firstDate+'T00:00:00'); return `${dt.getMonth()+1}.${String(dt.getDate()).padStart(2,'0')} ${DOW[dt.getDay()]}`; })() : '';
+          const timeLabel = s.time_str ? (() => { const [h,m] = s.time_str.split(':').map(Number); return (h<12?'오전 ':'오후 ')+(h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시'); })() : '';
+          const mapBtns = s.map_url && s.map_provider
+            ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>` : '';
+          const actionBtn = s.action_url
+            ? `<a href="${s.action_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-ink text-white text-sm font-bold hover:bg-ink/85 transition">${s.action_label || '링크 ↗'}</a>` : '';
+          const extraDates = s.candidate_dates?.length > 1
+            ? `<div class="flex flex-wrap gap-1.5 mt-2">${s.candidate_dates.map(d => { const dt=new Date(d+'T00:00:00'); return `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/15 text-white">${dt.getMonth()+1}/${dt.getDate()}(${DOW[dt.getDay()]})</span>`; }).join('')}</div>` : '';
+          return `<div class="snap-center shrink-0 w-full rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.15)]">
+            <div class="relative p-6 pb-8" style="background:${grad}">
+              <div class="flex items-start justify-between mb-8">
+                <span class="text-[11px] font-bold tracking-widest text-white/60 uppercase">${s.type_icon} ${s.type}</span>
+                ${dday ? `<span class="font-mono text-xs font-bold px-2.5 py-1 rounded-full bg-white/15 text-white">${dday}</span>` : ''}
+              </div>
+              <h3 class="font-display text-3xl sm:text-4xl text-white leading-tight drop-shadow">${s.title}</h3>
+              ${dateLabel||timeLabel ? `<p class="font-mono text-[11px] text-white/60 mt-2">${[dateLabel,timeLabel].filter(Boolean).join(' · ')}</p>` : ''}
+              ${extraDates}
+            </div>
+            <div class="bg-white p-5 flex flex-col gap-3">
+              ${s.place||s.addr ? `<div class="flex items-start gap-2.5"><span class="text-base mt-0.5">📍</span><div>${s.place?`<div class="font-bold text-sm">${s.place}</div>`:''} ${s.addr?`<div class="text-xs text-ink-3 mt-0.5">${s.addr}</div>`:''}</div></div>` : ''}
+              ${s.memo ? `<p class="text-xs text-ink-3 italic border-l-2 border-ink/10 pl-3">${s.memo}</p>` : ''}
+              ${actionBtn||mapBtns ? `<div class="flex flex-wrap gap-2 pt-2 border-t border-ink/8">${actionBtn}${mapBtns}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+
+        dots.innerHTML = meetSessions.map((_, i) =>
+          `<button onclick="meetGoTo(${i})" class="meet-dot rounded-full transition-all ${i===0?'bg-ink w-5 h-2':'bg-ink/20 w-2 h-2'}"></button>`
+        ).join('');
+
+        const ddEl = document.getElementById('meet-dday');
+        if (ddEl) ddEl.textContent = meetDday(meetSessions[0]?.candidate_dates?.[0]);
+
+        slider.addEventListener('scroll', () => {
+          const idx = Math.round(slider.scrollLeft / slider.clientWidth);
+          if (idx !== meetIdx) { meetIdx = idx; updateMeetDots(); }
+        }, { passive: true });
       }
 
-      function refreshRsvpUI() {
-        let attend = 0;
-        MEMBERS.forEach(name => {
-          if (name === '이은준') { attend++; return; }
-          const el = document.getElementById('av-' + name);
-          if (!el) return;
-          const s = rsvpState[name];
-          if (s === 'attend') attend++;
-          const base = MEMBER_COLORS[name] || 'bg-ink text-white';
-          el.className = 'w-10 h-10 rounded-full font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition ' +
-            (s === 'attend'  ? base + ' ring-2 ring-offset-1 ring-line-e' :
-             s === 'decline' ? 'bg-ink/10 text-ink/20'                    :
-                               'bg-ink/15 text-ink/30');
+      function meetGoTo(i) {
+        const slider = document.getElementById('meet-slider');
+        slider.scrollTo({ left: i * slider.clientWidth, behavior: 'smooth' });
+        meetIdx = i; updateMeetDots();
+      }
+
+      function updateMeetDots() {
+        document.querySelectorAll('.meet-dot').forEach((d, i) => {
+          d.className = 'meet-dot rounded-full transition-all ' + (i===meetIdx ? 'bg-ink w-5 h-2' : 'bg-ink/20 w-2 h-2');
         });
-        document.getElementById('rsvp-count').innerHTML = attend + '<span class="text-white/50 text-xl">/7</span>';
-        document.getElementById('rsvp-bar').style.width = (attend / 7 * 100) + '%';
+        const ddEl = document.getElementById('meet-dday');
+        if (ddEl) ddEl.textContent = meetDday(meetSessions[meetIdx]?.candidate_dates?.[0]);
       }
 
-      function toggleRsvp(name) {
-        rsvpState[name] = rsvpState[name] === 'attend' ? null : 'attend';
-        refreshRsvpUI();
-      }
-
-      function submitRsvp(status) {
-        const myName = '이태화'; // TODO: 로그인 연동 후 교체
-        rsvpState[myName] = status;
-        refreshRsvpUI();
-        const msg = document.getElementById('rsvp-msg');
-        msg.textContent = status === 'attend' ? '✓ 참석으로 등록됐어요!' : '불참으로 등록됐어요.';
-        msg.className = 'text-center text-sm mt-3 ' + (status === 'attend' ? 'text-ok' : 'text-ink-3');
-        setTimeout(() => { msg.textContent = ''; }, 3000);
-      }
-
-      loadRsvp();
+      loadMeet();
     </script>
 
     <!-- ===== 이벤트 ===== -->
