@@ -3824,12 +3824,18 @@
       // 멤버 가입 상태 카드 테두리 + 뱃지 표시
       (async function updateMemberBorders() {
         try {
-          const { data: names } = await sb.rpc('get_registered_members');
+          const { data: names, error } = await sb.rpc('get_registered_members');
+          if (error) { console.error('[멤버상태] RPC 에러:', error); return; }
+          console.log('[멤버상태] 가입자 목록:', names);
           const registered = new Set(names || []);
-          document.querySelectorAll('[data-member]').forEach((card) => {
+          const cards = document.querySelectorAll('[data-member]');
+          console.log('[멤버상태] 카드 수:', cards.length);
+          cards.forEach((card) => {
             const name = card.dataset.member;
             const isReg = registered.has(name);
             card.style.borderColor = isReg ? '#34d399' : '#f87171';
+            card.style.borderWidth = '2px';
+            card.style.borderStyle = 'solid';
 
             // 이름 옆 뱃지 삽입
             const nameEl = card.querySelector('.font-bold.text-base');
@@ -3837,15 +3843,13 @@
               const badge = document.createElement('span');
               badge.className = 'member-status-badge';
               badge.textContent = isReg ? '가입완료' : '가입안함';
-              badge.style.cssText = `
-                font-size:10px; font-weight:700; margin-left:6px;
-                color:${isReg ? '#16a34a' : '#dc2626'};
-                vertical-align: middle;
-              `;
+              badge.style.cssText = `font-size:10px; font-weight:700; margin-left:6px; color:${isReg ? '#16a34a' : '#dc2626'}; vertical-align: middle;`;
               nameEl.appendChild(badge);
+            } else if (!nameEl) {
+              console.warn('[멤버상태] 이름 엘리먼트 못 찾음:', name);
             }
           });
-        } catch (_) {}
+        } catch (e) { console.error('[멤버상태] 예외:', e); }
       })();
 
       window.addEventListener('load', async () => {
