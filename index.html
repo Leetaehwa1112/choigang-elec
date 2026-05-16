@@ -674,7 +674,6 @@
             <h2 class="font-display text-2xl sm:text-3xl mt-2">이벤트</h2>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openSchedule()" class="px-3 py-2 rounded-full bg-ink text-white text-sm font-bold hover:bg-ink/85 transition">+ 일정잡기</button>
             <div class="flex rounded-lg overflow-hidden border border-ink/15 text-sm font-bold shadow-sm">
               <button id="btn-list" onclick="setView('list')" class="px-4 py-2 bg-ink text-white transition">리스트</button>
               <button id="btn-cal"  onclick="setView('cal')"  class="px-4 py-2 transition bg-line-y text-ink font-extrabold">📅 달력</button>
@@ -759,9 +758,11 @@
                 return `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isWe?'bg-warn/10 text-warn':'bg-ink/8 text-ink-3'}">${dt.getMonth()+1}/${dt.getDate()}(${DOW_KR[dt.getDay()]})</span>`;
               }).join('')}</div>` : '';
 
-          const mapBtn = s.map_url && s.map_provider
-            ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="flex-shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg"
-                style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>` : '';
+          const actionBtn = s.action_url
+            ? `<a href="${s.action_url}" target="_blank" rel="noopener" class="flex-shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-ink text-white whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
+            : (s.map_url && s.map_provider
+              ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="flex-shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap"
+                  style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>` : '');
 
           return `<div class="bg-white border border-ink/10 rounded-xl p-4 flex items-center gap-3 shadow-sm">
             ${dateCol}
@@ -773,7 +774,7 @@
               ${s.place||s.time_str ? `<p class="text-xs text-ink-3 mt-0.5">${[s.place, s.time_str ? s.time_str.replace(':','시 ')+'분' : ''].filter(Boolean).join(' · ')}</p>` : ''}
               ${extraDates}
             </div>
-            ${mapBtn}
+            ${actionBtn}
           </div>`;
         }).join('');
       }
@@ -1532,6 +1533,15 @@
                 </div>
                 <div id="sched-map-preview" class="mt-2.5 ml-14 hidden"></div>
               </div>
+              <!-- 링크 (청첩장 등) -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
+                <span class="text-lg w-6 text-center">🔖</span>
+                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">링크</span>
+                <input id="sched-action-label" type="text" placeholder="버튼 이름 (예: 📩 청첩장)" maxlength="15" oninput="saveSchedDetail()"
+                  class="w-28 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none border-r border-ink/15 pr-3 mr-1 flex-shrink-0">
+                <input id="sched-action-url" type="url" placeholder="URL 붙여넣기" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none min-w-0">
+              </label>
               <!-- 메모 -->
               <label class="flex items-start gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center mt-0.5">📝</span>
@@ -1706,15 +1716,12 @@
 
       /* ── 세부사항 저장/불러오기 (localStorage) ── */
       function saveSchedDetail() {
-        const detail = {
-          title: document.getElementById('sched-title')?.value || '',
-          time:  document.getElementById('sched-time')?.value  || '',
-          place: document.getElementById('sched-place')?.value || '',
-          addr:  document.getElementById('sched-addr')?.value  || '',
-          map:   document.getElementById('sched-map')?.value   || '',
-          memo:  document.getElementById('sched-memo')?.value  || '',
-        };
-        localStorage.setItem('schedDetail', JSON.stringify(detail));
+        const g = id => document.getElementById(id)?.value || '';
+        localStorage.setItem('schedDetail', JSON.stringify({
+          title: g('sched-title'), time: g('sched-time'), place: g('sched-place'),
+          addr: g('sched-addr'), map: g('sched-map'), memo: g('sched-memo'),
+          actionLabel: g('sched-action-label'), actionUrl: g('sched-action-url'),
+        }));
       }
       function loadSchedDetail() {
         try {
@@ -1726,6 +1733,8 @@
           set('sched-addr',  d.addr  || '');
           set('sched-map',   d.map   || '');
           set('sched-memo',  d.memo  || '');
+          set('sched-action-label', d.actionLabel || '');
+          set('sched-action-url',   d.actionUrl   || '');
           renderMapPreview();
         } catch(e) {}
       }
@@ -1766,6 +1775,9 @@
 
         const mapProvider = detectMapProvider(mapUrl)?.key || null;
 
+        const actionLabel = document.getElementById('sched-action-label')?.value.trim() || null;
+        const actionUrl   = document.getElementById('sched-action-url')?.value.trim()   || null;
+
         const payload = {
           title,
           type: schedType,
@@ -1776,6 +1788,8 @@
           map_url: mapUrl || null,
           map_provider: mapProvider,
           memo: memo || null,
+          action_url: actionUrl,
+          action_label: actionLabel,
           candidate_dates: schedDates.map(d => d.date_str),
           is_active: true,
         };
