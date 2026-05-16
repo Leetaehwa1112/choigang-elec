@@ -417,8 +417,8 @@
 
             function heroResetTimer() {
               clearInterval(heroTimer);
-              const delay = HERO_SLIDES[heroCur].type === 'youtube' ? 9000 : 3800;
-              heroTimer = setInterval(() => heroGo(heroCur + 1), delay);
+              if (HERO_SLIDES[heroCur].type === 'youtube') return; // 영상 슬라이드는 자동 넘김 없음
+              heroTimer = setInterval(() => heroGo(heroCur + 1), 3800);
             }
             window.heroResetTimer = heroResetTimer;
 
