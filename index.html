@@ -214,35 +214,8 @@
           <span class="led-blink w-2 h-2 rounded-full bg-line-l text-line-l flex-shrink-0"></span>
           <span class="font-mono text-[10px] font-bold text-ink-3 tracking-widest">LATEST · 최근 업데이트</span>
         </div>
-        <div class="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-
-          <!-- 1. 오늘 청모 사진 (가장 최신) -->
-          <a href="#memory" class="flex-shrink-0 flex items-center gap-3 bg-panel rounded-lg px-3 py-2.5 hover:bg-board/60 transition border border-ink/10 hover:border-line-l min-w-0 max-w-[260px]">
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg" class="w-12 h-12 rounded object-cover flex-shrink-0"/>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="new-badge">NEW</span>
-                <span class="text-[10px] font-mono text-ink-3">사진</span>
-              </div>
-              <div class="font-bold text-sm truncate mt-0.5">이은준 청첩장 모임</div>
-              <div class="text-[10px] text-ink-3 font-mono">2026.05.15</div>
-            </div>
-          </a>
-
-          <!-- 2. 이은준 결혼식 등록 -->
-          <a href="https://bojagicard.com/i/home.php?uid=o5hladp5&inflow_suid=1" target="_blank" class="flex-shrink-0 flex items-center gap-3 bg-panel rounded-lg px-3 py-2.5 hover:bg-board/60 transition border border-line-l/40 hover:border-line-l min-w-0 max-w-[260px]">
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778865110/ozzfmaepada6r6wsljne.jpg" class="w-12 h-12 rounded object-cover flex-shrink-0"/>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="new-badge">NEW</span>
-                <span class="text-[10px] font-mono text-ink-3">경조사</span>
-              </div>
-              <div class="font-bold text-sm truncate mt-0.5">이은준 결혼식 6/28</div>
-              <div class="text-[10px] text-line-l font-mono">청첩장 열기 ↗</div>
-            </div>
-          </a>
-
-
+        <div id="latest-updates-list" class="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div class="text-[11px] text-ink-3 font-mono py-2 opacity-50">불러오는 중…</div>
         </div>
       </div>
     </section>
@@ -2849,6 +2822,79 @@
         inputEl.value = '';
         await loadCmt(widget);
       }
+
+      // ── 최근 업데이트 동적 로드 ──
+      async function loadLatestUpdates() {
+        const container = document.getElementById('latest-updates-list');
+        if (!container) return;
+        try {
+          const [{ data: events }, { data: photos }] = await Promise.all([
+            sb.from('schedule_sessions')
+              .select('id, title, type, type_icon, candidate_dates, action_url, action_label, cover_url, created_at')
+              .eq('is_active', true).order('created_at', { ascending: false }).limit(3),
+            sb.from('photo_memories')
+              .select('id, type, src, label, group_name, created_at')
+              .order('created_at', { ascending: false }).limit(3)
+          ]);
+          const _esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          const _isNew = d => d && (Date.now() - new Date(d)) < 14*24*60*60*1000;
+          const _newBadge = d => _isNew(d) ? '<span class="new-badge">NEW</span>' : '';
+          const items = [];
+
+          (events || []).forEach(s => {
+            const _au = s.action_url ? (s.action_url.match(/^https?:\/\//) ? s.action_url : 'https://'+s.action_url) : null;
+            const dateStr = (s.candidate_dates?.[0] || '').replace(/-/g, '.');
+            const thumb = s.cover_url
+              ? `<img src="${s.cover_url}" class="w-12 h-12 rounded object-cover flex-shrink-0"/>`
+              : `<div class="w-12 h-12 rounded bg-ink text-white flex items-center justify-center text-xl flex-shrink-0">${s.type_icon || '📌'}</div>`;
+            const bottomText = _au && s.action_label
+              ? `<div class="text-[10px] text-line-l font-mono">${_esc(s.action_label)} ↗</div>`
+              : `<div class="text-[10px] text-ink-3 font-mono">${dateStr}</div>`;
+            const link = _au || '#calendar';
+            const tgt = _au ? 'target="_blank" rel="noopener"' : '';
+            const border = _au ? 'border-line-l/40 hover:border-line-l' : 'border-ink/10 hover:border-line-l';
+            items.push({ ts: s.created_at, html:
+              `<a href="${link}" ${tgt} class="flex-shrink-0 flex items-center gap-3 bg-panel rounded-lg px-3 py-2.5 hover:bg-board/60 transition border ${border} min-w-0 max-w-[260px]">
+                ${thumb}
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">${_newBadge(s.created_at)}<span class="text-[10px] font-mono text-ink-3">${_esc(s.type)}</span></div>
+                  <div class="font-bold text-sm truncate mt-0.5">${_esc(s.title)}</div>
+                  ${bottomText}
+                </div>
+              </a>`
+            });
+          });
+
+          (photos || []).forEach(p => {
+            const thumb = p.type === 'youtube'
+              ? `https://img.youtube.com/vi/${p.src}/hqdefault.jpg`
+              : p.src;
+            const label = p.label || p.group_name || '사진';
+            const dateStr = (p.created_at || '').slice(0, 10).replace(/-/g, '.');
+            const typeLabel = p.type === 'youtube' ? '영상' : '사진';
+            items.push({ ts: p.created_at, html:
+              `<a href="#memory" class="flex-shrink-0 flex items-center gap-3 bg-panel rounded-lg px-3 py-2.5 hover:bg-board/60 transition border border-ink/10 hover:border-line-l min-w-0 max-w-[260px]">
+                <img src="${thumb}" class="w-12 h-12 rounded object-cover flex-shrink-0"/>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">${_newBadge(p.created_at)}<span class="text-[10px] font-mono text-ink-3">${typeLabel}</span></div>
+                  <div class="font-bold text-sm truncate mt-0.5">${_esc(label)}</div>
+                  <div class="text-[10px] text-ink-3 font-mono">${dateStr}</div>
+                </div>
+              </a>`
+            });
+          });
+
+          items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+          const top5 = items.slice(0, 5);
+          container.innerHTML = top5.length
+            ? top5.map(i => i.html).join('')
+            : '<div class="text-[11px] text-ink-3 font-mono py-2 opacity-50">아직 업데이트가 없어요</div>';
+        } catch(e) {
+          console.warn('loadLatestUpdates failed', e);
+          container.innerHTML = '';
+        }
+      }
+      loadLatestUpdates();
 
       // 페이지 로드 시 모든 위젯 댓글 수 표시
       (async () => {
