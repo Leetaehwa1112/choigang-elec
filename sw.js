@@ -1,6 +1,17 @@
 // 최강전기 PWA Service Worker
 // 정적 리소스만 캐시 - Supabase/Cloudinary 등 외부 API는 네트워크 우선
-const VERSION = 'v1.0.2';
+const VERSION = 'v1.0.6';
+const VAPID_PUBLIC_KEY = 'BKN_42BLXAEFw1b912ap0ebSZ-fRRmazrY9Hhw5328s5-GsMPg6MOi2eWUewfyLmj6wJIBEtJpp9EYujGoFVZB0';
+const ORIGIN = 'https://choigang-elec.vercel.app';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
 const STATIC_CACHE = `choigang-static-${VERSION}`;
 const RUNTIME_CACHE = `choigang-runtime-${VERSION}`;
 
@@ -10,6 +21,7 @@ const PRECACHE_URLS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/badge-mono-96.png',
   './icons/icon.svg',
   './icons/apple-touch-icon.png',
 ];
@@ -110,12 +122,16 @@ self.addEventListener('push', (event) => {
   const title = data.title || '최강전기';
   const options = {
     body: data.body || '',
-    icon: data.icon || './icons/icon-192.png',
-    badge: data.badge || './icons/icon-192.png',
+    icon: data.icon || `${ORIGIN}/icons/icon-512.png`,
+    badge: data.badge || `${ORIGIN}/icons/badge-mono-96.png`,
+    image: data.image || undefined,
     tag: data.tag || 'choigang-default',
     renotify: data.renotify ?? true,
     requireInteraction: data.requireInteraction ?? false,
-    vibrate: [80, 40, 80],
+    vibrate: [120, 60, 120, 60, 200],
+    actions: data.actions || [
+      { action: 'open', title: '보러가기' },
+    ],
     data: {
       url: data.url || './',
       sessionId: data.sessionId || null,
@@ -143,11 +159,13 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('pushsubscriptionchange', (event) => {
   event.waitUntil((async () => {
     try {
-      const sub = await self.registration.pushManager.subscribe(
-        event.oldSubscription?.options || { userVisibleOnly: true }
-      );
+      const opts = event.oldSubscription?.options || {
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      };
+      const sub = await self.registration.pushManager.subscribe(opts);
       // 클라이언트에 알려서 Supabase에 다시 저장하도록
-      const allClients = await self.clients.matchAll();
+      const allClients = await self.clients.matchAll({ includeUncontrolled: true });
       allClients.forEach((c) => c.postMessage({ type: 'PUSH_RESUBSCRIBED', subscription: sub.toJSON() }));
     } catch (_) {}
   })());

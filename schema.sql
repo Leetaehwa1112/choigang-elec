@@ -259,6 +259,63 @@ create policy "sp_delete_own" on scheduled_pushes for delete using (auth.uid() i
 -- );
 
 -- ============================================================
+-- [INSTANT PUSH] scheduled_pushes INSERT 시 Edge Function 즉시 호출
+-- ============================================================
+-- 어드민이 "즉시 발송" 누르면 cron(5분) 안 기다리고 바로 발송되게 하는 트리거
+--
+-- 1회 셋업:
+--   ① 시크릿 저장 (CRON_SECRET, PROJECT_URL)
+--      create schema if not exists private;
+--      create table if not exists private.app_secrets (key text primary key, value text not null);
+--      insert into private.app_secrets(key,value) values
+--        ('cron_secret','<YOUR_CRON_SECRET>'),
+--        ('project_url','https://mspwdasiewqtwfyngdhy.supabase.co')
+--      on conflict (key) do update set value = excluded.value;
+--      revoke all on private.app_secrets from public, anon, authenticated;
+--
+--   ② 아래 함수/트리거 실행 (이 블록 그대로 복붙)
+
+create or replace function private.trigger_scheduled_push()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, private, extensions
+as $$
+declare
+  v_url    text;
+  v_secret text;
+  v_delay  interval;
+begin
+  -- send_at이 5초 이내(=즉시 발송)일 때만 트리거. 미래 예약은 cron에 맡김.
+  v_delay := new.send_at - now();
+  if v_delay > interval '5 seconds' then
+    return new;
+  end if;
+
+  select value into v_url    from private.app_secrets where key = 'project_url';
+  select value into v_secret from private.app_secrets where key = 'cron_secret';
+  if v_url is null or v_secret is null then
+    return new;  -- 시크릿 미설정 시 cron 폴백
+  end if;
+
+  perform net.http_post(
+    url     := v_url || '/functions/v1/send-scheduled-pushes',
+    headers := jsonb_build_object(
+      'Content-Type',  'application/json',
+      'Authorization', 'Bearer ' || v_secret
+    ),
+    body    := jsonb_build_object('forceId', new.id)
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists on_scheduled_push_insert on public.scheduled_pushes;
+create trigger on_scheduled_push_insert
+  after insert on public.scheduled_pushes
+  for each row execute function private.trigger_scheduled_push();
+
+-- ============================================================
 -- updated_at 자동 갱신 트리거 (LIVE 테이블용)
 -- ============================================================
 create or replace function set_updated_at()

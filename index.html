@@ -3323,7 +3323,7 @@
         if (error || !row) { msg.textContent = '저장 실패'; return; }
         // 즉시 호출 — 사용자의 anon 세션 토큰으로는 Edge Function 호출 불가, cron이 5분 내 처리
         msg.style.color = '#16a34a';
-        msg.textContent = '등록 완료 · 곧 발송됩니다 (최대 5분)';
+        msg.textContent = '발송 중… 잠시 후 알림이 도착해요';
         setTimeout(() => { msg.textContent = ''; msg.style.color = '#d12c2c'; }, 3000);
         document.getElementById('apTitle').value = '';
         document.getElementById('apBody').value = '';

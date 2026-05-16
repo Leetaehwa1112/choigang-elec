@@ -115,16 +115,17 @@ Deno.serve(async (req) => {
     }
 
     const isToday = t.kind === 'd_day';
-    const icon = t.row.type_icon || '📌';
-    const titleHead =
-      t.kind === 'd_day' ? '오늘 모임 있어요'
-      : t.kind === 'd_1' ? '내일 모임 있어요'
-      : '3일 뒤 모임 있어요';
-    const timePart = t.row.time_str ? ` · ${t.row.time_str}` : '';
-    const placePart = t.row.place ? ` @ ${t.row.place}` : '';
+    const icon = t.row.type_icon || '⚡';
+    const dTag =
+      t.kind === 'd_day' ? '오늘'
+      : t.kind === 'd_1' ? '내일'
+      : '3일 뒤';
+    const lines: string[] = [];
+    if (t.row.time_str) lines.push(`🕘 ${t.row.time_str}`);
+    if (t.row.place)    lines.push(`📍 ${t.row.place}`);
     const payload = JSON.stringify({
-      title: `${icon} ${titleHead}`,
-      body: `${t.row.title}${timePart}${placePart}`,
+      title: `${icon} ${dTag} · ${t.row.title}`,
+      body: lines.join('\n') || '자세히 보러가기',
       tag: `event-${t.sessionId}-${t.kind}`,
       url: `${SITE_URL}/#meet`,
       sessionId: t.sessionId,
