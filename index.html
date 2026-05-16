@@ -374,7 +374,7 @@
                     <span class="text-[9px] font-mono text-ink-3">한동명</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-이은준" class="w-10 h-10 rounded-full bg-line-e text-white font-display text-base flex items-center justify-center hover:scale-105 transition" title="이은준 · 주인공">은</div>
+                    <div id="av-이은준" class="w-10 h-10 rounded-full bg-line-e text-white font-display text-base flex items-center justify-center hover:scale-105 transition" title="이은준 · 주인공">💍</div>
                     <span class="text-[9px] font-mono text-line-e font-bold">이은준</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
@@ -453,6 +453,16 @@
       MEMBERS.forEach(n => rsvpState[n] = null);
       rsvpState['이은준'] = 'attend';
 
+      const MEMBER_COLORS = {
+        '이태화': 'bg-ink text-line-y',
+        '나준민': 'bg-line-l text-white',
+        '한동명': 'bg-line-y text-ink',
+        '이은준': 'bg-line-e text-white',
+        '김상현': 'bg-board-dark text-white',
+        '김하람': 'bg-panel-dark text-white',
+        '김건우': 'bg-line-n text-white',
+      };
+
       let currentEventId = null;
 
       // DB에서 RSVP 불러오기
@@ -482,10 +492,11 @@
           const el = document.getElementById('av-' + name);
           if (!el) return;
           const s = rsvpState[name];
-          el.className = 'w-10 h-10 rounded-full font-bold text-sm flex items-center justify-center cursor-pointer hover:scale-105 transition ' +
-            (s === 'attend'  ? 'bg-line-e text-white ring-2 ring-line-e' :
-             s === 'decline' ? 'bg-ink/15 text-ink/30'                   :
-                               'bg-ink/15 text-ink-2');
+          const base = MEMBER_COLORS[name] || 'bg-ink/15 text-ink-2';
+          el.className = 'w-10 h-10 rounded-full font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition ' +
+            (s === 'attend'  ? base + ' ring-2 ring-offset-1 ring-line-e' :
+             s === 'decline' ? 'bg-ink/10 text-ink/25'                    :
+                               base);
         });
         document.getElementById('rsvp-count').innerHTML = attend + '<span class="text-white/50 text-xl">/7</span>';
         document.getElementById('rsvp-bar').style.width = (attend / 7 * 100) + '%';
