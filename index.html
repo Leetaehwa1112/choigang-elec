@@ -532,8 +532,17 @@
           <!-- 뷰 토글 -->
           <div class="flex rounded-lg overflow-hidden border border-ink/15 text-sm font-bold">
             <button id="btn-list" onclick="setView('list')" class="px-4 py-2 bg-ink text-white transition">리스트</button>
-            <button id="btn-cal"  onclick="setView('cal')"  class="px-4 py-2 bg-white text-ink-2 transition">달력</button>
+            <button id="btn-cal"  onclick="setView('cal')"  class="relative px-4 py-2 bg-white text-ink-2 transition">
+              달력
+              <span id="cal-badge" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-line-e animate-ping"></span>
+              <span id="cal-badge2" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-line-e"></span>
+            </button>
           </div>
+        </div>
+
+        <!-- 달력 힌트 -->
+        <div id="cal-hint" class="flex items-center gap-1.5 mb-3 text-[11px] text-ink-3 font-mono">
+          <span class="animate-bounce inline-block">☝️</span> 달력 탭 누르면 월별로 볼 수 있어요
         </div>
 
         <!-- 리스트 뷰 -->
@@ -641,8 +650,15 @@
         document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
         document.getElementById('view-cal').classList.toggle('hidden', v !== 'cal');
         document.getElementById('btn-list').className = 'px-4 py-2 transition ' + (v === 'list' ? 'bg-ink text-white' : 'bg-white text-ink-2');
-        document.getElementById('btn-cal').className  = 'px-4 py-2 transition ' + (v === 'cal'  ? 'bg-ink text-white' : 'bg-white text-ink-2');
-        if (v === 'cal') renderCal();
+        document.getElementById('btn-cal').className  = 'relative px-4 py-2 transition ' + (v === 'cal' ? 'bg-ink text-white' : 'bg-white text-ink-2');
+        if (v === 'cal') {
+          renderCal();
+          // 힌트·뱃지 제거
+          ['cal-hint','cal-badge','cal-badge2'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+          });
+        }
       }
     </script>
 
