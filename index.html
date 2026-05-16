@@ -3828,9 +3828,8 @@
           const registered = new Set(names || []);
           document.querySelectorAll('[data-member]').forEach((card) => {
             const name = card.dataset.member;
-            card.classList.remove('border-board');
             const isReg = registered.has(name);
-            card.classList.add(isReg ? 'border-emerald-400' : 'border-red-400');
+            card.style.borderColor = isReg ? '#34d399' : '#f87171';
 
             // 이름 옆 뱃지 삽입
             const nameEl = card.querySelector('.font-bold.text-base');
