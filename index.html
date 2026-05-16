@@ -286,9 +286,202 @@
 
       /* iOS Pull-to-refresh 차단 (선택적) */
       body { overscroll-behavior-y: none; }
+
+      /* ===== 인증 게이트 (전체화면 로그인) ===== */
+      body.gate-locked { overflow: hidden; }
+      body.gate-locked > *:not(#authGate):not(script) { visibility: hidden; }
+
+      #authGate {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background:
+          radial-gradient(circle at 20% 10%, rgba(245,180,0,0.18) 0, transparent 45%),
+          radial-gradient(circle at 85% 85%, rgba(209,44,44,0.15) 0, transparent 50%),
+          linear-gradient(160deg, #2b3140 0%, #1a1d24 100%);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding:
+          calc(28px + var(--safe-top))
+          calc(20px + var(--safe-right))
+          calc(28px + var(--safe-bottom))
+          calc(20px + var(--safe-left));
+        overflow-y: auto;
+        animation: gateFade 0.35s ease;
+      }
+      @keyframes gateFade { from { opacity: 0 } to { opacity: 1 } }
+      #authGate.hidden { display: none; }
+
+      .gate-card {
+        width: 100%;
+        max-width: 360px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 22px;
+        padding: 22px 20px;
+        backdrop-filter: blur(8px);
+      }
+      .gate-logo {
+        width: 64px; height: 64px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f5b400, #d99a00);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 14px;
+        box-shadow: 0 8px 24px rgba(245,180,0,0.3);
+      }
+      .gate-title {
+        font-family: "Black Han Sans", sans-serif;
+        font-size: 26px;
+        text-align: center;
+        margin-bottom: 4px;
+        letter-spacing: 0.01em;
+      }
+      .gate-subtitle {
+        text-align: center;
+        font-size: 12px;
+        color: rgba(255,255,255,0.55);
+        margin-bottom: 22px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .gate-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: rgba(0,0,0,0.25);
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 16px;
+      }
+      .gate-tab {
+        padding: 10px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 9px;
+        color: rgba(255,255,255,0.5);
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        background: transparent;
+      }
+      .gate-tab.active {
+        background: rgba(245,180,0,0.95);
+        color: #1a1d24;
+      }
+      .gate-input {
+        width: 100%;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        padding: 13px 14px;
+        border-radius: 12px;
+        font-size: 15px;
+        margin-bottom: 10px;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .gate-input:focus { border-color: rgba(245,180,0,0.6); }
+      .gate-input::placeholder { color: rgba(255,255,255,0.35); }
+      select.gate-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+      .gate-submit {
+        width: 100%;
+        background: linear-gradient(180deg, #f5b400, #d99a00);
+        color: #1a1d24;
+        font-weight: 800;
+        padding: 14px;
+        border-radius: 12px;
+        border: none;
+        font-size: 15px;
+        margin-top: 4px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(245,180,0,0.25);
+      }
+      .gate-submit:active { transform: translateY(1px); }
+      .gate-err {
+        color: #ff8888;
+        font-size: 12px;
+        margin: 4px 0 8px;
+        min-height: 16px;
+      }
+      .gate-install {
+        margin-top: 16px;
+        text-align: center;
+      }
+      .gate-install-btn {
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.15);
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .gate-install-btn:active { transform: translateY(1px); }
+      .gate-footer {
+        text-align: center;
+        font-size: 11px;
+        color: rgba(255,255,255,0.4);
+        margin-top: 18px;
+        font-family: "JetBrains Mono", monospace;
+      }
     </style>
   </head>
-  <body>
+  <body class="gate-locked">
+
+    <!-- ===== 인증 게이트 (로그인 전 전체화면) ===== -->
+    <div id="authGate" role="dialog" aria-label="로그인 또는 회원가입">
+      <div class="gate-card">
+        <div class="gate-logo">
+          <svg width="36" height="36" viewBox="0 0 34 34">
+            <path d="M19 5L9 19h7l-2 10 11-14h-7l1-10z" fill="#1a1d24"/>
+          </svg>
+        </div>
+        <div class="gate-title">최강전기</div>
+        <div class="gate-subtitle">CH · 01 · 동창회 전용</div>
+
+        <div class="gate-tabs">
+          <button type="button" class="gate-tab active" id="gateTabLogin" onclick="switchGateTab('login')">로그인</button>
+          <button type="button" class="gate-tab" id="gateTabSignup" onclick="switchGateTab('signup')">회원가입</button>
+        </div>
+
+        <!-- 로그인 -->
+        <div id="gateFormLogin">
+          <input id="gate-login-username" class="gate-input" type="text" placeholder="아이디" autocomplete="username" autocapitalize="none" />
+          <input id="gate-login-password" class="gate-input" type="password" placeholder="비밀번호" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')gateLogin()" />
+          <p class="gate-err" id="gate-login-err"></p>
+          <button type="button" class="gate-submit" onclick="gateLogin()">들어가기</button>
+        </div>
+
+        <!-- 회원가입 -->
+        <div id="gateFormSignup" style="display:none">
+          <select id="gate-signup-name" class="gate-input">
+            <option value="">본인 이름 (실명)</option>
+            <option>이태화</option><option>나준민</option><option>한동명</option>
+            <option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option>
+          </select>
+          <input id="gate-signup-username" class="gate-input" type="text" placeholder="아이디" autocomplete="username" autocapitalize="none" />
+          <input id="gate-signup-password" class="gate-input" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"
+            onkeydown="if(event.key==='Enter')gateSignup()" />
+          <p class="gate-err" id="gate-signup-err"></p>
+          <button type="button" class="gate-submit" onclick="gateSignup()">가입하기</button>
+        </div>
+
+        <div class="gate-install" id="gateInstallWrap">
+          <button type="button" class="gate-install-btn" id="gateInstallBtn" onclick="gateInstall()">
+            <span>⚡</span><span>앱처럼 홈에 추가</span>
+          </button>
+        </div>
+
+        <div class="gate-footer">PWR · ON · 7/7</div>
+      </div>
+    </div>
 
     <!-- ===== 네비게이션 ===== -->
     <nav class="sticky top-0 z-40 bg-panel/95 backdrop-blur border-b-2 border-panel-dark shadow-sm">
@@ -2848,6 +3041,19 @@
         _greetingTimer = setTimeout(() => { card.classList.add('hidden'); }, 5000);
       }
 
+      function showAuthGate() {
+        const gate = document.getElementById('authGate');
+        if (!gate) return;
+        gate.classList.remove('hidden');
+        document.body.classList.add('gate-locked');
+      }
+      function hideAuthGate() {
+        const gate = document.getElementById('authGate');
+        if (!gate) return;
+        gate.classList.add('hidden');
+        document.body.classList.remove('gate-locked');
+      }
+
       sb.auth.onAuthStateChange((event, session) => {
         _authSession = session;
         const loginBtn = document.getElementById('auth-login-btn');
@@ -2859,10 +3065,12 @@
           userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
           userName.textContent = name;
           localStorage.setItem('rsvpName', name);
+          hideAuthGate();
           if (event === 'SIGNED_IN') showGreeting(name);
         } else {
           loginBtn.classList.remove('hidden');
           userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
+          showAuthGate();
         }
         updateCmtAuthUI();
       });
@@ -2878,12 +3086,106 @@
           userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
           userName.textContent = name;
           localStorage.setItem('rsvpName', name);
+          hideAuthGate();
         } else {
           loginBtn.classList.remove('hidden');
+          showAuthGate();
         }
         highlightRegisteredMembers();
         updateCmtAuthUI();
       });
+
+      /* ── 게이트 핸들러 ── */
+      function switchGateTab(tab) {
+        const isLogin = tab === 'login';
+        document.getElementById('gateTabLogin').classList.toggle('active', isLogin);
+        document.getElementById('gateTabSignup').classList.toggle('active', !isLogin);
+        document.getElementById('gateFormLogin').style.display = isLogin ? '' : 'none';
+        document.getElementById('gateFormSignup').style.display = isLogin ? 'none' : '';
+      }
+
+      async function gateLogin() {
+        const username = document.getElementById('gate-login-username').value.trim().toLowerCase();
+        const password = document.getElementById('gate-login-password').value;
+        const err = document.getElementById('gate-login-err');
+        err.textContent = '';
+        if (!username || !password) { err.textContent = '아이디와 비밀번호를 입력해주세요.'; return; }
+        const { error } = await sb.auth.signInWithPassword({
+          email: username + '@choigang-elec.app',
+          password
+        });
+        if (error) { err.textContent = '아이디 또는 비밀번호가 틀렸어요.'; return; }
+        // onAuthStateChange가 게이트 닫음
+      }
+
+      async function gateSignup() {
+        const name     = document.getElementById('gate-signup-name').value.trim();
+        const username = document.getElementById('gate-signup-username').value.trim().toLowerCase();
+        const password = document.getElementById('gate-signup-password').value;
+        const err = document.getElementById('gate-signup-err');
+        err.textContent = '';
+        if (!name || !username || !password) { err.textContent = '모든 항목을 입력해주세요.'; return; }
+        if (password.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 해요.'; return; }
+        const { data: signUpData, error } = await sb.auth.signUp({
+          email: username + '@choigang-elec.app',
+          password,
+          options: { data: { name, username } }
+        });
+        if (error) {
+          const msg = error.message || '';
+          if (msg.includes('already') || msg.includes('duplicate') || msg.includes('unique')) {
+            err.textContent = '이미 사용 중인 아이디예요.';
+          } else if (msg.includes('Password')) {
+            err.textContent = '비밀번호는 6자 이상이어야 해요.';
+          } else {
+            err.textContent = msg || '가입 중 오류가 발생했어요.';
+          }
+          return;
+        }
+        if (signUpData?.user?.id) {
+          await sb.from('profiles').upsert({ id: signUpData.user.id, name }, { onConflict: 'id' });
+        }
+        // onAuthStateChange가 자동 진입
+      }
+
+      /* ── standalone(앱 설치 후 실행) 모드면 설치 UI 자체 숨김 ── */
+      (function hideInstallUiIfStandalone() {
+        const isStandalone =
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true;
+        if (!isStandalone) return;
+        const wrap = document.getElementById('gateInstallWrap');
+        if (wrap) wrap.style.display = 'none';
+        // appinstalled 이벤트가 나중에 와도 동일 처리
+      })();
+      window.addEventListener('appinstalled', () => {
+        const wrap = document.getElementById('gateInstallWrap');
+        if (wrap) wrap.style.display = 'none';
+      });
+
+      /* ── 게이트 내부 설치 버튼 ── */
+      function gateInstall() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone =
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true;
+        if (isStandalone) {
+          alert('이미 앱으로 설치되어 있어요!');
+          return;
+        }
+        if (window._deferredInstallPrompt) {
+          window._deferredInstallPrompt.prompt();
+          window._deferredInstallPrompt.userChoice.then(() => {
+            window._deferredInstallPrompt = null;
+          });
+          return;
+        }
+        if (isIOS) {
+          alert('iPhone에서 설치하기:\n\n1. Safari 하단의 공유 버튼(□↑) 탭\n2. "홈 화면에 추가" 선택\n3. "추가" 탭');
+          return;
+        }
+        alert('Chrome/Edge 주소창 우측 설치 아이콘(⊕) 또는 메뉴 → "앱 설치"를 눌러주세요.');
+      }
 
       // 가입완료 멤버 카드 강조
       async function highlightRegisteredMembers() {
@@ -3263,6 +3565,7 @@
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
           deferredPrompt = e;
+          window._deferredInstallPrompt = e;
           showBanner();
         });
 
