@@ -776,7 +776,7 @@
             </button>`;
           }).join('');
           const _au = s.action_url ? (s.action_url.match(/^https?:\/\//) ? s.action_url : 'https://'+s.action_url) : null;
-          const actionLink = _au?`<a href="${_au}" target="_blank" rel="noopener" class="text-line-l underline font-mono text-xs">↗ ${s.action_label||'링크'}</a>`:'';
+          const actionLink = _au?`<a href="${_au}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200/70 shadow-sm ring-1 ring-rose-100/80 text-rose-700 font-semibold text-sm hover:from-rose-100 hover:to-amber-100 hover:shadow-md active:scale-[.97] transition-all"><span>💌</span><span>${s.action_label||'링크'}</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-60"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></a>`:'';
           return `<div class="shrink-0 w-full">
             <div class="distribution rounded-xl p-3 sm:p-4">
               <div class="metal-panel rounded-lg overflow-hidden">
@@ -934,7 +934,7 @@
           const _sau = s.action_url ? (s.action_url.match(/^https?:\/\//) ? s.action_url : 'https://'+s.action_url) : null;
           const actionBtn = _sau
             ? `<a href="${_sau}" target="_blank" rel="noopener"
-                class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-xl bg-ink text-white shadow-md ring-1 ring-ink/15 hover:bg-ink/85 hover:shadow-lg active:scale-[.97] transition-all whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200/70 shadow-sm ring-1 ring-rose-100/80 text-rose-700 font-semibold text-sm hover:from-rose-100 hover:to-amber-100 hover:shadow-md active:scale-[.97] transition-all whitespace-nowrap"><span>💌</span><span>${s.action_label || '링크'}</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.6"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></a>`
             : '';
 
           const _sq = ((s.place||'') + (s.addr?' '+s.addr:'')).replace(/ /g,'+');
