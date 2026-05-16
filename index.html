@@ -1616,23 +1616,30 @@
         if (!list) return;
         list.innerHTML = '<div class="text-[10px] text-white/40 py-1">불러오는 중…</div>';
         const { data, error } = await sb.from('comments')
-          .select('author, content, created_at')
+          .select('id, author, content, created_at')
           .eq('target', target)
           .order('created_at', { ascending: true })
           .limit(30);
-        if (target !== _lbCmtTarget) return; // 사진이 바뀐 경우 무시
+        if (target !== _lbCmtTarget) return;
         if (error || !data || !data.length) {
           list.innerHTML = '<div class="text-[10px] text-white/30 py-1">첫 댓글을 남겨보세요 💬</div>';
           return;
         }
         list.innerHTML = data.map(c =>
-          `<div class="flex gap-1.5 text-xs leading-snug">
+          `<div class="flex gap-1.5 text-xs leading-snug group">
             <span class="font-mono text-[10px] font-bold text-white/80 flex-shrink-0 whitespace-nowrap">${escHtml(c.author)}</span>
             <span class="text-white/70 flex-1 break-all">${escHtml(c.content)}</span>
             <span class="text-[9px] text-white/30 flex-shrink-0 font-mono whitespace-nowrap">${timeAgo(c.created_at)}</span>
+            <button onclick="lbDeleteCmt('${c.id}')" class="opacity-0 group-hover:opacity-100 text-white/40 hover:text-red-400 transition text-[10px] flex-shrink-0 leading-none px-0.5" title="삭제">×</button>
           </div>`
         ).join('');
         list.scrollTop = list.scrollHeight;
+      }
+
+      async function lbDeleteCmt(id) {
+        const { error } = await sb.from('comments').delete().eq('id', id);
+        if (!error) lbLoadCmt();
+        else showToast('삭제 실패 😢');
       }
 
       async function lbSubmitCmt() {
@@ -2146,6 +2153,7 @@
               <span class="font-mono text-[10px] font-bold text-ink-2 flex-shrink-0 pt-px whitespace-nowrap">${escHtml(c.author)}</span>
               <span class="text-ink flex-1 break-all">${escHtml(c.content)}</span>
               <span class="text-[9px] text-ink-3/50 flex-shrink-0 pt-px font-mono whitespace-nowrap">${timeAgo(c.created_at)}</span>
+              <button onclick="deleteCmt('${c.id}', this)" class="opacity-0 group-hover:opacity-100 text-ink-3/40 hover:text-red-400 transition text-[10px] flex-shrink-0 leading-none px-0.5" title="삭제">×</button>
             </div>`
           ).join('');
           countEl.textContent = data.length;
@@ -2153,6 +2161,20 @@
         } else {
           list.innerHTML = '<div class="text-[11px] text-ink-3/60 py-1">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</div>';
           countEl.textContent = '';
+        }
+      }
+
+      async function deleteCmt(id, btn) {
+        const row = btn.closest('div');
+        const { error } = await sb.from('comments').delete().eq('id', id);
+        if (error) { showToast('삭제 실패 😢'); return; }
+        row.remove();
+        // 카운트 갱신
+        const widget = btn.closest('.cmt-widget');
+        const countEl = widget?.querySelector('.cmt-count');
+        if (countEl) {
+          const cur = parseInt(countEl.textContent) || 0;
+          countEl.textContent = cur > 1 ? cur - 1 : '';
         }
       }
 
