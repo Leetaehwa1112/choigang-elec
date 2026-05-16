@@ -256,10 +256,38 @@
             </div>
           </div>
         </div>
-        <!-- 메인 사진 -->
-        <div class="mt-6 rounded-xl overflow-hidden shadow-lg bg-ink/5" style="height:320px">
-          <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg" alt="최강전기 고등학교 시절" class="w-full h-full object-contain"/>
+        <!-- 메인 사진 슬라이드 -->
+        <div class="mt-6 rounded-xl overflow-hidden shadow-lg bg-ink/5 relative" style="height:320px" id="hero-slider">
+          <div id="hero-track" class="flex h-full transition-transform duration-700 ease-in-out">
+            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
+            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
+            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778865110/ozzfmaepada6r6wsljne.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
+            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
+          </div>
+          <!-- 인디케이터 -->
+          <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5" id="hero-dots"></div>
         </div>
+        <script>
+          (function() {
+            const track = document.getElementById('hero-track');
+            const dotsEl = document.getElementById('hero-dots');
+            const total = track.children.length;
+            let cur = 0;
+            for (let i = 0; i < total; i++) {
+              const d = document.createElement('div');
+              d.className = 'w-1.5 h-1.5 rounded-full transition-all ' + (i === 0 ? 'bg-white' : 'bg-white/40');
+              dotsEl.appendChild(d);
+            }
+            function go(n) {
+              cur = (n + total) % total;
+              track.style.transform = `translateX(-${cur * 100}%)`;
+              [...dotsEl.children].forEach((d, i) => {
+                d.className = 'w-1.5 h-1.5 rounded-full transition-all ' + (i === cur ? 'bg-white' : 'bg-white/40');
+              });
+            }
+            setInterval(() => go(cur + 1), 3500);
+          })();
+        </script>
       </div>
     </section>
 
