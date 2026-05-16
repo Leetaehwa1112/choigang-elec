@@ -492,6 +492,7 @@
           const el = document.getElementById('av-' + name);
           if (!el) return;
           const s = rsvpState[name];
+          if (s === 'attend') attend++;
           const base = MEMBER_COLORS[name] || 'bg-ink text-white';
           el.className = 'w-10 h-10 rounded-full font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition ' +
             (s === 'attend'  ? base + ' ring-2 ring-offset-1 ring-line-e' :
