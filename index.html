@@ -930,6 +930,8 @@
           });
         }
 
+        if (!document.getElementById('view-cal')?.classList.contains('hidden')) renderCal();
+
         if (error || !data || !data.length) {
           el.innerHTML = `<div class="text-center py-14 text-ink-3 text-sm opacity-50">${error ? '불러올 수 없어요' : '등록된 이벤트가 없어요'}</div>`;
           return;
@@ -1780,7 +1782,7 @@
           <div class="flex items-center gap-3">
             <div id="sched-type-icon" class="text-2xl">⚡</div>
             <div>
-              <div class="font-mono text-[10px] text-ink-3 leading-none mb-0.5">이벤트 생성</div>
+              <div id="sched-modal-subtitle" class="font-mono text-[10px] text-ink-3 leading-none mb-0.5">이벤트 생성</div>
               <h2 id="sched-modal-title" class="font-display text-xl leading-tight">언제 모일까요?</h2>
             </div>
           </div>
@@ -2052,6 +2054,10 @@
         document.getElementById('sched-cover-remove').classList.add('hidden');
         document.getElementById('sched-cover-url').value = '';
         document.getElementById('sched-cover-file').value = '';
+        const bar = document.getElementById('sched-cover-progress');
+        const barWrap = document.getElementById('sched-cover-progress-wrap');
+        if (bar) bar.style.width = '0%';
+        if (barWrap) barWrap.classList.add('hidden');
       }
 
       async function uploadCoverIfNeeded() {
@@ -2082,8 +2088,10 @@
         if (!_authSession) { showToast('먼저 로그인해주세요 🔒'); return; }
         editingEventId = session ? session.id : null;
         const title = document.getElementById('sched-modal-title');
+        const subtitle = document.getElementById('sched-modal-subtitle');
         const btn = document.getElementById('sched-submit-btn');
         if (title) title.textContent = session ? '이벤트 수정' : '언제 모일까요?';
+        if (subtitle) subtitle.textContent = session ? '이벤트 수정' : '이벤트 생성';
         if (btn) btn.innerHTML = session ? '<span>✏️</span> 수정하기' : '<span>⚡</span> 등록하기';
         document.getElementById('schedule-modal').classList.replace('hidden','flex');
         if (session) {
