@@ -313,6 +313,12 @@
               });
 
               container.children[0].style.opacity = '1';
+              // 첫 슬라이드가 유튜브면 바로 자동재생
+              if (HERO_SLIDES[0] && HERO_SLIDES[0].type === 'youtube') {
+                const id = HERO_SLIDES[0].ytId;
+                const iframe = container.children[0].querySelector('iframe');
+                if (iframe) iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1`;
+              }
               heroSetHeight();
               heroResetTimer();
             };
