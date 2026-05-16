@@ -2542,6 +2542,15 @@
       }
 
       let _authSession = null;
+      let _greetingTimer = null;
+      function showGreeting(name) {
+        const el = document.getElementById('greeting-text');
+        if (!el) return;
+        if (_greetingTimer) clearTimeout(_greetingTimer);
+        el.textContent = `${name}님 안녕하세요`;
+        _greetingTimer = setTimeout(() => { el.textContent = '최강전기 동창회'; }, 5000);
+      }
+
       sb.auth.onAuthStateChange((event, session) => {
         _authSession = session;
         const loginBtn = document.getElementById('auth-login-btn');
@@ -2553,6 +2562,7 @@
           userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
           userName.textContent = name;
           localStorage.setItem('rsvpName', name);
+          if (event === 'SIGNED_IN') showGreeting(name);
         } else {
           loginBtn.classList.remove('hidden');
           userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
@@ -2572,6 +2582,7 @@
           userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
           userName.textContent = name;
           localStorage.setItem('rsvpName', name);
+          showGreeting(name);
         } else {
           loginBtn.classList.remove('hidden');
         }
