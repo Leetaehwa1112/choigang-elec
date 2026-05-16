@@ -104,38 +104,64 @@ create index on help_requests (requester_id);
 -- ============================================================
 -- 4. EVENTS (모임 일정)
 -- ============================================================
+-- 목업 기준 필드:
+--   title, held_at, location_name, location_url, fee, max_headcount,
+--   organizer_id, note, event_type, is_published
+--
+-- 플로우:
+--   1. 주최자(organizer)가 이벤트 생성 (is_published=false 초안)
+--   2. 확정 후 is_published=true → 멤버에게 알림
+--   3. 멤버들이 RSVP → event_rsvps 에 기록
+--   4. 회비 납부 여부는 rsvp.fee_paid 로 추적
+-- ============================================================
 create type event_type as enum (
   'regular',    -- 정기 동창회
-  'flash',      -- 번개
-  'ceremony'    -- 경조사
+  'flash',      -- 번개 모임
+  'ceremony'    -- 경조사 (결혼식·장례 등)
 );
 
 create table events (
-  id            uuid primary key default uuid_generate_v4(),
-  organizer_id  uuid not null references members(id) on delete cascade,
+  id              uuid primary key default uuid_generate_v4(),
+  organizer_id    uuid not null references members(id) on delete restrict,
 
-  title         text not null,
-  description   text,
-  event_type    event_type not null default 'regular',
+  title           text not null,                    -- "정기 동창회"
+  description     text,                             -- 상세 설명 (선택)
+  event_type      event_type not null default 'regular',
 
-  held_at       timestamptz not null,
-  location_name text,
-  location_url  text,                              -- 지도 링크
+  held_at         timestamptz not null,             -- 모임 일시
+  location_name   text,                             -- "강남 ○○삼겹살 2층 단독룸"
+  location_url    text,                             -- 카카오맵 or 네이버지도 링크
+  location_address text,                            -- 실 주소 (선택)
 
-  fee           integer,
-  max_headcount integer,
-  note          text,
+  fee             integer,                          -- 회비 (원), null=무료
+  max_headcount   integer,                          -- 정원 (null=무제한)
+  note            text,                             -- "결혼식 끝나고 바로" 등 메모
 
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  is_published    boolean not null default false,   -- false=초안, true=공개
+  rsvp_deadline   timestamptz,                      -- RSVP 마감 (null=당일까지)
+
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
 );
 
+comment on table events is '모임 일정 (정기·번개·경조사)';
 create index on events (held_at);
+create index on events (is_published, held_at);
 
 -- ============================================================
--- 5. EVENT_RSVPS
+-- 5. EVENT_RSVPS (참석 여부 + 회비 납부)
 -- ============================================================
-create type rsvp_status as enum ('attend', 'decline', 'maybe');
+-- 목업 기준:
+--   - 참석(attend) / 불참(decline) 버튼
+--   - 참석자 아바타 리스트 표시
+--   - 4/6 카운트
+--   - 회비 납부 여부 (fee_paid)
+-- ============================================================
+create type rsvp_status as enum (
+  'attend',   -- 참석
+  'decline',  -- 불참
+  'maybe'     -- 미응답 (기본값)
+);
 
 create table event_rsvps (
   id          uuid primary key default uuid_generate_v4(),
@@ -143,13 +169,63 @@ create table event_rsvps (
   member_id   uuid not null references members(id) on delete cascade,
 
   status      rsvp_status not null default 'maybe',
-  memo        text,
+  memo        text,                                 -- 개인 메모 ("차 가져가서 늦을 것 같음" 등)
 
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now(),
+  fee_paid    boolean not null default false,       -- 회비 납부 여부
+  paid_at     timestamptz,                          -- 납부 시각
+
+  responded_at timestamptz,                         -- 최초 응답 시각
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
 
   unique (event_id, member_id)
 );
+
+comment on table event_rsvps is 'RSVP (참석/불참) + 회비 납부 추적';
+create index on event_rsvps (event_id, status);
+create index on event_rsvps (member_id);
+
+-- 뷰: 다음 모임 카드에 필요한 데이터 한방에
+-- 사용처: 메인 페이지 "다음 모임" 섹션
+create view next_event_card as
+select
+  e.id,
+  e.title,
+  e.event_type,
+  e.held_at,
+  e.location_name,
+  e.location_url,
+  e.fee,
+  e.note,
+  e.max_headcount,
+  e.rsvp_deadline,
+  m.name  as organizer_name,
+  m.phone as organizer_phone,
+  -- 참석 확정 수
+  count(r.id) filter (where r.status = 'attend')  as attend_count,
+  -- 불참 수
+  count(r.id) filter (where r.status = 'decline') as decline_count,
+  -- 미응답 수
+  count(r.id) filter (where r.status = 'maybe')   as maybe_count,
+  -- 회비 납부 완료 수
+  count(r.id) filter (where r.status = 'attend' and r.fee_paid) as fee_paid_count,
+  -- 참석 멤버 정보 (아바타 리스트용 JSON 배열)
+  coalesce(
+    jsonb_agg(
+      jsonb_build_object('id', am.id, 'name', am.name, 'avatar_url', am.avatar_url, 'fee_paid', r.fee_paid)
+      order by r.responded_at
+    ) filter (where r.status = 'attend'),
+    '[]'
+  ) as attendees
+from events e
+join members m on m.id = e.organizer_id
+left join event_rsvps r on r.event_id = e.id
+left join members am on am.id = r.member_id
+where e.is_published = true
+  and e.held_at >= now()
+group by e.id, m.name, m.phone
+order by e.held_at asc
+limit 1;
 
 -- ============================================================
 -- 6. STATUS_POSTS (근황 · 직접 작성 + 인스타 미러)
