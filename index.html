@@ -731,6 +731,12 @@
 
             heroInit();
 
+            // 백그라운드 탭/숨김 시 타이머 정지 (배터리/CPU 절약)
+            document.addEventListener('visibilitychange', () => {
+              if (document.hidden) clearInterval(heroTimer);
+              else heroResetTimer();
+            });
+
             // 스와이프 지원
             let tsx = 0;
             const slider = document.getElementById('hero-slider');
@@ -924,8 +930,14 @@
       }
       document.querySelectorAll('.dday-badge').forEach(el => el.textContent = getDday());
 
+      // ── 멤버 목록 (단일 소스) ──
+      const MEMBER_LIST = [
+        {name:'이태화',ch:'태'},{name:'나준민',ch:'준'},{name:'한동명',ch:'동'},
+        {name:'이은준',ch:'은'},{name:'김상현',ch:'상'},{name:'김하람',ch:'하'},{name:'김건우',ch:'건'},
+      ];
+      const MEMBERS = MEMBER_LIST.map(m => m.name);
+
       // ── RSVP 상태 ──
-      const MEMBERS = ['이태화','나준민','한동명','이은준','김상현','김하람','김건우'];
       const rsvpState = {};
       MEMBERS.forEach(n => rsvpState[n] = null);
       rsvpState['이은준'] = 'attend';
@@ -1030,11 +1042,16 @@
 
       loadRsvp();
 
-      /* ── 멤버 목록 ── */
-      const MEMBER_LIST = [
-        {name:'이태화',ch:'태'},{name:'나준민',ch:'준'},{name:'한동명',ch:'동'},
-        {name:'이은준',ch:'은'},{name:'김상현',ch:'상'},{name:'김하람',ch:'하'},{name:'김건우',ch:'건'},
-      ];
+      // RSVP 토글 (data-* 속성 + 위임)
+      document.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('.rsvp-toggle');
+        if (!btn) return;
+        const id = Number(btn.dataset.rsvpId);
+        const name = btn.dataset.rsvpName;
+        const attending = btn.dataset.rsvpAttending === '1';
+        if (!id || !name) return;
+        toggleDbRsvp(id, name, attending);
+      });
 
       /* ── 다음 모임 슬라이더 ── */
       const TYPE_GRAD = {
@@ -1093,8 +1110,8 @@
             const cls = isA ? 'bg-green-400 text-white ring-2 ring-green-300'
                        : isD ? 'bg-ink/8 text-ink/25 line-through'
                        : 'bg-ink/15 text-ink/40 hover:bg-ink/25';
-            return `<button type="button" onclick="toggleDbRsvp(${s.id},'${m.name}',${isA})"
-              class="flex flex-col items-center gap-1 hover:scale-110 transition-transform active:scale-95">
+            return `<button type="button" data-rsvp-id="${s.id}" data-rsvp-name="${escHtml(m.name)}" data-rsvp-attending="${isA?'1':'0'}"
+              class="rsvp-toggle flex flex-col items-center gap-1 hover:scale-110 transition-transform active:scale-95">
               <div class="w-10 h-10 rounded-full ${cls} font-display text-base flex items-center justify-center transition">${m.ch}</div>
               <span class="text-[10px] font-mono ${isA?'text-green-500 font-bold':'text-ink-3'}">${m.name.slice(-2)}</span>
             </button>`;
@@ -1288,8 +1305,8 @@
                     <button onclick="deleteEvent('${s.id}')" class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 transition flex items-center justify-center text-sm" title="삭제">🗑️</button>
                   </div>
                 </div>
-                <h4 class="font-display text-xl leading-tight text-ink">${s.title}</h4>
-                ${s.place||timeDisplay ? `<p class="text-xs text-ink-3">${[s.place, timeDisplay].filter(Boolean).join('  ·  ')}</p>` : ''}
+                <h4 class="font-display text-xl leading-tight text-ink">${escHtml(s.title)}</h4>
+                ${s.place||timeDisplay ? `<p class="text-xs text-ink-3">${[escHtml(s.place), timeDisplay].filter(Boolean).join('  ·  ')}</p>` : ''}
                 ${candidateChips}
                 ${actionBtn||mapLink ? `<div class="flex flex-wrap items-center gap-2 pt-2 mt-auto border-t border-ink/6">
                   ${actionBtn}
@@ -3025,6 +3042,19 @@
       }
 
       async function submitLogout() {
+        // 푸시 구독 정리 (DB의 endpoint 행은 user_id cascade로 삭제됨, 브라우저 측만 해제)
+        try {
+          if ('serviceWorker' in navigator && 'PushManager' in window) {
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) {
+              const endpoint = sub.endpoint;
+              await sub.unsubscribe().catch(() => {});
+              try { await sb.from('push_subscriptions').delete().eq('endpoint', endpoint); } catch (_) {}
+            }
+          }
+        } catch (_) {}
+        localStorage.removeItem('push-enabled');
         await sb.auth.signOut();
         closeAuthModal();
         showToast('로그아웃됐어요.');
@@ -3369,7 +3399,7 @@
     <script>
       // ── 댓글 시스템 ──
       function escHtml(s) {
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
       }
 
       function timeAgo(iso) {
@@ -3790,15 +3820,25 @@
         function maybeShow() {
           if (!banner) return;
           if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-          if (Notification.permission !== 'default') return;          // 이미 허용/거부됨
-          if (localStorage.getItem(STORAGE_KEY)) return;
-          if (!_authSession) return;                                   // 로그인 전엔 안 띄움
+          if (!_authSession) return;
           // iOS는 standalone에서만 푸시 가능
           const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
           const isStandalone =
             window.matchMedia('(display-mode: standalone)').matches ||
             window.navigator.standalone === true;
           if (isIOS && !isStandalone) return;
+          const perm = Notification.permission;
+          if (perm === 'granted') return;
+          if (localStorage.getItem(STORAGE_KEY) && perm !== 'denied') return;
+          if (perm === 'denied') {
+            // 거부 상태: 안내 모드로 표시 (브라우저 설정에서 풀어야 한다고)
+            const titleEl = banner.querySelector('div[style*="font-weight:700"]');
+            const subEl = banner.querySelector('div[style*="font-size:11px"]');
+            const acceptBtn = banner.querySelector('#notifAccept');
+            if (titleEl) titleEl.textContent = '알림이 차단돼 있어요';
+            if (subEl) subEl.textContent = '브라우저 설정 > 사이트 권한 > 알림에서 허용';
+            if (acceptBtn) acceptBtn.style.display = 'none';
+          }
           banner.classList.add('show');
         }
 
@@ -3825,19 +3865,14 @@
       (async function updateMemberBorders() {
         try {
           const { data: names, error } = await sb.rpc('get_registered_members');
-          if (error) { console.error('[멤버상태] RPC 에러:', error); return; }
-          console.log('[멤버상태] 가입자 목록:', names);
+          if (error) return;
           const registered = new Set(names || []);
-          const cards = document.querySelectorAll('[data-member]');
-          console.log('[멤버상태] 카드 수:', cards.length);
-          cards.forEach((card) => {
+          document.querySelectorAll('[data-member]').forEach((card) => {
             const name = card.dataset.member;
             const isReg = registered.has(name);
             card.style.borderColor = isReg ? '#34d399' : '#f87171';
             card.style.borderWidth = '2px';
             card.style.borderStyle = 'solid';
-
-            // 이름 옆 뱃지 삽입
             const nameEl = card.querySelector('.font-bold.text-base');
             if (nameEl && !nameEl.querySelector('.member-status-badge')) {
               const badge = document.createElement('span');
@@ -3845,11 +3880,9 @@
               badge.textContent = isReg ? '가입완료' : '가입안함';
               badge.style.cssText = `font-size:10px; font-weight:700; margin-left:6px; color:${isReg ? '#16a34a' : '#dc2626'}; vertical-align: middle;`;
               nameEl.appendChild(badge);
-            } else if (!nameEl) {
-              console.warn('[멤버상태] 이름 엘리먼트 못 찾음:', name);
             }
           });
-        } catch (e) { console.error('[멤버상태] 예외:', e); }
+        } catch (_) {}
       })();
 
       window.addEventListener('load', async () => {

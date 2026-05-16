@@ -101,18 +101,25 @@ Deno.serve(async (req) => {
   const results: any[] = [];
 
   for (const t of targets) {
-    // 중복 발송 방지 — 같은 (session_id, kind, date)는 한 번만
-    const { data: logRow } = await supabase
+    // 중복 발송 방지 — atomic lock: 먼저 행을 차지(insert with sent_count=0)하고 성공한 호출만 발송
+    // unique (session_id, kind, target_date) 제약 + ignoreDuplicates 옵션
+    const { data: claimed, error: claimErr } = await supabase
       .from('notification_log')
-      .select('id')
-      .eq('session_id', t.sessionId)
-      .eq('kind', t.kind)
-      .eq('target_date', t.date)
-      .maybeSingle();
-    if (logRow) {
+      .upsert(
+        { session_id: t.sessionId, kind: t.kind, target_date: t.date, sent_count: 0 },
+        { onConflict: 'session_id,kind,target_date', ignoreDuplicates: true }
+      )
+      .select('id');
+    if (claimErr) {
+      results.push({ sessionId: t.sessionId, kind: t.kind, error: claimErr.message });
+      continue;
+    }
+    if (!claimed || claimed.length === 0) {
+      // 다른 호출이 이미 차지함 → 스킵
       results.push({ sessionId: t.sessionId, kind: t.kind, skipped: 'already_sent' });
       continue;
     }
+    const logId = claimed[0].id as number;
 
     const isToday = t.kind === 'd_day';
     const icon = t.row.type_icon || '⚡';
@@ -133,29 +140,47 @@ Deno.serve(async (req) => {
     });
 
     let sent = 0;
+    let transientFail = 0;
     for (const sub of subs || []) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } } as any,
-          payload
-        );
-        sent++;
-      } catch (e: any) {
-        // 410 Gone / 404 Not Found → 만료된 구독, 제거
-        const status = e?.statusCode || e?.status || 0;
-        if (status === 404 || status === 410) expired.push(sub.id);
+      let lastStatus = 0;
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } } as any,
+            payload
+          );
+          sent++;
+          lastStatus = 0;
+          break;
+        } catch (e: any) {
+          lastErr = e;
+          lastStatus = e?.statusCode || e?.status || 0;
+          // 영구 실패: 만료/잘못된 구독 → 즉시 제거, 재시도 안 함
+          if (lastStatus === 404 || lastStatus === 410 || lastStatus === 403) {
+            expired.push(sub.id);
+            break;
+          }
+          // 일시 실패(5xx, 408, 429, 네트워크): 지수 백오프 후 재시도
+          const isTransient = lastStatus === 0 || lastStatus === 408 || lastStatus === 429 || (lastStatus >= 500 && lastStatus < 600);
+          if (!isTransient) break;
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 300 * Math.pow(2, attempt)));
+        }
+      }
+      if (lastStatus !== 0 && lastStatus !== 404 && lastStatus !== 410 && lastStatus !== 403) {
+        transientFail++;
+        console.warn('[push] 일시 실패 후 포기:', sub.endpoint?.slice(-12), 'status=', lastStatus, lastErr?.body || '');
       }
     }
 
-    await supabase.from('notification_log').insert({
-      session_id: t.sessionId,
-      kind: t.kind,
-      target_date: t.date,
-      sent_count: sent,
-    });
+    // 실제 발송 카운트 업데이트
+    await supabase
+      .from('notification_log')
+      .update({ sent_count: sent })
+      .eq('id', logId);
 
     totalSent += sent;
-    results.push({ sessionId: t.sessionId, kind: t.kind, sent });
+    results.push({ sessionId: t.sessionId, kind: t.kind, sent, transientFail });
   }
 
   if (expired.length) {

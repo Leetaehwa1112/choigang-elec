@@ -1,6 +1,6 @@
 // 최강전기 PWA Service Worker
 // 정적 리소스만 캐시 - Supabase/Cloudinary 등 외부 API는 네트워크 우선
-const VERSION = 'v1.0.7';
+const VERSION = 'v1.0.8';
 const VAPID_PUBLIC_KEY = 'BKN_42BLXAEFw1b912ap0ebSZ-fRRmazrY9Hhw5328s5-GsMPg6MOi2eWUewfyLmj6wJIBEtJpp9EYujGoFVZB0';
 const ORIGIN = 'https://choigang-elec.vercel.app';
 
@@ -29,7 +29,12 @@ const PRECACHE_URLS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS).catch(() => {}))
+      .then((cache) => Promise.allSettled(
+        PRECACHE_URLS.map((u) => cache.add(u).catch((e) => {
+          console.warn('[SW] precache 실패:', u, e?.message || e);
+          return null;
+        }))
+      ))
       .then(() => self.skipWaiting())
   );
 });
