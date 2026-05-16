@@ -1277,7 +1277,7 @@
           <input id="lb-cmt-input" type="text" placeholder="사진에 한마디…" maxlength="80"
             class="flex-1 text-xs border border-white/20 rounded px-2 py-1 bg-white/10 text-white placeholder-white/40 min-w-0"
             onkeydown="if(event.key==='Enter')lbSubmitCmt()">
-          <button onclick="lbSubmitCmt()" class="text-xs font-bold px-2.5 py-1 bg-white text-ink rounded hover:bg-line-y transition flex-shrink-0">↑</button>
+          <button id="lb-cmt-submit" onclick="lbSubmitCmt()" class="text-xs font-bold px-2.5 py-1 bg-white text-ink rounded hover:bg-line-y transition flex-shrink-0">↑</button>
         </div>
       </div>
     </div>
@@ -1701,6 +1701,7 @@
       async function lbSubmitCmt() {
         const nameEl = document.getElementById('lb-cmt-name');
         const inputEl = document.getElementById('lb-cmt-input');
+        const submitBtn = document.getElementById('lb-cmt-submit');
         let name;
         if (_authSession) {
           name = _authSession.user.user_metadata?.name || _authSession.user.user_metadata?.username || '';
@@ -1715,13 +1716,14 @@
         }
         const content = inputEl?.value.trim();
         if (!content) { inputEl?.focus(); return; }
-        inputEl.value = '';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '…'; }
         const { error } = await sb.from('comments').insert({
           target: _lbCmtTarget,
           author: name,
           content
         });
-        if (!error) lbLoadCmt();
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '↑'; }
+        if (!error) { inputEl.value = ''; lbLoadCmt(); }
         else showToast('댓글 등록 실패 😢');
       }
 
@@ -2125,6 +2127,7 @@
         meetCur = 0;
         document.getElementById('meet-slides').style.transform = 'translateX(0)';
         initMeetSlider();
+        loadLatestUpdates();
       }
 
       function closeSchedule() {
@@ -2430,6 +2433,7 @@
         showToast(isEdit ? '수정됐어요! ✏️' : '일정이 등록됐어요! 🎉');
         loadEvents();
         initMeetSlider();
+        loadLatestUpdates();
       }
 
       /* ── RSVP (아바타 클릭: 토글, 버튼 클릭: 내 응답) ── */
@@ -2625,7 +2629,6 @@
           userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
           userName.textContent = name;
           localStorage.setItem('rsvpName', name);
-          showGreeting(name);
         } else {
           loginBtn.classList.remove('hidden');
         }
