@@ -256,38 +256,95 @@
             </div>
           </div>
         </div>
-        <!-- 메인 사진 슬라이드 -->
-        <div class="mt-6 rounded-xl overflow-hidden shadow-lg bg-ink/5 relative" style="height:320px" id="hero-slider">
-          <div id="hero-track" class="flex h-full transition-transform duration-700 ease-in-out">
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778865110/ozzfmaepada6r6wsljne.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png" alt="" class="w-full h-full object-cover flex-shrink-0"/>
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg" alt="" class="w-full h-full object-cover flex-shrink-0"/>
-          </div>
-          <!-- 인디케이터 -->
-          <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5" id="hero-dots"></div>
+        <!-- 메인 슬라이드 (사진 + 유튜브 지원) -->
+        <div class="mt-6 rounded-xl overflow-hidden shadow-lg bg-ink relative" style="height:320px" id="hero-slider">
+          <div id="hero-slides" class="absolute inset-0"></div>
+          <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="hero-dots"></div>
+          <!-- 좌우 터치 영역 -->
+          <button onclick="heroGo(heroCur-1)" class="absolute left-0 top-0 h-full w-1/4 z-10 opacity-0"></button>
+          <button onclick="heroGo(heroCur+1)" class="absolute right-0 top-0 h-full w-1/4 z-10 opacity-0"></button>
         </div>
         <script>
+          const HERO_SLIDES = [
+            { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg' },
+            { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg' },
+            { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg' },
+            { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png' },
+            { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg' },
+            // 유튜브 예시: { type: 'youtube', ytId: 'VIDEO_ID', isShort: false }
+          ];
+
           (function() {
-            const track = document.getElementById('hero-track');
+            const container = document.getElementById('hero-slides');
             const dotsEl = document.getElementById('hero-dots');
-            const total = track.children.length;
-            let cur = 0;
-            for (let i = 0; i < total; i++) {
+            const total = HERO_SLIDES.length;
+            window.heroCur = 0;
+            let timer;
+
+            // 슬라이드 엘리먼트 생성
+            HERO_SLIDES.forEach((s, i) => {
+              const wrap = document.createElement('div');
+              wrap.style.cssText = 'position:absolute;inset:0;opacity:0;transition:opacity 0.7s;';
+              wrap.id = 'hslide-' + i;
+
+              if (s.type === 'youtube') {
+                const src = `https://www.youtube.com/embed/${s.ytId}?autoplay=0&mute=1&loop=1&playlist=${s.ytId}&controls=0&playsinline=1`;
+                wrap.innerHTML = `<iframe src="${src}" class="w-full h-full" style="pointer-events:none" frameborder="0" allow="autoplay; fullscreen"></iframe>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>`;
+              } else {
+                wrap.innerHTML = `<img src="${s.src}" class="w-full h-full object-cover">`;
+              }
+              container.appendChild(wrap);
+
+              // 도트
               const d = document.createElement('div');
-              d.className = 'w-1.5 h-1.5 rounded-full transition-all ' + (i === 0 ? 'bg-white' : 'bg-white/40');
+              d.className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer ' + (i === 0 ? 'bg-white scale-125' : 'bg-white/40');
+              d.onclick = () => heroGo(i);
               dotsEl.appendChild(d);
+            });
+
+            window.heroGo = function(n) {
+              const slides = container.children;
+              const dots = dotsEl.children;
+              slides[heroCur].style.opacity = '0';
+              dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white/40';
+              heroCur = (n + total) % total;
+              slides[heroCur].style.opacity = '1';
+              dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white scale-125';
+
+              // 영상 슬라이드면 자동재생 시작
+              if (HERO_SLIDES[heroCur].type === 'youtube') {
+                const iframe = slides[heroCur].querySelector('iframe');
+                if (iframe) {
+                  const id = HERO_SLIDES[heroCur].ytId;
+                  iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1`;
+                }
+              }
+              resetTimer();
+            };
+
+            // 첫 슬라이드 표시
+            container.children[0].style.opacity = '1';
+
+            function resetTimer() {
+              clearInterval(timer);
+              const delay = HERO_SLIDES[heroCur].type === 'youtube' ? 8000 : 3800;
+              timer = setInterval(() => heroGo(heroCur + 1), delay);
             }
-            function go(n) {
-              cur = (n + total) % total;
-              track.style.transform = `translateX(-${cur * 100}%)`;
-              [...dotsEl.children].forEach((d, i) => {
-                d.className = 'w-1.5 h-1.5 rounded-full transition-all ' + (i === cur ? 'bg-white' : 'bg-white/40');
-              });
-            }
-            setInterval(() => go(cur + 1), 3500);
+            resetTimer();
+
+            // 스와이프 지원
+            let tsx = 0;
+            const slider = document.getElementById('hero-slider');
+            slider.addEventListener('touchstart', e => { tsx = e.touches[0].clientX; }, { passive: true });
+            slider.addEventListener('touchend', e => {
+              const dx = e.changedTouches[0].clientX - tsx;
+              if (Math.abs(dx) > 40) heroGo(heroCur + (dx < 0 ? 1 : -1));
+            });
           })();
         </script>
       </div>
