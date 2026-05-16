@@ -1698,15 +1698,20 @@
       async function lbSubmitCmt() {
         const nameEl = document.getElementById('lb-cmt-name');
         const inputEl = document.getElementById('lb-cmt-input');
-        const name = nameEl?.value.trim();
-        const content = inputEl?.value.trim();
-        if (!name) {
-          nameEl?.classList.add('ring-2','ring-yellow-400');
-          setTimeout(() => nameEl?.classList.remove('ring-2','ring-yellow-400'), 1500);
-          return;
+        let name;
+        if (_authSession) {
+          name = _authSession.user.user_metadata?.name || _authSession.user.user_metadata?.username || '';
+        } else {
+          name = nameEl?.value.trim();
+          if (!name) {
+            nameEl?.classList.add('ring-2','ring-yellow-400');
+            setTimeout(() => nameEl?.classList.remove('ring-2','ring-yellow-400'), 1500);
+            return;
+          }
+          saveCmtName(name);
         }
+        const content = inputEl?.value.trim();
         if (!content) { inputEl?.focus(); return; }
-        saveCmtName(name);
         inputEl.value = '';
         const { error } = await sb.from('comments').insert({
           target: _lbCmtTarget,
@@ -2553,6 +2558,7 @@
           userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
           loginBtn.classList.add('hidden'); // 초기엔 숨김, 세션 확인 후 표시
         }
+        updateCmtAuthUI();
       });
 
       // 초기 세션 확인
@@ -2570,6 +2576,7 @@
           loginBtn.classList.remove('hidden');
         }
         highlightRegisteredMembers();
+        updateCmtAuthUI();
       });
 
       // 가입완료 멤버 카드 강조
@@ -2617,6 +2624,47 @@
       const CMT_NAME_KEY = 'cmtAuthor';
       function getCmtName() { return localStorage.getItem(CMT_NAME_KEY) || ''; }
       function saveCmtName(n) { localStorage.setItem(CMT_NAME_KEY, n); }
+
+      function updateCmtAuthUI() {
+        const loggedIn = !!_authSession;
+        const name = loggedIn
+          ? (_authSession.user.user_metadata?.name || _authSession.user.user_metadata?.username || '')
+          : '';
+        document.querySelectorAll('.cmt-widget').forEach(widget => {
+          const sel = widget.querySelector('.cmt-name-sel');
+          if (!sel) return;
+          let label = widget.querySelector('.cmt-author-label');
+          if (loggedIn) {
+            sel.classList.add('hidden');
+            if (!label) {
+              label = document.createElement('span');
+              label.className = 'cmt-author-label text-[11px] font-mono font-bold text-line-l bg-line-l/10 px-1.5 py-1 rounded flex-shrink-0 whitespace-nowrap';
+              sel.after(label);
+            }
+            label.textContent = name;
+          } else {
+            sel.classList.remove('hidden');
+            label?.remove();
+          }
+        });
+        const lbSel = document.getElementById('lb-cmt-name');
+        let lbLabel = document.getElementById('lb-cmt-author-label');
+        if (lbSel) {
+          if (loggedIn) {
+            lbSel.classList.add('hidden');
+            if (!lbLabel) {
+              lbLabel = document.createElement('span');
+              lbLabel.id = 'lb-cmt-author-label';
+              lbLabel.className = 'text-xs font-mono font-bold text-line-y bg-white/10 px-1.5 py-1 rounded flex-shrink-0 whitespace-nowrap';
+              lbSel.after(lbLabel);
+            }
+            lbLabel.textContent = name;
+          } else {
+            lbSel.classList.remove('hidden');
+            lbLabel?.remove();
+          }
+        }
+      }
 
       function initCmtWidgets() {
         const saved = getCmtName();
@@ -2689,17 +2737,21 @@
         const nameEl = widget.querySelector('.cmt-name-sel');
         const inputEl = widget.querySelector('.cmt-input');
         const submitBtn = widget.querySelector('.cmt-submit');
-        const name = nameEl?.value.trim();
-        const content = inputEl?.value.trim();
-        if (!name) {
-          nameEl?.focus();
-          nameEl?.classList.add('ring-2','ring-red-400');
-          setTimeout(() => nameEl?.classList.remove('ring-2','ring-red-400'), 1500);
-          return;
+        let name;
+        if (_authSession) {
+          name = _authSession.user.user_metadata?.name || _authSession.user.user_metadata?.username || '';
+        } else {
+          name = nameEl?.value.trim();
+          if (!name) {
+            nameEl?.focus();
+            nameEl?.classList.add('ring-2','ring-red-400');
+            setTimeout(() => nameEl?.classList.remove('ring-2','ring-red-400'), 1500);
+            return;
+          }
+          saveCmtName(name);
         }
+        const content = inputEl?.value.trim();
         if (!content) { inputEl?.focus(); return; }
-
-        saveCmtName(name);
 
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '…'; }
         const { error } = await sb.from('comments').insert({
