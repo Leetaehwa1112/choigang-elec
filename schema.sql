@@ -488,3 +488,24 @@ create policy "public read"   on schedule_votes for select using (true);
 create policy "public insert" on schedule_votes for insert with check (true);
 create policy "public update" on schedule_votes for update using (true);
 create policy "public delete" on schedule_votes for delete using (true);
+
+create table if not exists schedule_sessions (
+  id              bigserial primary key,
+  title           text not null,
+  type            text not null,
+  type_icon       text not null default '📌',
+  time_str        text,                -- "18:00"
+  place           text,
+  addr            text,
+  map_url         text,
+  map_provider    text check (map_provider in ('kakao','naver','tmap')),
+  memo            text,
+  candidate_dates text[] not null default '{}',
+  is_active       boolean not null default true,
+  created_at      timestamptz default now()
+);
+alter table schedule_sessions enable row level security;
+create policy "public read"   on schedule_sessions for select using (true);
+create policy "public insert" on schedule_sessions for insert with check (true);
+create policy "public update" on schedule_sessions for update using (true);
+create policy "public delete" on schedule_sessions for delete using (true);

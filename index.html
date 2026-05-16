@@ -1458,65 +1458,77 @@
             <div class="flex flex-wrap gap-2" id="sched-type-btns"></div>
           </div>
 
-          <!-- ② 후보 날짜 선택 (미니 캘린더) -->
+          <!-- ② 후보 날짜 -->
           <div class="px-5 py-4 border-b border-ink/8">
-            <div class="font-mono text-[10px] text-ink-3 mb-3">후보 날짜 <span class="opacity-50">· 날짜를 탭하면 추가/삭제돼요</span></div>
-            <!-- 월 네비 -->
+            <div class="font-mono text-[10px] text-ink-3 mb-3">후보 날짜 <span class="opacity-50">· 탭해서 추가/삭제</span></div>
             <div class="flex items-center justify-between mb-3">
               <button onclick="schedCalMove(-1)" class="w-8 h-8 rounded-full bg-ink/8 flex items-center justify-center font-bold text-ink hover:bg-ink/15 transition">‹</button>
               <span id="sched-cal-title" class="font-display text-base"></span>
               <button onclick="schedCalMove(1)"  class="w-8 h-8 rounded-full bg-ink/8 flex items-center justify-center font-bold text-ink hover:bg-ink/15 transition">›</button>
             </div>
-            <!-- 캘린더 그리드 -->
             <div id="sched-cal-grid" class="select-none"></div>
-            <!-- 선택된 날짜 칩 -->
             <div id="sched-date-chips" class="mt-3 flex flex-wrap gap-1.5 min-h-[28px]"></div>
           </div>
 
-          <!-- ③ 가능 여부 그리드 -->
           <!-- ③ 세부 사항 -->
-          <div class="px-5 py-4 pb-8">
+          <div class="px-5 py-4 pb-6">
             <div class="font-mono text-[10px] text-ink-3 mb-3">세부 사항</div>
             <div class="space-y-2">
+              <!-- 모임 이름 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
+                <span class="text-lg w-6 text-center">✏️</span>
+                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">이름</span>
+                <input id="sched-title" type="text" placeholder="예) 여름 번개, 강남 삼겹살" maxlength="30" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
+              </label>
               <!-- 시간 -->
               <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center">⏰</span>
-                <span class="text-xs font-bold text-ink-3 w-8">시간</span>
+                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">시간</span>
                 <input id="sched-time" type="time" value="18:00" oninput="saveSchedDetail()"
                   class="flex-1 bg-transparent text-sm font-mono text-ink focus:outline-none">
               </label>
-              <!-- 장소 + 지도 통합 -->
+              <!-- 장소명 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
+                <span class="text-lg w-6 text-center">📍</span>
+                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">장소</span>
+                <input id="sched-place" type="text" placeholder="예) 르한스" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
+              </label>
+              <!-- 주소 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
+                <span class="text-lg w-6 text-center">🏠</span>
+                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">주소</span>
+                <input id="sched-addr" type="text" placeholder="예) 서울 성북구 정릉로10길 127" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
+              </label>
+              <!-- 지도 링크 (붙여넣기) -->
               <div class="bg-ink/4 rounded-xl px-4 py-3">
                 <div class="flex items-center gap-3">
-                  <span class="text-lg w-6 text-center">📍</span>
-                  <span class="text-xs font-bold text-ink-3 w-8">장소</span>
-                  <input id="sched-place" type="text" placeholder="장소명 또는 주소 입력" oninput="saveSchedDetail(); updateMapLinks()"
-                    class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
+                  <span class="text-lg w-6 text-center">🔗</span>
+                  <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">지도</span>
+                  <input id="sched-map" type="url" placeholder="카카오·네이버·티맵 링크 붙여넣기" oninput="saveSchedDetail(); renderMapPreview()"
+                    class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none min-w-0">
                 </div>
-                <!-- 지도 검색 버튼 -->
-                <div class="flex gap-2 mt-2.5 ml-14">
-                  <a id="sched-kakao-link" href="#" target="_blank" onclick="return openMapSearch('kakao')"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#FEE500] text-[#3A1D1D] text-xs font-bold transition hover:brightness-95 active:scale-95">
-                    <img src="https://developers.kakao.com/favicon.ico" class="w-3.5 h-3.5" onerror="this.remove()">
-                    카카오맵
-                  </a>
-                  <a id="sched-naver-link" href="#" target="_blank" onclick="return openMapSearch('naver')"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#03C75A] text-white text-xs font-bold transition hover:brightness-95 active:scale-95">
-                    <span class="font-extrabold text-[10px]">N</span>
-                    네이버지도
-                  </a>
-                </div>
+                <div id="sched-map-preview" class="mt-2.5 ml-14 hidden"></div>
               </div>
               <!-- 메모 -->
               <label class="flex items-start gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center mt-0.5">📝</span>
-                <span class="text-xs font-bold text-ink-3 w-8 mt-1">메모</span>
+                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0 mt-1">메모</span>
                 <textarea id="sched-memo" rows="2" placeholder="자유롭게 적어주세요" oninput="saveSchedDetail()"
                   class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none resize-none leading-relaxed"></textarea>
               </label>
             </div>
           </div>
 
+        </div>
+
+        <!-- 등록 버튼 -->
+        <div class="px-5 py-4 border-t border-ink/8 flex-shrink-0">
+          <button onclick="submitSchedule()" class="w-full py-3.5 rounded-xl bg-ink text-white font-display text-base font-bold flex items-center justify-center gap-2 hover:bg-ink/85 active:scale-[0.98] transition">
+            <span>⚡</span> 등록하기
+          </button>
         </div>
       </div>
     </div>
@@ -1675,8 +1687,11 @@
       /* ── 세부사항 저장/불러오기 (localStorage) ── */
       function saveSchedDetail() {
         const detail = {
+          title: document.getElementById('sched-title')?.value || '',
           time:  document.getElementById('sched-time')?.value  || '',
           place: document.getElementById('sched-place')?.value || '',
+          addr:  document.getElementById('sched-addr')?.value  || '',
+          map:   document.getElementById('sched-map')?.value   || '',
           memo:  document.getElementById('sched-memo')?.value  || '',
         };
         localStorage.setItem('schedDetail', JSON.stringify(detail));
@@ -1684,22 +1699,91 @@
       function loadSchedDetail() {
         try {
           const d = JSON.parse(localStorage.getItem('schedDetail') || '{}');
-          if (document.getElementById('sched-time'))  document.getElementById('sched-time').value  = d.time  || '18:00';
-          if (document.getElementById('sched-place')) document.getElementById('sched-place').value = d.place || '';
-          if (document.getElementById('sched-memo'))  document.getElementById('sched-memo').value  = d.memo  || '';
-          updateMapLinks();
+          const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+          set('sched-title', d.title || '');
+          set('sched-time',  d.time  || '18:00');
+          set('sched-place', d.place || '');
+          set('sched-addr',  d.addr  || '');
+          set('sched-map',   d.map   || '');
+          set('sched-memo',  d.memo  || '');
+          renderMapPreview();
         } catch(e) {}
       }
-      function updateMapLinks() {}
-      function openMapSearch(provider) {
-        const q = encodeURIComponent(document.getElementById('sched-place')?.value.trim() || '');
-        if (!q) return false;
-        const urls = {
-          kakao: `https://map.kakao.com/?q=${q}`,
-          naver: `https://map.naver.com/v5/search/${q}`,
+
+      /* ── 지도 링크 자동 감지 ── */
+      function detectMapProvider(url) {
+        if (!url) return null;
+        if (url.includes('map.kakao.com'))  return { key: 'kakao', label: '카카오맵', color: '#FEE500', text: '#3C1E1E' };
+        if (url.includes('map.naver.com'))  return { key: 'naver', label: '네이버지도', color: '#03C75A', text: '#fff' };
+        if (url.includes('tmap.life') || url.includes('tmap.co.kr')) return { key: 'tmap', label: '티맵', color: '#1a6dff', text: '#fff' };
+        return null;
+      }
+      function renderMapPreview() {
+        const url = document.getElementById('sched-map')?.value.trim() || '';
+        const box = document.getElementById('sched-map-preview');
+        if (!box) return;
+        const p = detectMapProvider(url);
+        if (!p) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+        box.classList.remove('hidden');
+        box.innerHTML = `<a href="${url}" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;background:${p.color};color:${p.text};font-size:12px;font-weight:700;text-decoration:none;">
+          ${p.label} 열기 ↗
+        </a>`;
+      }
+
+      /* ── 등록하기 ── */
+      async function submitSchedule() {
+        const title = document.getElementById('sched-title')?.value.trim() || '';
+        const time  = document.getElementById('sched-time')?.value  || '';
+        const place = document.getElementById('sched-place')?.value.trim() || '';
+        const addr  = document.getElementById('sched-addr')?.value.trim()  || '';
+        const mapUrl = document.getElementById('sched-map')?.value.trim()  || '';
+        const memo  = document.getElementById('sched-memo')?.value.trim()  || '';
+        const typeIcon = SCHED_TYPES.find(t => t.key === schedType)?.icon || '📌';
+
+        if (!title) { alert('모임 이름을 입력해주세요.'); document.getElementById('sched-title')?.focus(); return; }
+        if (!schedDates.length) { alert('후보 날짜를 하나 이상 선택해주세요.'); return; }
+
+        const mapProvider = detectMapProvider(mapUrl)?.key || null;
+
+        const payload = {
+          title,
+          type: schedType,
+          type_icon: typeIcon,
+          time_str: time,
+          place,
+          addr,
+          map_url: mapUrl || null,
+          map_provider: mapProvider,
+          memo: memo || null,
+          candidate_dates: schedDates.map(d => d.date_str),
+          is_active: true,
         };
-        window.open(urls[provider], '_blank');
-        return false;
+
+        const btn = document.querySelector('#schedule-modal button[onclick="submitSchedule()"]');
+        if (btn) { btn.disabled = true; btn.textContent = '등록 중…'; }
+
+        const { error } = await sb.from('schedule_sessions').insert(payload);
+
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span>⚡</span> 등록하기'; }
+
+        if (error) {
+          console.error(error);
+          alert('등록 중 오류가 발생했어요: ' + (error.message || ''));
+          return;
+        }
+
+        closeSchedule();
+        showToast('일정이 등록됐어요! 🎉');
+      }
+
+      function showToast(msg) {
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1d24;color:#fff;padding:10px 20px;border-radius:999px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.3s';
+        document.body.appendChild(t);
+        requestAnimationFrame(() => { t.style.opacity = '1'; });
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2800);
       }
     </script>
 
