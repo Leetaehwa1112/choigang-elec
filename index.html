@@ -3821,7 +3821,7 @@
       })();
 
       // 이미 권한 허용된 사용자도 구독 갱신 (브라우저 데이터 삭제 대비)
-      // 멤버 가입 상태 카드 테두리 표시
+      // 멤버 가입 상태 카드 테두리 + 뱃지 표시
       (async function updateMemberBorders() {
         try {
           const { data: names } = await sb.rpc('get_registered_members');
@@ -3829,10 +3829,21 @@
           document.querySelectorAll('[data-member]').forEach((card) => {
             const name = card.dataset.member;
             card.classList.remove('border-board');
-            if (registered.has(name)) {
-              card.classList.add('border-emerald-400');
-            } else {
-              card.classList.add('border-red-400');
+            const isReg = registered.has(name);
+            card.classList.add(isReg ? 'border-emerald-400' : 'border-red-400');
+
+            // 이름 옆 뱃지 삽입
+            const nameEl = card.querySelector('.font-bold.text-base');
+            if (nameEl && !nameEl.querySelector('.member-status-badge')) {
+              const badge = document.createElement('span');
+              badge.className = 'member-status-badge';
+              badge.textContent = isReg ? '가입완료' : '가입안함';
+              badge.style.cssText = `
+                font-size:10px; font-weight:700; margin-left:6px;
+                color:${isReg ? '#16a34a' : '#dc2626'};
+                vertical-align: middle;
+              `;
+              nameEl.appendChild(badge);
             }
           });
         } catch (_) {}
