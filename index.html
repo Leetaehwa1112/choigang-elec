@@ -737,7 +737,7 @@
             return `<button type="button" onclick="toggleDbRsvp(${s.id},'${m.name}',${isA})"
               class="flex flex-col items-center gap-1 hover:scale-110 transition-transform active:scale-95">
               <div class="w-10 h-10 rounded-full ${cls} font-display text-base flex items-center justify-center transition">${m.ch}</div>
-              <span class="text-[9px] font-mono ${isA?'text-green-500 font-bold':'text-ink-3'}">${m.name}</span>
+              <span class="text-[10px] font-mono ${isA?'text-green-500 font-bold':'text-ink-3'}">${m.name.slice(-2)}</span>
             </button>`;
           }).join('');
           const actionLink = s.action_url?`<a href="${s.action_url}" target="_blank" rel="noopener" class="text-line-l underline font-mono text-xs">↗ ${s.action_label||'링크'}</a>`:'';
