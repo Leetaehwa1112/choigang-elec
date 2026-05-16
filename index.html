@@ -631,21 +631,26 @@
 
       let currentEventId = null;
 
-      // DB에서 RSVP 불러오기
+      // DB에서 RSVP 불러오기 (결혼식 카드용)
       async function loadRsvp() {
-        const { data: event } = await sb.from('next_event_card').select('*').single();
-        if (!event) return;
-        currentEventId = event.id;
+        // 1) 기본 상태(이은준=attend)로 즉시 UI 그림 — DB 실패해도 빈 게이지 안 보이게
+        refreshRsvpUI();
 
-        const { data: rsvps } = await sb
-          .from('event_rsvps')
-          .select('status, members(name)')
-          .eq('event_id', event.id);
+        // 2) 결혼식 session_id 찾기 (schedule_sessions에 등록돼 있어야 함)
+        const { data: weddings } = await sb.from('schedule_sessions')
+          .select('id').eq('title', '이은준 결혼식').limit(1);
+        if (!weddings?.length) return;
+        currentEventId = weddings[0].id;
+
+        const { data: rsvps } = await sb.from('event_rsvps')
+          .select('member_name, status')
+          .eq('session_id', currentEventId);
 
         if (rsvps) {
           rsvps.forEach(r => {
-            const name = r.members?.name;
-            if (name && MEMBERS.includes(name)) rsvpState[name] = r.status;
+            if (MEMBERS.includes(r.member_name) && r.member_name !== '이은준') {
+              rsvpState[r.member_name] = r.status;
+            }
           });
         }
         refreshRsvpUI();
@@ -669,19 +674,35 @@
         document.getElementById('rsvp-bar').style.width = (attend / 7 * 100) + '%';
       }
 
-      function toggleRsvp(name) {
-        rsvpState[name] = rsvpState[name] === 'attend' ? null : 'attend';
+      async function toggleRsvp(name) {
+        const newStatus = rsvpState[name] === 'attend' ? null : 'attend';
+        rsvpState[name] = newStatus;
         refreshRsvpUI();
+        if (!currentEventId) return;
+        if (newStatus === null) {
+          await sb.from('event_rsvps').delete()
+            .eq('session_id', currentEventId).eq('member_name', name);
+        } else {
+          await sb.from('event_rsvps').upsert(
+            { session_id: Number(currentEventId), member_name: name, status: 'attend', updated_at: new Date().toISOString() },
+            { onConflict: 'session_id,member_name' }
+          );
+        }
       }
 
-      function submitRsvp(status) {
-        const myName = '이태화'; // TODO: 로그인 연동 후 교체
+      async function submitRsvp(status) {
+        const myName = localStorage.getItem('rsvpName') || '이태화';
         rsvpState[myName] = status;
         refreshRsvpUI();
         const msg = document.getElementById('rsvp-msg');
         msg.textContent = status === 'attend' ? '✓ 참석으로 등록됐어요!' : '불참으로 등록됐어요.';
         msg.className = 'text-center text-sm mt-3 ' + (status === 'attend' ? 'text-ok' : 'text-ink-3');
         setTimeout(() => { msg.textContent = ''; }, 3000);
+        if (!currentEventId) return;
+        await sb.from('event_rsvps').upsert(
+          { session_id: Number(currentEventId), member_name: myName, status, updated_at: new Date().toISOString() },
+          { onConflict: 'session_id,member_name' }
+        );
       }
 
       loadRsvp();
@@ -704,10 +725,11 @@
       let meetTotal = 1, meetCur = 0;
 
       async function initMeetSlider() {
-        // 기존 extra 슬라이드 제거 (재호출 시)
+        // 재호출 시 현재 슬라이드 인덱스 보존
+        const savedCur = meetCur;
         const meetSlides = document.getElementById('meet-slides');
         while (meetSlides.children.length > 1) meetSlides.removeChild(meetSlides.lastChild);
-        meetTotal = 1; meetCur = Math.min(meetCur, 0); updateMeetArrows();
+        meetTotal = 1;
 
         const [{ data }, { data: rsvps }] = await Promise.all([
           sb.from('schedule_sessions').select('*').eq('is_active', true).order('created_at', { ascending: true }),
@@ -788,6 +810,8 @@
           </div>`;
         }).join(''));
         meetTotal = 1 + extras.length;
+        meetCur = Math.max(0, Math.min(savedCur, meetTotal - 1));
+        meetSlides.style.transform = `translateX(-${meetCur * 100}%)`;
         updateMeetArrows();
       }
 
@@ -2267,9 +2291,10 @@
         const isEdit = !!editingEventId;
         if (btn) { btn.disabled = true; btn.textContent = isEdit ? '수정 중…' : '등록 중…'; }
 
-        const { error } = isEdit
-          ? await sb.from('schedule_sessions').update(payload).eq('id', editingEventId)
-          : await sb.from('schedule_sessions').insert(payload);
+        const result = isEdit
+          ? await sb.from('schedule_sessions').update(payload).eq('id', editingEventId).select().single()
+          : await sb.from('schedule_sessions').insert(payload).select().single();
+        const { data: savedSession, error } = result;
 
         if (btn) { btn.disabled = false; btn.innerHTML = isEdit ? '<span>✏️</span> 수정하기' : '<span>⚡</span> 등록하기'; }
 
@@ -2279,11 +2304,30 @@
           return;
         }
 
+        // 주최자 자동 참석 (신규 등록 시에만)
+        if (!isEdit && savedSession?.id) {
+          const myName = localStorage.getItem('rsvpName') || '';
+          if (myName && MEMBER_LIST.find(m => m.name === myName)) {
+            await sb.from('event_rsvps').upsert(
+              { session_id: Number(savedSession.id), member_name: myName, status: 'attend', updated_at: new Date().toISOString() },
+              { onConflict: 'session_id,member_name' }
+            );
+          } else {
+            _pendingMyRsvp = { sessionId: savedSession.id, status: 'attend' };
+            const namesDiv = document.getElementById('rsvp-picker-names');
+            if (namesDiv) {
+              namesDiv.innerHTML = MEMBER_LIST.map(m =>
+                `<button onclick="pickMyRsvpName('${m.name}')"
+                  class="py-3 rounded-xl bg-ink/6 hover:bg-ink/12 font-bold text-sm transition">${m.name}</button>`
+              ).join('');
+              document.getElementById('rsvp-picker').classList.remove('hidden');
+            }
+          }
+        }
+
         closeSchedule();
         showToast(isEdit ? '수정됐어요! ✏️' : '일정이 등록됐어요! 🎉');
         loadEvents();
-        meetCur = 0;
-        document.getElementById('meet-slides').style.transform = 'translateX(0)';
         initMeetSlider();
       }
 
@@ -2302,8 +2346,6 @@
           if (error) { alert('오류: ' + error.message); return; }
           showToast(`${memberName} 참석 ✓`);
         }
-        meetCur = 0;
-        document.getElementById('meet-slides').style.transform = 'translateX(0)';
         initMeetSlider();
       }
 
@@ -2345,8 +2387,6 @@
         );
         if (error) { alert('오류: ' + error.message); return; }
         showToast(`${name} ${status==='attend'?'참석 ✓':'불참'}`);
-        meetCur = 0;
-        document.getElementById('meet-slides').style.transform = 'translateX(0)';
         initMeetSlider();
       }
 
