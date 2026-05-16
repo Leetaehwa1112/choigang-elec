@@ -182,7 +182,11 @@
         </ul>
 
         <div class="flex items-center gap-2">
-          <button class="hidden sm:inline-flex wago-btn font-bold text-xs px-3 py-2 rounded">로그인</button>
+          <button id="nav-login-btn" onclick="openLogin()" class="hidden sm:inline-flex wago-btn font-bold text-xs px-3 py-2 rounded">로그인</button>
+          <div id="nav-user" class="hidden items-center gap-2">
+            <span id="nav-user-name" class="hidden sm:inline text-xs font-bold text-ink-2"></span>
+            <button onclick="doLogout()" class="hidden sm:inline-flex text-xs font-mono text-ink-3 hover:text-line-l px-2 py-1">로그아웃</button>
+          </div>
           <button id="menuBtn" class="md:hidden p-2 -mr-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
@@ -786,6 +790,48 @@
       </div>
     </footer>
 
+    <!-- ===== 로그인 모달 ===== -->
+    <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4">
+      <div class="bg-panel rounded-xl shadow-2xl p-6 w-full max-w-sm">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="font-display text-2xl">최강전기 입장</h3>
+            <p class="text-xs text-ink-3 mt-0.5">이메일로 링크 받고 클릭하면 끝</p>
+          </div>
+          <button onclick="closeLogin()" class="text-ink-3 hover:text-ink text-2xl leading-none">✕</button>
+        </div>
+        <div id="login-form">
+          <div class="mb-3">
+            <label class="text-xs font-bold text-ink-2 mb-1.5 block">이름</label>
+            <select id="login-name" class="w-full border-2 border-ink/15 rounded-lg px-3 py-2.5 text-sm bg-white font-bold focus:border-line-y outline-none">
+              <option value="">-- 선택 --</option>
+              <option>이태화</option>
+              <option>나준민</option>
+              <option>한동명</option>
+              <option>이은준</option>
+              <option>김상현</option>
+              <option>김하람</option>
+              <option>김건우</option>
+            </select>
+          </div>
+          <div class="mb-5">
+            <label class="text-xs font-bold text-ink-2 mb-1.5 block">이메일</label>
+            <input id="login-email" type="email" placeholder="your@email.com"
+              class="w-full border-2 border-ink/15 rounded-lg px-3 py-2.5 text-sm focus:border-line-y outline-none"/>
+          </div>
+          <button onclick="sendMagicLink()" class="wago-btn w-full font-display text-lg py-3 rounded-lg">
+            ⚡ 로그인 링크 받기
+          </button>
+          <p id="login-error" class="text-xs text-line-l text-center mt-2 hidden"></p>
+        </div>
+        <div id="login-sent" class="hidden text-center py-4">
+          <div class="text-5xl mb-3">📩</div>
+          <div class="font-display text-xl">이메일 확인하세요!</div>
+          <p class="text-sm text-ink-3 mt-2">링크 클릭하면 자동으로 입장돼요.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== 플로팅 도움 요청 ===== -->
     <button class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
       <span class="text-xl">⚡</span>
@@ -810,26 +856,101 @@
         '김건우': '전기과 멤버',
       };
 
-      (async function() {
-        const textEl = document.getElementById('greeting-text');
-        const { data: { session } } = await sb.auth.getSession();
+      // ── 모달 열기/닫기 ──
+      function openLogin()  { document.getElementById('login-modal').classList.remove('hidden'); }
+      function closeLogin() {
+        document.getElementById('login-modal').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('login-sent').classList.add('hidden');
+        document.getElementById('login-error').classList.add('hidden');
+      }
+      document.getElementById('login-modal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeLogin();
+      });
+
+      // ── 매직링크 발송 ──
+      async function sendMagicLink() {
+        const name  = document.getElementById('login-name').value;
+        const email = document.getElementById('login-email').value.trim();
+        const errEl = document.getElementById('login-error');
+        errEl.classList.add('hidden');
+
+        if (!name)  { errEl.textContent = '이름을 선택해주세요'; errEl.classList.remove('hidden'); return; }
+        if (!email) { errEl.textContent = '이메일을 입력해주세요'; errEl.classList.remove('hidden'); return; }
+
+        const { error } = await sb.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: window.location.href.split('#')[0],
+            data: { name }
+          }
+        });
+
+        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('login-sent').classList.remove('hidden');
+      }
+
+      // ── 로그아웃 ──
+      async function doLogout() {
+        await sb.auth.signOut();
+        location.reload();
+      }
+
+      // ── UI 업데이트 ──
+      function applySession(session) {
+        const textEl    = document.getElementById('greeting-text');
+        const loginBtn  = document.getElementById('nav-login-btn');
+        const userDiv   = document.getElementById('nav-user');
+        const userLabel = document.getElementById('nav-user-name');
 
         if (!session) {
-          textEl.innerHTML = '<span class="text-ink-3 font-normal">로그인하면 인사해드려요</span>';
+          textEl.innerHTML = '<span class="text-ink-3 font-normal text-xs">로그인하면 인사해드려요</span>';
+          loginBtn.classList.remove('hidden');
+          userDiv.classList.add('hidden');
           return;
         }
 
-        // 로그인된 경우 members 테이블에서 이름 조회
-        const { data: member } = await sb
-          .from('members')
-          .select('name')
-          .eq('auth_id', session.user.id)
-          .single();
-
-        const name  = member?.name ?? session.user.email;
+        const name  = session.user.user_metadata?.name ?? '멤버';
         const title = MEMBER_TITLES[name] ?? '전기과 멤버';
         textEl.textContent = `${title}님이 입장하셨습니다.`;
+        loginBtn.classList.add('hidden');
+        userDiv.classList.remove('hidden');
+        userDiv.classList.add('flex');
+        userLabel.textContent = name;
+        closeLogin();
+      }
+
+      // ── 초기 세션 확인 ──
+      (async () => {
+        const { data: { session } } = await sb.auth.getSession();
+        applySession(session);
+
+        // 로그인 직후 members 테이블에 auth_id 연결
+        if (session) {
+          const name = session.user.user_metadata?.name;
+          if (name) {
+            await sb.from('members')
+              .update({ auth_id: session.user.id })
+              .eq('name', name)
+              .is('auth_id', null);
+          }
+        }
       })();
+
+      // ── 인증 상태 변경 감지 ──
+      sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN') {
+          const name = session.user.user_metadata?.name;
+          if (name) {
+            await sb.from('members')
+              .update({ auth_id: session.user.id })
+              .eq('name', name)
+              .is('auth_id', null);
+          }
+          applySession(session);
+        }
+      });
     </script>
   </body>
 </html>
