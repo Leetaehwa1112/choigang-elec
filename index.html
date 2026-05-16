@@ -1561,7 +1561,7 @@
             statusText.textContent = 'Cloudinary에 업로드 중...';
             const formData = new FormData();
             formData.append('file', _uploadFile);
-            formData.append('upload_preset', 'ml_default');
+            formData.append('upload_preset', 'choigang_upload');
             const xhr = new XMLHttpRequest();
             const cloudUrl = await new Promise((resolve, reject) => {
               xhr.upload.onprogress = e => {
