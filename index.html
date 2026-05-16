@@ -1474,13 +1474,46 @@
           </div>
 
           <!-- ③ 가능 여부 그리드 -->
-          <div class="px-5 py-4 pb-6">
-            <div class="font-mono text-[10px] text-ink-3 mb-2.5">가능 여부 <span class="opacity-50">· 내 이름 선택 후 탭해서 표시</span></div>
-            <!-- 내 이름 -->
-            <div class="flex gap-1.5 flex-wrap mb-4" id="sched-member-btns"></div>
-            <!-- 그리드 -->
-            <div id="sched-grid">
-              <div class="text-center text-ink-3 text-sm py-6 opacity-50">날짜를 선택하면 여기에 표시돼요</div>
+          <!-- ③ 세부 사항 -->
+          <div class="px-5 py-4 pb-8">
+            <div class="font-mono text-[10px] text-ink-3 mb-3">세부 사항</div>
+            <div class="space-y-2">
+              <!-- 시간 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+                <span class="text-lg w-6 text-center">⏰</span>
+                <span class="text-xs font-bold text-ink-3 w-8">시간</span>
+                <input id="sched-time" type="time" value="18:00" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm font-mono text-ink focus:outline-none">
+              </label>
+              <!-- 장소 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+                <span class="text-lg w-6 text-center">📍</span>
+                <span class="text-xs font-bold text-ink-3 w-8">장소</span>
+                <input id="sched-place" type="text" placeholder="미정" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
+              </label>
+              <!-- 장소 링크 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+                <span class="text-lg w-6 text-center">🗺️</span>
+                <span class="text-xs font-bold text-ink-3 w-8">지도</span>
+                <input id="sched-map" type="url" placeholder="카카오맵·네이버지도 링크" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none min-w-0">
+              </label>
+              <!-- 회비 -->
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+                <span class="text-lg w-6 text-center">💰</span>
+                <span class="text-xs font-bold text-ink-3 w-8">회비</span>
+                <input id="sched-fee" type="text" placeholder="미정" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm font-mono text-ink placeholder-ink/25 focus:outline-none">
+                <span class="text-xs text-ink-3">원</span>
+              </label>
+              <!-- 메모 -->
+              <label class="flex items-start gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+                <span class="text-lg w-6 text-center mt-0.5">📝</span>
+                <span class="text-xs font-bold text-ink-3 w-8 mt-1">메모</span>
+                <textarea id="sched-memo" rows="2" placeholder="자유롭게 적어주세요" oninput="saveSchedDetail()"
+                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none resize-none leading-relaxed"></textarea>
+              </label>
             </div>
           </div>
 
@@ -1523,7 +1556,7 @@
       ];
       const SCHED_DAYS = ['일','월','화','수','목','금','토'];
 
-      let schedDates = [], schedVotes = {}, schedMe = null;
+      let schedDates = [], schedMe = null;
       let schedType  = localStorage.getItem('schedType') || '번개';
       let schedCalY  = new Date().getFullYear();
       let schedCalM  = new Date().getMonth();
@@ -1533,6 +1566,7 @@
         renderSchedTypeBtns();
         renderSchedCal();
         loadScheduleData();
+        loadSchedDetail();
       }
       function closeSchedule() {
         document.getElementById('schedule-modal').classList.replace('flex','hidden');
@@ -1633,80 +1667,31 @@
 
       /* ── 데이터 로드 ── */
       async function loadScheduleData() {
-        const [{ data: dates }, { data: votes }] = await Promise.all([
-          sb.from('schedule_dates').select('*').order('date_str'),
-          sb.from('schedule_votes').select('*'),
-        ]);
+        const { data: dates } = await sb.from('schedule_dates').select('*').order('date_str');
         schedDates = dates || [];
-        schedVotes = {};
-        (votes||[]).forEach(v => { if (!schedVotes[v.date_str]) schedVotes[v.date_str]={}; schedVotes[v.date_str][v.member_name]=v.status; });
-        renderSchedCal(); renderSchedMemberBtns(); renderSchedGrid();
+        renderSchedCal();
       }
 
-      /* ── 멤버 버튼 ── */
-      function renderSchedMemberBtns() {
-        document.getElementById('sched-member-btns').innerHTML = MEMBERS.map(m => {
-          const char = m[1];
-          const color = MEMBER_COLORS[m] || 'bg-ink text-white';
-          const on = schedMe === m;
-          return `<button onclick="selectSchedMe('${m}')" class="flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full border-2 transition ${on ? 'border-ink' : 'border-transparent opacity-50 hover:opacity-80'}">
-            <div class="w-7 h-7 rounded-full ${color} font-display text-sm flex items-center justify-center flex-shrink-0">${char}</div>
-            <span class="text-xs font-bold">${m}</span>
-          </button>`;
-        }).join('');
+      /* ── 세부사항 저장/불러오기 (localStorage) ── */
+      function saveSchedDetail() {
+        const detail = {
+          time:  document.getElementById('sched-time')?.value  || '',
+          place: document.getElementById('sched-place')?.value || '',
+          map:   document.getElementById('sched-map')?.value   || '',
+          fee:   document.getElementById('sched-fee')?.value   || '',
+          memo:  document.getElementById('sched-memo')?.value  || '',
+        };
+        localStorage.setItem('schedDetail', JSON.stringify(detail));
       }
-      function selectSchedMe(name) { schedMe = schedMe===name ? null : name; renderSchedMemberBtns(); renderSchedGrid(); }
-
-      /* ── 가능 여부 그리드 ── */
-      function renderSchedGrid() {
-        const el = document.getElementById('sched-grid');
-        if (!schedDates.length) { el.innerHTML = '<div class="text-center text-ink-3/50 text-xs py-4">날짜를 선택하면 여기에 표시돼요</div>'; return; }
-
-        let h = '<div class="overflow-x-auto"><table class="w-full text-center text-xs border-collapse">';
-        // 헤더
-        h += '<thead><tr><th class="text-left pb-2 pr-1 font-mono text-[10px] text-ink-3 whitespace-nowrap w-16">날짜</th>';
-        MEMBERS.forEach(m => {
-          const on = schedMe === m;
-          h += `<th class="pb-2 px-0"><div class="w-7 h-7 rounded-full ${MEMBER_COLORS[m]||'bg-ink text-white'} ${on?'ring-2 ring-offset-1 ring-line-l':''} font-display text-xs flex items-center justify-center mx-auto">${m[1]}</div></th>`;
-        });
-        h += '<th class="pb-2 pl-1 font-mono text-[10px] text-ink-3 whitespace-nowrap">가능</th></tr></thead><tbody>';
-
-        schedDates.forEach(d => {
-          const vt = schedVotes[d.date_str] || {};
-          const cnt = Object.values(vt).filter(s=>s==='available').length;
-          const best = cnt >= 6;
-          h += `<tr class="border-t border-ink/8 ${best?'bg-line-e/5':''}">
-            <td class="text-left py-2 pr-1 whitespace-nowrap">
-              <div class="font-bold text-[11px]">${d.date_label}</div>
-            </td>`;
-          MEMBERS.forEach(m => {
-            const st = vt[m] || 'none';
-            const isMe = schedMe === m;
-            const sym = st==='available'?'✓' : st==='unavailable'?'✗' : '·';
-            const bg  = st==='available'?'bg-line-e/15 text-line-e font-bold' : st==='unavailable'?'bg-ink/8 text-ink/25' : 'text-ink/20';
-            const act = isMe ? 'cursor-pointer active:scale-90' : 'cursor-default';
-            h += `<td class="py-1 px-0"><button onclick="schedToggleVote('${d.date_str}','${m}')" class="w-7 h-7 rounded-full ${bg} ${act} transition-transform flex items-center justify-center mx-auto text-sm">${sym}</button></td>`;
-          });
-          const cc = cnt>=6?'text-line-e font-extrabold' : cnt>=4?'text-line-y font-bold':'text-ink-3';
-          h += `<td class="py-2 pl-1 ${cc} whitespace-nowrap">${cnt}<span class="text-[9px] font-normal opacity-50">/7</span></td></tr>`;
-        });
-        h += '</tbody></table></div>';
-        el.innerHTML = h;
-      }
-
-      async function schedToggleVote(dateStr, memberName) {
-        if (schedMe !== memberName) return;
-        const cur = (schedVotes[dateStr]||{})[memberName] || 'none';
-        const next = cur==='none'?'available' : cur==='available'?'unavailable':'none';
-        if (!schedVotes[dateStr]) schedVotes[dateStr] = {};
-        if (next==='none') {
-          delete schedVotes[dateStr][memberName];
-          await sb.from('schedule_votes').delete().eq('date_str',dateStr).eq('member_name',memberName);
-        } else {
-          schedVotes[dateStr][memberName] = next;
-          await sb.from('schedule_votes').upsert({date_str:dateStr,member_name:memberName,status:next},{onConflict:'date_str,member_name'});
-        }
-        renderSchedGrid();
+      function loadSchedDetail() {
+        try {
+          const d = JSON.parse(localStorage.getItem('schedDetail') || '{}');
+          if (document.getElementById('sched-time'))  document.getElementById('sched-time').value  = d.time  || '18:00';
+          if (document.getElementById('sched-place')) document.getElementById('sched-place').value = d.place || '';
+          if (document.getElementById('sched-map'))   document.getElementById('sched-map').value   = d.map   || '';
+          if (document.getElementById('sched-fee'))   document.getElementById('sched-fee').value   = d.fee   || '';
+          if (document.getElementById('sched-memo'))  document.getElementById('sched-memo').value  = d.memo  || '';
+        } catch(e) {}
       }
     </script>
 
