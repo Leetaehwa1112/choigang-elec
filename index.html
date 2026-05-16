@@ -1479,36 +1479,36 @@
             <div class="font-mono text-[10px] text-ink-3 mb-3">세부 사항</div>
             <div class="space-y-2">
               <!-- 시간 -->
-              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center">⏰</span>
                 <span class="text-xs font-bold text-ink-3 w-8">시간</span>
                 <input id="sched-time" type="time" value="18:00" oninput="saveSchedDetail()"
                   class="flex-1 bg-transparent text-sm font-mono text-ink focus:outline-none">
               </label>
-              <!-- 장소 -->
-              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
-                <span class="text-lg w-6 text-center">📍</span>
-                <span class="text-xs font-bold text-ink-3 w-8">장소</span>
-                <input id="sched-place" type="text" placeholder="미정" oninput="saveSchedDetail()"
-                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
-              </label>
-              <!-- 장소 링크 -->
-              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
-                <span class="text-lg w-6 text-center">🗺️</span>
-                <span class="text-xs font-bold text-ink-3 w-8">지도</span>
-                <input id="sched-map" type="url" placeholder="카카오맵·네이버지도 링크" oninput="saveSchedDetail()"
-                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none min-w-0">
-              </label>
-              <!-- 회비 -->
-              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
-                <span class="text-lg w-6 text-center">💰</span>
-                <span class="text-xs font-bold text-ink-3 w-8">회비</span>
-                <input id="sched-fee" type="text" placeholder="미정" oninput="saveSchedDetail()"
-                  class="flex-1 bg-transparent text-sm font-mono text-ink placeholder-ink/25 focus:outline-none">
-                <span class="text-xs text-ink-3">원</span>
-              </label>
+              <!-- 장소 + 지도 통합 -->
+              <div class="bg-ink/4 rounded-xl px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <span class="text-lg w-6 text-center">📍</span>
+                  <span class="text-xs font-bold text-ink-3 w-8">장소</span>
+                  <input id="sched-place" type="text" placeholder="장소명 또는 주소 입력" oninput="saveSchedDetail(); updateMapLinks()"
+                    class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
+                </div>
+                <!-- 지도 검색 버튼 -->
+                <div class="flex gap-2 mt-2.5 ml-14">
+                  <a id="sched-kakao-link" href="#" target="_blank" onclick="return openMapSearch('kakao')"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#FEE500] text-[#3A1D1D] text-xs font-bold transition hover:brightness-95 active:scale-95">
+                    <img src="https://developers.kakao.com/favicon.ico" class="w-3.5 h-3.5" onerror="this.remove()">
+                    카카오맵
+                  </a>
+                  <a id="sched-naver-link" href="#" target="_blank" onclick="return openMapSearch('naver')"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#03C75A] text-white text-xs font-bold transition hover:brightness-95 active:scale-95">
+                    <span class="font-extrabold text-[10px]">N</span>
+                    네이버지도
+                  </a>
+                </div>
+              </div>
               <!-- 메모 -->
-              <label class="flex items-start gap-3 bg-ink/4 rounded-xl px-4 py-3 cursor-pointer">
+              <label class="flex items-start gap-3 bg-ink/4 rounded-xl px-4 py-3">
                 <span class="text-lg w-6 text-center mt-0.5">📝</span>
                 <span class="text-xs font-bold text-ink-3 w-8 mt-1">메모</span>
                 <textarea id="sched-memo" rows="2" placeholder="자유롭게 적어주세요" oninput="saveSchedDetail()"
@@ -1677,8 +1677,6 @@
         const detail = {
           time:  document.getElementById('sched-time')?.value  || '',
           place: document.getElementById('sched-place')?.value || '',
-          map:   document.getElementById('sched-map')?.value   || '',
-          fee:   document.getElementById('sched-fee')?.value   || '',
           memo:  document.getElementById('sched-memo')?.value  || '',
         };
         localStorage.setItem('schedDetail', JSON.stringify(detail));
@@ -1688,10 +1686,20 @@
           const d = JSON.parse(localStorage.getItem('schedDetail') || '{}');
           if (document.getElementById('sched-time'))  document.getElementById('sched-time').value  = d.time  || '18:00';
           if (document.getElementById('sched-place')) document.getElementById('sched-place').value = d.place || '';
-          if (document.getElementById('sched-map'))   document.getElementById('sched-map').value   = d.map   || '';
-          if (document.getElementById('sched-fee'))   document.getElementById('sched-fee').value   = d.fee   || '';
           if (document.getElementById('sched-memo'))  document.getElementById('sched-memo').value  = d.memo  || '';
+          updateMapLinks();
         } catch(e) {}
+      }
+      function updateMapLinks() {}
+      function openMapSearch(provider) {
+        const q = encodeURIComponent(document.getElementById('sched-place')?.value.trim() || '');
+        if (!q) return false;
+        const urls = {
+          kakao: `https://map.kakao.com/?q=${q}`,
+          naver: `https://map.naver.com/v5/search/${q}`,
+        };
+        window.open(urls[provider], '_blank');
+        return false;
       }
     </script>
 
