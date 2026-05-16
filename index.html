@@ -828,50 +828,75 @@
       </div>
     </section>
 
-    <!-- ===== 사진 업로드 모달 ===== -->
+    <!-- ===== 미디어 업로드 모달 ===== -->
     <div id="upload-modal" class="fixed inset-0 z-[60] hidden items-end sm:items-center justify-center bg-black/70" onclick="closeUploadModal(event)">
       <div class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 mx-0 sm:mx-4" onclick="event.stopPropagation()">
         <div class="flex items-center justify-between mb-4">
-          <h3 id="upload-modal-title" class="font-bold text-ink text-base">📷 사진 추가</h3>
+          <h3 id="upload-modal-title" class="font-bold text-ink text-base">미디어 추가</h3>
           <button onclick="closeUploadModal()" class="text-ink-3 hover:text-ink text-xl leading-none">✕</button>
         </div>
 
-        <!-- 앨범 선택 (그룹 지정 없을 때 표시) -->
+        <!-- 사진 / 유튜브 탭 -->
+        <div class="flex rounded-lg overflow-hidden border border-ink/15 text-sm font-bold mb-4">
+          <button id="tab-photo" onclick="setUploadTab('photo')" class="flex-1 py-2 bg-ink text-white transition">📷 사진</button>
+          <button id="tab-yt"    onclick="setUploadTab('yt')"    class="flex-1 py-2 bg-white text-ink-2 transition">▶ 유튜브</button>
+        </div>
+
+        <!-- 앨범 선택 -->
         <div id="upload-group-row" class="mb-3">
           <label class="text-[11px] text-ink-3 mb-1 block font-mono">앨범 선택</label>
           <select id="upload-group-sel" onchange="onGroupSelChange(this)" class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l"></select>
         </div>
 
-        <!-- 새 앨범 이름 입력 -->
+        <!-- 새 앨범 이름 -->
         <div id="upload-new-album-row" class="mb-3 hidden">
           <label class="text-[11px] text-ink-3 mb-1 block font-mono">새 앨범 이름</label>
           <input id="upload-new-album" type="text" placeholder="예) MT 2024 🏕️" maxlength="30" class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l">
         </div>
 
-        <!-- 사진 설명 -->
+        <!-- 설명 -->
         <div class="mb-3">
           <label class="text-[11px] text-ink-3 mb-1 block font-mono">설명 <span class="opacity-50">(선택)</span></label>
           <input id="upload-label" type="text" placeholder="예) '26.05.15 청모" maxlength="40" class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l">
         </div>
 
-        <!-- 파일 드롭 영역 -->
-        <div id="upload-drop" class="border-2 border-dashed border-ink/25 rounded-xl flex flex-col items-center justify-center p-5 mb-4 cursor-pointer hover:border-line-l transition-colors min-h-[100px]" onclick="document.getElementById('upload-file').click()">
-          <div id="upload-preview" class="hidden w-full flex justify-center">
-            <img id="upload-preview-img" class="max-h-28 rounded-lg object-contain">
+        <!-- 사진 영역 -->
+        <div id="upload-photo-area">
+          <div id="upload-drop" class="border-2 border-dashed border-ink/25 rounded-xl flex flex-col items-center justify-center p-5 mb-4 cursor-pointer hover:border-line-l transition-colors min-h-[100px]" onclick="document.getElementById('upload-file').click()">
+            <div id="upload-preview" class="hidden w-full flex justify-center">
+              <img id="upload-preview-img" class="max-h-28 rounded-lg object-contain">
+            </div>
+            <div id="upload-drop-hint" class="text-center pointer-events-none">
+              <div class="text-3xl mb-1">📷</div>
+              <div class="text-xs text-ink-3">탭해서 사진 선택<br><span class="opacity-60">또는 드래그 앤 드롭</span></div>
+            </div>
           </div>
-          <div id="upload-drop-hint" class="text-center pointer-events-none">
-            <div class="text-3xl mb-1">📷</div>
-            <div class="text-xs text-ink-3">탭해서 사진 선택<br><span class="opacity-60">또는 드래그 앤 드롭</span></div>
-          </div>
+          <input id="upload-file" type="file" accept="image/*" class="hidden" onchange="onFileSelected(this)">
         </div>
-        <input id="upload-file" type="file" accept="image/*" class="hidden" onchange="onFileSelected(this)">
 
-        <!-- 업로드 진행 -->
+        <!-- 유튜브 영역 -->
+        <div id="upload-yt-area" class="hidden mb-4">
+          <label class="text-[11px] text-ink-3 mb-1 block font-mono">유튜브 링크</label>
+          <input id="upload-yt-url" type="url" placeholder="https://youtube.com/watch?v=... 또는 Shorts 링크"
+            class="w-full border border-ink/20 rounded-lg px-2 py-1.5 text-sm text-ink bg-white focus:outline-none focus:border-line-l mb-2"
+            oninput="onYtUrlInput(this.value)">
+          <!-- 유튜브 미리보기 -->
+          <div id="yt-preview" class="hidden rounded-xl overflow-hidden border border-ink/10 bg-black">
+            <img id="yt-thumb" class="w-full object-cover">
+            <div class="px-3 py-2 flex items-center gap-2">
+              <span id="yt-type-badge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-line-e text-white"></span>
+              <span id="yt-title-hint" class="text-[11px] text-white/70 font-mono truncate"></span>
+            </div>
+          </div>
+          <div id="yt-error" class="hidden text-[11px] text-line-e font-mono mt-1">올바른 유튜브 링크를 입력해주세요</div>
+        </div>
+
+        <!-- 진행바 -->
         <div id="upload-progress" class="hidden mb-3">
           <div class="h-1.5 bg-ink/10 rounded-full overflow-hidden">
             <div id="upload-progress-bar" class="h-full bg-line-l transition-all duration-300" style="width:0%"></div>
           </div>
-          <div id="upload-status" class="text-[11px] text-ink-3 text-center mt-1.5 font-mono">업로드 중...</div>
+          <div id="upload-status" class="text-[11px] text-ink-3 text-center mt-1.5 font-mono">저장 중...</div>
         </div>
 
         <button id="upload-submit" onclick="submitUpload()" disabled
@@ -928,7 +953,11 @@
           const { data, error } = await sb.from('photo_memories').select('*').order('created_at', { ascending: true });
           if (error || !data || !data.length) return;
           data.forEach(row => {
-            MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name });
+            if (row.type === 'youtube') {
+              MEMORIES.push({ type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name });
+            } else {
+              MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name });
+            }
           });
           rebuildAndRender();
         } catch(e) { console.warn('photo_memories load failed', e); }
@@ -989,43 +1018,76 @@
       // ── 업로드 모달 ──
       let _uploadGroupName = '';
       let _uploadFile = null;
+      let _uploadTab = 'photo'; // 'photo' | 'yt'
+      let _ytId = null;
+      let _ytIsShort = false;
+
+      function parseYtId(url) {
+        const m = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        return m ? m[1] : null;
+      }
+
+      function setUploadTab(tab) {
+        _uploadTab = tab;
+        _uploadFile = null;
+        _ytId = null;
+        document.getElementById('tab-photo').className = 'flex-1 py-2 transition ' + (tab === 'photo' ? 'bg-ink text-white' : 'bg-white text-ink-2');
+        document.getElementById('tab-yt').className    = 'flex-1 py-2 transition ' + (tab === 'yt'    ? 'bg-ink text-white' : 'bg-white text-ink-2');
+        document.getElementById('upload-photo-area').classList.toggle('hidden', tab !== 'photo');
+        document.getElementById('upload-yt-area').classList.toggle('hidden', tab !== 'yt');
+        document.getElementById('upload-submit').disabled = true;
+      }
+
+      function onYtUrlInput(url) {
+        const id = parseYtId(url);
+        const isShort = /youtube\.com\/shorts\//.test(url);
+        const errEl = document.getElementById('yt-error');
+        const previewEl = document.getElementById('yt-preview');
+        if (!url.trim()) { errEl.classList.add('hidden'); previewEl.classList.add('hidden'); document.getElementById('upload-submit').disabled = true; return; }
+        if (!id) { errEl.classList.remove('hidden'); previewEl.classList.add('hidden'); document.getElementById('upload-submit').disabled = true; return; }
+        errEl.classList.add('hidden');
+        _ytId = id;
+        _ytIsShort = isShort;
+        document.getElementById('yt-thumb').src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+        document.getElementById('yt-type-badge').textContent = isShort ? '▼ Shorts' : '▶ 영상';
+        document.getElementById('yt-title-hint').textContent = isShort ? '세로형 (9:16)' : '가로형 (16:9)';
+        previewEl.classList.remove('hidden');
+        document.getElementById('upload-submit').disabled = false;
+      }
 
       function openUploadModal(groupName) {
         _uploadGroupName = groupName;
         _uploadFile = null;
-        const modal = document.getElementById('upload-modal');
-        const groupRow = document.getElementById('upload-group-row');
+        _ytId = null;
+
+        document.getElementById('upload-file').value = '';
+        document.getElementById('upload-label').value = '';
+        document.getElementById('upload-preview').classList.add('hidden');
+        document.getElementById('upload-drop-hint').classList.remove('hidden');
+        document.getElementById('upload-progress').classList.add('hidden');
+        document.getElementById('upload-submit').disabled = true;
+        document.getElementById('upload-yt-url').value = '';
+        document.getElementById('yt-preview').classList.add('hidden');
+        document.getElementById('yt-error').classList.add('hidden');
+        setUploadTab('photo');
+
         const groupSel = document.getElementById('upload-group-sel');
-        const labelInput = document.getElementById('upload-label');
-        const preview = document.getElementById('upload-preview');
-        const hint = document.getElementById('upload-drop-hint');
-        const progress = document.getElementById('upload-progress');
-        const submitBtn = document.getElementById('upload-submit');
-        const fileInput = document.getElementById('upload-file');
-
-        fileInput.value = '';
-        labelInput.value = '';
-        preview.classList.add('hidden');
-        hint.classList.remove('hidden');
-        progress.classList.add('hidden');
-        submitBtn.disabled = true;
-
-        // 그룹 셀렉터 구성
         const existingGroups = MEM_GROUPS.map(g => g.name);
         groupSel.innerHTML = existingGroups.map(n =>
           `<option value="${n}" ${n === groupName ? 'selected' : ''}>${n}</option>`
         ).join('') + '<option value="__new__">+ 새 앨범 만들기</option>';
 
+        const groupRow = document.getElementById('upload-group-row');
         if (groupName) {
-          document.getElementById('upload-modal-title').textContent = `📷 ${groupName}에 추가`;
+          document.getElementById('upload-modal-title').textContent = `${groupName}에 추가`;
           groupRow.classList.add('hidden');
         } else {
-          document.getElementById('upload-modal-title').textContent = '📷 사진 추가';
+          document.getElementById('upload-modal-title').textContent = '미디어 추가';
           groupRow.classList.remove('hidden');
         }
 
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        document.getElementById('upload-modal').classList.remove('hidden');
+        document.getElementById('upload-modal').classList.add('flex');
       }
 
       function closeUploadModal(e) {
@@ -1060,7 +1122,6 @@
           const file = e.dataTransfer.files[0];
           if (!file || !file.type.startsWith('image/')) return;
           _uploadFile = file;
-          document.getElementById('upload-file').files = e.dataTransfer.files;
           const reader = new FileReader();
           reader.onload = ev => {
             document.getElementById('upload-preview-img').src = ev.target.result;
@@ -1073,70 +1134,66 @@
       });
 
       async function submitUpload() {
-        if (!_uploadFile) return;
         const submitBtn = document.getElementById('upload-submit');
         const progress = document.getElementById('upload-progress');
         const progressBar = document.getElementById('upload-progress-bar');
         const statusText = document.getElementById('upload-status');
         const groupSel = document.getElementById('upload-group-sel');
         const labelInput = document.getElementById('upload-label');
-        const newAlbumRow = document.getElementById('upload-new-album-row');
-        const newAlbumInput = document.getElementById('upload-new-album');
 
-        // 그룹명 결정
         let groupName = _uploadGroupName || groupSel.value;
         if (groupName === '__new__') {
-          groupName = newAlbumInput ? newAlbumInput.value.trim() : '';
+          groupName = document.getElementById('upload-new-album').value.trim();
           if (!groupName) { alert('앨범 이름을 입력해주세요.'); return; }
         }
         const label = labelInput.value.trim() || groupName;
 
         submitBtn.disabled = true;
         progress.classList.remove('hidden');
-        progressBar.style.width = '20%';
-        statusText.textContent = 'Cloudinary에 업로드 중...';
 
         try {
-          // 1. Cloudinary 업로드 (unsigned preset)
-          const formData = new FormData();
-          formData.append('file', _uploadFile);
-          formData.append('upload_preset', 'ml_default');
+          if (_uploadTab === 'yt') {
+            // 유튜브 저장 (Cloudinary 불필요)
+            progressBar.style.width = '60%';
+            statusText.textContent = 'Supabase에 저장 중...';
+            const { error } = await sb.from('photo_memories').insert({
+              src: _ytId, label, group_name: groupName, type: 'youtube', is_short: _ytIsShort
+            });
+            if (error) throw error.message;
+            MEMORIES.push({ type: 'youtube', ytId: _ytId, isShort: _ytIsShort, label, group: groupName });
 
-          const xhr = new XMLHttpRequest();
-          const cloudUrl = await new Promise((resolve, reject) => {
-            xhr.upload.onprogress = e => {
-              if (e.lengthComputable) {
-                progressBar.style.width = Math.round(20 + (e.loaded/e.total)*60) + '%';
-              }
-            };
-            xhr.onload = () => {
-              const res = JSON.parse(xhr.responseText);
-              if (res.secure_url) resolve(res.secure_url);
-              else reject(res.error?.message || '업로드 실패');
-            };
-            xhr.onerror = () => reject('네트워크 오류');
-            xhr.open('POST', 'https://api.cloudinary.com/v1_1/dhk87y1nb/image/upload');
-            xhr.send(formData);
-          });
-
-          progressBar.style.width = '80%';
-          statusText.textContent = 'Supabase에 저장 중...';
-
-          // 2. Supabase에 저장
-          const { error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName });
-          if (error) throw error.message;
+          } else {
+            // 사진: Cloudinary 업로드
+            if (!_uploadFile) return;
+            progressBar.style.width = '20%';
+            statusText.textContent = 'Cloudinary에 업로드 중...';
+            const formData = new FormData();
+            formData.append('file', _uploadFile);
+            formData.append('upload_preset', 'ml_default');
+            const xhr = new XMLHttpRequest();
+            const cloudUrl = await new Promise((resolve, reject) => {
+              xhr.upload.onprogress = e => {
+                if (e.lengthComputable) progressBar.style.width = Math.round(20 + (e.loaded/e.total)*60) + '%';
+              };
+              xhr.onload = () => { const r = JSON.parse(xhr.responseText); r.secure_url ? resolve(r.secure_url) : reject(r.error?.message || '업로드 실패'); };
+              xhr.onerror = () => reject('네트워크 오류');
+              xhr.open('POST', 'https://api.cloudinary.com/v1_1/dhk87y1nb/image/upload');
+              xhr.send(formData);
+            });
+            progressBar.style.width = '80%';
+            statusText.textContent = 'Supabase에 저장 중...';
+            const { error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName, type: 'photo', is_short: false });
+            if (error) throw error.message;
+            MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName });
+          }
 
           progressBar.style.width = '100%';
           statusText.textContent = '완료! ✅';
-
-          // 3. 메모리에 추가 후 재렌더
-          MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName });
           rebuildAndRender();
-
           setTimeout(() => {
             document.getElementById('upload-modal').classList.add('hidden');
             document.getElementById('upload-modal').classList.remove('flex');
-          }, 800);
+          }, 700);
 
         } catch(err) {
           statusText.textContent = '오류: ' + err;
@@ -1145,11 +1202,8 @@
         }
       }
 
-      // 새 앨범 선택 시 입력란 표시
       function onGroupSelChange(sel) {
-        const newRow = document.getElementById('upload-new-album-row');
-        if (sel.value === '__new__') newRow.classList.remove('hidden');
-        else newRow.classList.add('hidden');
+        document.getElementById('upload-new-album-row').classList.toggle('hidden', sel.value !== '__new__');
       }
 
       // ── 라이트박스 (그룹 내부만 탐색) ──
@@ -1186,7 +1240,10 @@
         const m = lbItems[lbIdx];
         lbLabel.textContent = m.label;
         if (m.type === 'youtube') {
-          lbMedia.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.ytId}?autoplay=1" class="w-full max-w-2xl aspect-video rounded-lg" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+          const iframeClass = m.isShort
+            ? 'h-full max-h-[75vh] w-auto aspect-[9/16] rounded-lg'
+            : 'w-full max-w-2xl aspect-video rounded-lg';
+          lbMedia.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.ytId}?autoplay=1" class="${iframeClass}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
         } else {
           lbMedia.innerHTML = `<img src="${m.src}" class="max-w-full max-h-full object-contain rounded-lg" style="max-height:calc(100vh - 140px)"/>`;
         }
