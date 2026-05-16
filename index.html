@@ -2884,6 +2884,26 @@
             });
           });
 
+          // HARDCODED_MEMORIES — DB에 없는 항목만 추가 (Cloudinary v{ts}로 날짜 추출)
+          const dbSrcs = new Set((photos || []).map(p => p.src));
+          HARDCODED_MEMORIES.forEach(m => {
+            if (dbSrcs.has(m.src)) return;
+            const vtMatch = m.src.match(/\/v(\d+)\//);
+            const ts = vtMatch ? new Date(Number(vtMatch[1]) * 1000).toISOString() : null;
+            const label = m.label || m.group || '사진';
+            const dateStr = ts ? ts.slice(0, 10).replace(/-/g, '.') : '';
+            items.push({ ts, html:
+              `<a href="#memory" class="flex-shrink-0 flex items-center gap-3 bg-panel rounded-lg px-3 py-2.5 hover:bg-board/60 transition border border-ink/10 hover:border-line-l min-w-0 max-w-[260px]">
+                <img src="${m.src}" class="w-12 h-12 rounded object-cover flex-shrink-0"/>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">${_newBadge(ts)}<span class="text-[10px] font-mono text-ink-3">사진</span></div>
+                  <div class="font-bold text-sm truncate mt-0.5">${_esc(label)}</div>
+                  <div class="text-[10px] text-ink-3 font-mono">${dateStr}</div>
+                </div>
+              </a>`
+            });
+          });
+
           items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
           const top5 = items.slice(0, 5);
           container.innerHTML = top5.length
