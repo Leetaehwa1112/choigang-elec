@@ -189,6 +189,7 @@ create index if not exists push_subs_user_idx on push_subscriptions (user_id);
 alter table push_subscriptions enable row level security;
 create policy "push_read_own"   on push_subscriptions for select using (auth.uid() = user_id);
 create policy "push_insert_own" on push_subscriptions for insert with check (auth.uid() = user_id);
+create policy "push_update_own" on push_subscriptions for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "push_delete_own" on push_subscriptions for delete using (auth.uid() = user_id);
 -- 서비스 롤(Edge Function)은 RLS 우회 → 전체 발송 가능
 
@@ -232,10 +233,30 @@ create index if not exists scheduled_pushes_pending_idx
   on scheduled_pushes (send_at) where sent = false;
 
 alter table scheduled_pushes enable row level security;
+
+-- 어드민 판별: members 테이블에 role='admin'이거나 이름이 화이트리스트에 있으면 어드민
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from auth.users u
+    where u.id = auth.uid()
+      and (
+        coalesce(u.raw_user_meta_data->>'name','') in ('이태화','나준민')
+        or coalesce(u.raw_user_meta_data->>'username','') in ('이태화','나준민')
+      )
+  );
+$$;
+grant execute on function public.is_admin() to authenticated, anon;
+
 create policy "sp_read"   on scheduled_pushes for select using (true);
-create policy "sp_insert" on scheduled_pushes for insert with check (auth.uid() is not null);
-create policy "sp_update_own" on scheduled_pushes for update using (auth.uid() is not null);
-create policy "sp_delete_own" on scheduled_pushes for delete using (auth.uid() is not null);
+create policy "sp_insert" on scheduled_pushes for insert with check (public.is_admin());
+create policy "sp_update_admin" on scheduled_pushes for update using (public.is_admin());
+create policy "sp_delete_admin" on scheduled_pushes for delete using (public.is_admin());
 
 -- ============================================================
 -- [CRON] pg_cron으로 매일 Edge Function 호출
