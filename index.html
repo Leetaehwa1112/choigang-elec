@@ -758,9 +758,9 @@
             : `background:${grad}`;
           const dl = fd?(()=>{const dt=new Date(fd+'T00:00:00');return `${dt.getMonth()+1}.${String(dt.getDate()).padStart(2,'0')} ${DOW[dt.getDay()]}`})():'';
           const tl = s.time_str?(()=>{const[h,m]=s.time_str.split(':').map(Number);return(h<12?'오전 ':'오후 ')+(h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시')})():'';
-          const _q = encodeURIComponent((s.place||'') + (s.addr?' '+s.addr:''));
-          const _pn = encodeURIComponent(s.place||'');
-          const _pa = encodeURIComponent(s.addr||'');
+          const _q = ((s.place||'') + (s.addr?' '+s.addr:'')).replace(/ /g,'+');
+          const _pn = (s.place||'').replace(/ /g,'+');
+          const _pa = (s.addr||'').replace(/ /g,'+');
           const mapLinks = (s.place||s.addr) ? [
             s.map_url
               ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>`
@@ -944,9 +944,9 @@
                 class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-ink text-white hover:bg-ink/85 transition whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
             : '';
 
-          const _sq = encodeURIComponent((s.place||'') + (s.addr?' '+s.addr:''));
-          const _spn = encodeURIComponent(s.place||'');
-          const _spa = encodeURIComponent(s.addr||'');
+          const _sq = ((s.place||'') + (s.addr?' '+s.addr:'')).replace(/ /g,'+');
+          const _spn = (s.place||'').replace(/ /g,'+');
+          const _spa = (s.addr||'').replace(/ /g,'+');
           const mapLink = (s.place||s.addr) ? [
             s.map_url ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>` : '',
             `<a href="https://map.naver.com/v5/search/${_sq}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#03C75A;color:#fff;">네이버지도</a>`,
