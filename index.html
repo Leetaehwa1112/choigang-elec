@@ -767,51 +767,21 @@
       </div>
     </section>
 
-    <!-- ===== 추억 (작게) ===== -->
+    <!-- ===== 추억 ===== -->
     <section id="memory" class="workboard-light py-10 sm:py-14">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-end justify-between mb-5">
           <div>
             <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-05</div>
             <h2 class="font-display text-2xl sm:text-3xl mt-2">추억</h2>
-            <p class="text-ink-2 text-sm mt-1">모임 끝나면 자동으로 쌓입니다.</p>
-          </div>
-          <a href="#" class="text-sm text-ink-3 hover:text-line-l">전체 →</a>
-        </div>
-
-        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          <!-- 실제 사진: 오늘 청첩장 모임 -->
-          <div class="bg-white p-1.5 pb-4 shadow-md rotate-[-1deg] hover:rotate-0 hover:scale-105 transition cursor-pointer col-span-2 sm:col-span-1 relative">
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg" alt="이은준 청첩장 모임" class="w-full aspect-square object-cover"/>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2 leading-tight">'26.05.16<br/>이은준 청모</div>
-            <span class="absolute top-2 right-2 text-[8px] font-bold bg-line-l text-white px-1 rounded">NEW</span>
-          </div>
-          <!-- 실제 사진: 옛날 식당 -->
-          <div class="bg-white p-1.5 pb-4 shadow-md rotate-[2deg] hover:rotate-0 hover:scale-105 transition cursor-pointer">
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg" alt="옛날 식당" class="w-full aspect-square object-cover"/>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">고등학교 시절</div>
-          </div>
-          <!-- 실제 사진: 옛날 숙소 -->
-          <div class="bg-white p-1.5 pb-4 shadow-md rotate-[-2deg] hover:rotate-0 hover:scale-105 transition cursor-pointer">
-            <img src="https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg" alt="옛날 숙소" class="w-full aspect-square object-cover"/>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">수학여행 or MT</div>
-          </div>
-          <!-- 플레이스홀더들 -->
-          <div class="bg-white p-1.5 pb-4 shadow rotate-[1.5deg] hover:rotate-0 transition cursor-pointer">
-            <div class="aspect-square bg-gradient-to-br from-line-l/40 to-line-y/40 flex items-center justify-center text-3xl">🎓</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">'10 졸업식</div>
-          </div>
-          <div class="bg-white p-1.5 pb-4 shadow rotate-[-1deg] hover:rotate-0 transition cursor-pointer">
-            <div class="aspect-square bg-gradient-to-br from-line-e/40 to-board flex items-center justify-center text-3xl">🍻</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">'24 송년</div>
-          </div>
-          <div class="bg-white/70 p-1.5 pb-4 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition">
-            <div class="aspect-square w-full flex items-center justify-center text-2xl text-ink-3">＋</div>
-            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">사진 추가</div>
+            <p class="text-ink-2 text-sm mt-1">클릭하면 크게 볼 수 있어요.</p>
           </div>
         </div>
 
-        <!-- 추억 댓글 위젯 -->
+        <!-- 미디어 그리드 -->
+        <div id="memory-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+
+        <!-- 댓글 위젯 -->
         <div class="cmt-widget mt-6 pt-5 border-t border-dashed border-ink/20" data-target="memory">
           <button class="cmt-toggle flex items-center gap-2 text-sm text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)">
             <span>💬</span>
@@ -831,9 +801,118 @@
             </div>
           </div>
         </div>
-
       </div>
     </section>
+
+    <!-- ===== 라이트박스 모달 ===== -->
+    <div id="lb-overlay" class="fixed inset-0 z-50 hidden flex-col bg-black/95" onclick="lbClose(event)">
+      <div class="flex items-center justify-between px-4 py-3 flex-shrink-0">
+        <span id="lb-label" class="text-white/70 font-mono text-xs"></span>
+        <button onclick="lbClose()" class="text-white/60 hover:text-white text-2xl leading-none px-2">✕</button>
+      </div>
+      <div class="flex-1 flex items-center justify-center relative min-h-0 px-12">
+        <button onclick="lbMove(-1)" class="absolute left-2 text-white/60 hover:text-white text-3xl font-bold px-3 py-6 z-10">‹</button>
+        <div id="lb-media" class="w-full h-full flex items-center justify-center"></div>
+        <button onclick="lbMove(1)" class="absolute right-2 text-white/60 hover:text-white text-3xl font-bold px-3 py-6 z-10">›</button>
+      </div>
+      <div id="lb-dots" class="flex justify-center gap-1.5 py-4 flex-shrink-0"></div>
+    </div>
+
+    <script>
+      // ── 추억 미디어 데이터 ──
+      // type: 'photo' | 'youtube'
+      // photo → src (이미지 URL)
+      // youtube → ytId (유튜브 영상 ID)
+      const MEMORIES = [
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864616/aildof8ihrgd1l4yhsh0.jpg', label: "'26.05.16 이은준 청모", badge: 'NEW' },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778865110/ozzfmaepada6r6wsljne.jpg', label: "'26.05.16 이은준 청모" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png', label: "'26.05.16 이은준 청모" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg', label: "'26.05.16 이은준 청모" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864626/ezc3wgqi6ogrgh7uo4q3.jpg', label: "고등학교 시절" },
+        { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg', label: "수학여행 or MT" },
+        // 유튜브 예시: { type: 'youtube', ytId: 'VIDEO_ID', label: "영상 제목" },
+      ];
+
+      const ROTATIONS = ['-1deg','2deg','-2deg','1.5deg','-1deg','2.5deg','-1.5deg','1deg'];
+
+      function renderMemoryGrid() {
+        const grid = document.getElementById('memory-grid');
+        grid.innerHTML = MEMORIES.map((m, i) => {
+          const rot = ROTATIONS[i % ROTATIONS.length];
+          const thumb = m.type === 'youtube'
+            ? `https://img.youtube.com/vi/${m.ytId}/hqdefault.jpg`
+            : m.src;
+          const playIcon = m.type === 'youtube'
+            ? `<div class="absolute inset-0 flex items-center justify-center"><div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div>`
+            : '';
+          const badge = m.badge ? `<span class="absolute top-2 right-2 text-[8px] font-bold bg-line-l text-white px-1 rounded">${m.badge}</span>` : '';
+          return `
+            <div class="bg-white p-1.5 pb-5 shadow-md cursor-pointer hover:scale-105 hover:z-10 relative transition-transform duration-200"
+                 style="rotate:${rot}" onclick="lbOpen(${i})">
+              <div class="relative aspect-square overflow-hidden">
+                <img src="${thumb}" alt="${m.label}" class="w-full h-full object-cover"/>
+                ${playIcon}
+              </div>
+              <div class="font-mono text-[9px] text-ink-3 text-center mt-2 leading-tight px-1">${m.label}</div>
+              ${badge}
+            </div>`;
+        }).join('') + `
+          <div class="bg-white/70 p-1.5 pb-5 border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white transition">
+            <div class="aspect-square w-full flex items-center justify-center text-2xl text-ink-3">＋</div>
+            <div class="font-mono text-[9px] text-ink-3 text-center mt-2">추가</div>
+          </div>`;
+      }
+
+      // ── 라이트박스 ──
+      let lbIdx = 0;
+      const lbOv = document.getElementById('lb-overlay');
+      const lbMedia = document.getElementById('lb-media');
+      const lbDots = document.getElementById('lb-dots');
+      const lbLabel = document.getElementById('lb-label');
+
+      function lbOpen(i) {
+        lbIdx = i;
+        lbOv.classList.remove('hidden');
+        lbOv.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        lbRender();
+      }
+
+      function lbClose(e) {
+        if (e && e.target !== lbOv && e.target !== lbMedia) return;
+        lbOv.classList.add('hidden');
+        lbOv.classList.remove('flex');
+        document.body.style.overflow = '';
+        lbMedia.innerHTML = '';
+      }
+
+      function lbMove(dir) {
+        lbIdx = (lbIdx + dir + MEMORIES.length) % MEMORIES.length;
+        lbRender();
+      }
+
+      function lbRender() {
+        const m = MEMORIES[lbIdx];
+        lbLabel.textContent = m.label;
+        if (m.type === 'youtube') {
+          lbMedia.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.ytId}?autoplay=1" class="w-full max-w-2xl aspect-video rounded-lg" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+        } else {
+          lbMedia.innerHTML = `<img src="${m.src}" class="max-w-full max-h-full object-contain rounded-lg" style="max-height:calc(100vh - 140px)"/>`;
+        }
+        lbDots.innerHTML = MEMORIES.map((_, i) =>
+          `<div class="w-1.5 h-1.5 rounded-full transition-all ${i === lbIdx ? 'bg-white' : 'bg-white/30'}"></div>`
+        ).join('');
+      }
+
+      document.addEventListener('keydown', e => {
+        if (lbOv.classList.contains('hidden')) return;
+        if (e.key === 'Escape') lbClose();
+        if (e.key === 'ArrowLeft') lbMove(-1);
+        if (e.key === 'ArrowRight') lbMove(1);
+      });
+
+      renderMemoryGrid();
+    </script>
 
     <!-- ===== FOOTER ===== -->
     <footer class="distribution text-white py-8">
