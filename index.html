@@ -736,45 +736,62 @@
         }
 
         if (error || !data || !data.length) {
-          el.innerHTML = `<div class="text-center py-10 text-ink-3 text-sm opacity-60">${error ? '불러올 수 없어요' : '등록된 이벤트가 없어요 · 일정잡기로 추가해보세요!'}</div>`;
+          el.innerHTML = `<div class="text-center py-14 text-ink-3 text-sm opacity-50">${error ? '불러올 수 없어요' : '등록된 이벤트가 없어요'}</div>`;
           return;
         }
 
         el.innerHTML = data.map(s => {
-          const dates = (s.candidate_dates || []);
+          const dates = s.candidate_dates || [];
           const firstDate = dates[0] ? new Date(dates[0] + 'T00:00:00') : null;
-          const dateCol = firstDate
-            ? `<div class="text-center flex-shrink-0 w-12">
-                <div class="font-mono text-[10px] text-ink-3">${firstDate.getMonth()+1}월</div>
-                <div class="font-display text-2xl leading-none text-ink">${firstDate.getDate()}</div>
-                <div class="font-mono text-[10px] text-ink-3">${DOW_KR[firstDate.getDay()]}</div>
-               </div>
-               <div class="w-px h-10 bg-ink/15 flex-shrink-0"></div>` : '';
+          const DOW_FULL = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
 
-          const extraDates = dates.length > 1
-            ? `<div class="flex flex-wrap gap-1 mt-1.5">${dates.map((d,i) => {
+          const timeDisplay = s.time_str ? (() => {
+            const [h, m] = s.time_str.split(':').map(Number);
+            return (h < 12 ? '오전 ' : '오후 ') + (h > 12 ? h-12 : h) + (m ? ':'+String(m).padStart(2,'0') : '시');
+          })() : '';
+
+          const candidateChips = dates.length > 1
+            ? `<div class="flex flex-wrap gap-1.5 mt-3">${dates.map(d => {
                 const dt = new Date(d + 'T00:00:00');
                 const isWe = dt.getDay()===0||dt.getDay()===6;
-                return `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isWe?'bg-warn/10 text-warn':'bg-ink/8 text-ink-3'}">${dt.getMonth()+1}/${dt.getDate()}(${DOW_KR[dt.getDay()]})</span>`;
+                return `<span class="text-[11px] font-bold px-2 py-1 rounded-lg ${isWe?'bg-warn/10 text-warn':'bg-ink/6 text-ink-2'}">${dt.getMonth()+1}/${dt.getDate()} (${DOW_KR[dt.getDay()]})</span>`;
               }).join('')}</div>` : '';
 
           const actionBtn = s.action_url
-            ? `<a href="${s.action_url}" target="_blank" rel="noopener" class="flex-shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-ink text-white whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
+            ? `<a href="${s.action_url}" target="_blank" rel="noopener"
+                class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-ink text-white hover:bg-ink/85 transition whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
             : (s.map_url && s.map_provider
-              ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="flex-shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap"
+              ? `<a href="${s.map_url}" target="_blank" rel="noopener"
+                  class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl transition whitespace-nowrap"
                   style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>` : '');
 
-          return `<div class="bg-white border border-ink/10 rounded-xl p-4 flex items-center gap-3 shadow-sm">
-            ${dateCol}
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-bold bg-ink/8 text-ink-2 px-1.5 py-0.5 rounded">${s.type_icon} ${s.type}</span>
-                <h4 class="font-bold">${s.title}</h4>
+          const mapLink = s.map_url && s.action_url
+            ? `<a href="${s.map_url}" target="_blank" rel="noopener"
+                class="inline-flex items-center gap-1 text-xs text-ink-3 hover:text-ink transition whitespace-nowrap">📍 지도 보기</a>`
+            : '';
+
+          return `<div class="rounded-2xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-ink/8">
+            <div class="flex">
+              <!-- 날짜 패널 -->
+              ${firstDate ? `<div class="bg-ink text-white flex flex-col items-center justify-center px-5 py-6 flex-shrink-0 min-w-[72px]">
+                <span class="font-mono text-[10px] opacity-50 tracking-widest uppercase">${firstDate.getMonth()+1}월</span>
+                <span class="font-display text-4xl leading-none my-1">${firstDate.getDate()}</span>
+                <span class="font-mono text-[10px] opacity-50">${DOW_FULL[firstDate.getDay()]}</span>
+              </div>` : ''}
+              <!-- 콘텐츠 -->
+              <div class="bg-white flex-1 p-5 flex flex-col gap-2 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-bold tracking-wide text-ink-3 uppercase">${s.type_icon} ${s.type}</span>
+                </div>
+                <h4 class="font-display text-xl leading-tight text-ink">${s.title}</h4>
+                ${s.place||timeDisplay ? `<p class="text-xs text-ink-3">${[s.place, timeDisplay].filter(Boolean).join('  ·  ')}</p>` : ''}
+                ${candidateChips}
+                ${actionBtn||mapLink ? `<div class="flex flex-wrap items-center gap-2 pt-2 mt-auto border-t border-ink/6">
+                  ${actionBtn}
+                  ${mapLink}
+                </div>` : ''}
               </div>
-              ${s.place||s.time_str ? `<p class="text-xs text-ink-3 mt-0.5">${[s.place, s.time_str ? s.time_str.replace(':','시 ')+'분' : ''].filter(Boolean).join(' · ')}</p>` : ''}
-              ${extraDates}
             </div>
-            ${actionBtn}
           </div>`;
         }).join('');
       }
