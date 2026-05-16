@@ -1519,7 +1519,7 @@
       const SCHED_TYPES = [
         { key:'술자리',  icon:'🍻' }, { key:'밥자리',  icon:'🍚' },
         { key:'번개',   icon:'⚡' }, { key:'정기모임', icon:'🎉' },
-        { key:'야외활동',icon:'⛰️' }, { key:'기타',    icon:'🎲' },
+        { key:'야외활동',icon:'⛰️' },
       ];
       const SCHED_DAYS = ['일','월','화','수','목','금','토'];
 
@@ -1539,15 +1539,25 @@
       }
 
       /* ── 모임 종류 ── */
+      const isCustomType = () => !SCHED_TYPES.find(t => t.key === schedType);
+
       function renderSchedTypeBtns() {
-        const found = SCHED_TYPES.find(t => t.key === schedType) || SCHED_TYPES[2];
-        document.getElementById('sched-type-icon').textContent = found.icon;
-        document.getElementById('sched-type-btns').innerHTML = SCHED_TYPES.map(t => {
+        const found = SCHED_TYPES.find(t => t.key === schedType);
+        const custom = isCustomType();
+        document.getElementById('sched-type-icon').textContent = found ? found.icon : '✏️';
+        let html = SCHED_TYPES.map(t => {
           const on = t.key === schedType;
           return `<button onclick="setSchedType('${t.key}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold border-2 transition ${on ? 'border-ink bg-ink text-white' : 'border-ink/15 text-ink/60 hover:border-ink/40'}">${t.icon} ${t.key}</button>`;
         }).join('');
+        // 직접 입력 버튼/필드
+        html += custom
+          ? `<div class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold border-2 border-ink bg-ink text-white">✏️ <input id="sched-custom-input" type="text" value="${schedType}" maxlength="10" class="bg-transparent outline-none w-20 placeholder-white/50" placeholder="직접 입력" oninput="setSchedType(this.value||'기타')" onblur="if(!this.value)setSchedType('번개')" /></div>`
+          : `<button onclick="setSchedType('_custom_')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold border-2 border-ink/15 text-ink/60 hover:border-ink/40 transition">✏️ 직접 입력</button>`;
+        document.getElementById('sched-type-btns').innerHTML = html;
+        if (custom) setTimeout(() => document.getElementById('sched-custom-input')?.focus(), 50);
       }
       function setSchedType(key) {
+        if (key === '_custom_') { schedType = ''; localStorage.setItem('schedType', ''); renderSchedTypeBtns(); return; }
         schedType = key;
         localStorage.setItem('schedType', key);
         renderSchedTypeBtns();
