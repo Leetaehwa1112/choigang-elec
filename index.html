@@ -258,7 +258,7 @@
             <p class="font-bold text-ink-2 mt-1">전기과 짱</p>
           </div>
           <!-- 로그인 인사 -->
-          <div id="greeting-card" class="bg-panel-dark text-white rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 max-w-full">
+          <div id="greeting-card" class="hidden bg-panel-dark text-white rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 max-w-full">
             <span class="led-blink w-2 h-2 rounded-full bg-line-e text-line-e flex-shrink-0"></span>
             <div class="text-sm min-w-0">
               <div class="font-mono text-[10px] text-ink-3">입장</div>
@@ -2544,11 +2544,13 @@
       let _authSession = null;
       let _greetingTimer = null;
       function showGreeting(name) {
+        const card = document.getElementById('greeting-card');
         const el = document.getElementById('greeting-text');
-        if (!el) return;
+        if (!el || !card) return;
         if (_greetingTimer) clearTimeout(_greetingTimer);
         el.textContent = `${name}님 안녕하세요`;
-        _greetingTimer = setTimeout(() => { el.textContent = '최강전기 동창회'; }, 5000);
+        card.classList.remove('hidden');
+        _greetingTimer = setTimeout(() => { card.classList.add('hidden'); }, 5000);
       }
 
       sb.auth.onAuthStateChange((event, session) => {
