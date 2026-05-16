@@ -3203,7 +3203,39 @@
         if (!btn) return;
         btn.style.display = isAdmin() ? 'inline-flex' : 'none';
         if (isAdmin()) btn.onclick = openAdminPush;
+        positionAdminBtn();
       }
+      function positionAdminBtn() {
+        const btn = document.getElementById('adminPushBtn');
+        const banner = document.getElementById('notifBanner');
+        const install = document.getElementById('installBanner');
+        if (!btn) return;
+        // 배너가 떠있으면 그 위로 띄움, 없으면 기본 위치
+        let extra = 0;
+        if (banner && banner.classList.contains('show')) {
+          extra = banner.offsetHeight + 12;
+        } else if (install && install.classList.contains('show')) {
+          extra = install.offsetHeight + 12;
+        }
+        btn.style.bottom = `calc(var(--tabbar-height) + var(--safe-bottom) + ${76 + extra}px)`;
+      }
+      // 배너 show/hide될 때 자동 재배치
+      (() => {
+        const reposition = () => positionAdminBtn();
+        const obs = new MutationObserver(reposition);
+        const tryAttach = () => {
+          const b = document.getElementById('notifBanner');
+          const i = document.getElementById('installBanner');
+          if (b) obs.observe(b, { attributes: true, attributeFilter: ['class', 'style'] });
+          if (i) obs.observe(i, { attributes: true, attributeFilter: ['class', 'style'] });
+        };
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', tryAttach);
+        } else {
+          tryAttach();
+        }
+        window.addEventListener('resize', reposition);
+      })();
 
       async function openAdminPush() {
         if (!isAdmin()) return;
@@ -3612,7 +3644,7 @@
 
     <!-- ===== 어드민(이태화) 푸시 패널 ===== -->
     <button id="adminPushBtn" type="button" aria-label="푸시 어드민"
-      style="display:none;position:fixed;right:14px;bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px);z-index:60;background:#1a1d24;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:10px 14px;font-weight:700;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer">
+      style="display:none;position:fixed;right:14px;bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px);z-index:60;background:#1a1d24;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:9px 13px;font-weight:700;font-size:11px;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;transition:bottom 0.25s ease">
       📣 푸시 관리
     </button>
 
