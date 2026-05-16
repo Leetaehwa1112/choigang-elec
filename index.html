@@ -758,9 +758,16 @@
             : `background:${grad}`;
           const dl = fd?(()=>{const dt=new Date(fd+'T00:00:00');return `${dt.getMonth()+1}.${String(dt.getDate()).padStart(2,'0')} ${DOW[dt.getDay()]}`})():'';
           const tl = s.time_str?(()=>{const[h,m]=s.time_str.split(':').map(Number);return(h<12?'오전 ':'오후 ')+(h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시')})():'';
-          const mapLinks = [
-            s.map_url&&s.map_provider?`<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]}</a>`:''
-          ].filter(Boolean).join('');
+          const _q = encodeURIComponent((s.place||'') + (s.addr?' '+s.addr:''));
+          const _pn = encodeURIComponent(s.place||'');
+          const _pa = encodeURIComponent(s.addr||'');
+          const mapLinks = (s.place||s.addr) ? [
+            s.map_url
+              ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>`
+              : '',
+            `<a href="https://map.naver.com/v5/search/${_q}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#03C75A;color:#fff;">네이버지도</a>`,
+            `<a href="https://tmap.life/search?name=${_pn}&address=${_pa}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:#1a6dff;color:#fff;">티맵</a>`,
+          ].filter(Boolean).join('') : '';
           const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
           const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
           const declining = sRsvps.filter(r => r.status === 'decline').map(r => r.member_name);
@@ -935,15 +942,16 @@
           const actionBtn = s.action_url
             ? `<a href="${s.action_url}" target="_blank" rel="noopener"
                 class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-ink text-white hover:bg-ink/85 transition whitespace-nowrap">${s.action_label || '링크 ↗'}</a>`
-            : (s.map_url && s.map_provider
-              ? `<a href="${s.map_url}" target="_blank" rel="noopener"
-                  class="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl transition whitespace-nowrap"
-                  style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]} ↗</a>` : '');
-
-          const mapLink = s.map_url && s.action_url
-            ? `<a href="${s.map_url}" target="_blank" rel="noopener"
-                class="inline-flex items-center gap-1 text-xs text-ink-3 hover:text-ink transition whitespace-nowrap">📍 지도 보기</a>`
             : '';
+
+          const _sq = encodeURIComponent((s.place||'') + (s.addr?' '+s.addr:''));
+          const _spn = encodeURIComponent(s.place||'');
+          const _spa = encodeURIComponent(s.addr||'');
+          const mapLink = (s.place||s.addr) ? [
+            s.map_url ? `<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#FEE500;color:#3C1E1E;">카카오맵</a>` : '',
+            `<a href="https://map.naver.com/v5/search/${_sq}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#03C75A;color:#fff;">네이버지도</a>`,
+            `<a href="https://tmap.life/search?name=${_spn}&address=${_spa}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#1a6dff;color:#fff;">티맵</a>`,
+          ].filter(Boolean).join('') : '';
 
           const coverBg = s.cover_url ? `<div class="relative h-28 overflow-hidden"><img src="${s.cover_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/60"></div></div>` : '';
 
