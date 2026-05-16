@@ -396,6 +396,11 @@
               const total = HERO_SLIDES.length;
               const slides = container.children;
               const dots = dotsEl.children;
+              // 이전 슬라이드가 유튜브면 숨기기 전에 정지
+              if (HERO_SLIDES[heroCur].type === 'youtube') {
+                const prevIframe = slides[heroCur].querySelector('iframe');
+                if (prevIframe) ytPostMsg(prevIframe, 'pauseVideo', '');
+              }
               slides[heroCur].style.opacity = '0';
               dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white/40';
               heroCur = (n + total) % total;
