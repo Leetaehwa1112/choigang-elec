@@ -2392,9 +2392,9 @@
           return;
         }
 
-        // 주최자 자동 참석 (신규 등록 시에만)
+        // 주최자 자동 참석 (신규 등록 시, 로그인된 경우에만)
         if (!isEdit && savedSession?.id) {
-          const myName = localStorage.getItem('rsvpName') || '';
+          const myName = _authSession?.user?.user_metadata?.name || '';
           if (myName && MEMBER_LIST.find(m => m.name === myName)) {
             await sb.from('event_rsvps').upsert(
               { session_id: Number(savedSession.id), member_name: myName, status: 'attend', updated_at: new Date().toISOString() },
