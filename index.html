@@ -575,6 +575,24 @@
       </div>
     </section>
 
+    <!-- ===== 제안된 일정 ===== -->
+    <section id="proposed" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">일정잡기</div>
+            <h2 class="font-display text-2xl sm:text-3xl mt-2">제안된 일정</h2>
+          </div>
+          <button onclick="openSchedule()" class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-ink text-white text-sm font-bold hover:bg-ink/85 transition">
+            + 제안하기
+          </button>
+        </div>
+        <div id="proposed-list" class="grid gap-4 sm:grid-cols-2">
+          <div class="col-span-full text-center py-10 text-ink-3 text-sm opacity-60">불러오는 중…</div>
+        </div>
+      </div>
+    </section>
+
     <script>
       // ── Supabase 클라이언트 ──
       const { createClient } = supabase;
@@ -1785,6 +1803,62 @@
         requestAnimationFrame(() => { t.style.opacity = '1'; });
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2800);
       }
+
+      /* ── 제안된 일정 목록 ── */
+      const MAP_COLORS = { kakao: '#FEE500', naver: '#03C75A', tmap: '#1a6dff' };
+      const MAP_LABELS = { kakao: '카카오맵', naver: '네이버지도', tmap: '티맵' };
+      const MAP_TEXT   = { kakao: '#3C1E1E', naver: '#fff', tmap: '#fff' };
+
+      async function loadProposed() {
+        const el = document.getElementById('proposed-list');
+        if (!el) return;
+        const { data, error } = await sb.from('schedule_sessions')
+          .select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10);
+        if (error) {
+          el.innerHTML = '<div class="col-span-full text-center py-10 text-ink-3 text-sm opacity-60">일정을 불러올 수 없어요</div>';
+          return;
+        }
+        if (!data || !data.length) {
+          el.innerHTML = '<div class="col-span-full text-center py-10 text-ink-3 text-sm opacity-60">아직 제안된 일정이 없어요 · 첫 번째로 제안해보세요!</div>';
+          return;
+        }
+        el.innerHTML = data.map(s => {
+          const dates = (s.candidate_dates || []).map(d => {
+            const dt = new Date(d + 'T00:00:00');
+            const dow = ['일','월','화','수','목','금','토'][dt.getDay()];
+            const isWe = dt.getDay() === 0 || dt.getDay() === 6;
+            return `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${isWe ? 'bg-warn/10 text-warn' : 'bg-ink/8 text-ink-2'}">
+              ${(dt.getMonth()+1)}/${dt.getDate()} (${dow})
+            </span>`;
+          }).join('');
+          const mapBtn = s.map_url && s.map_provider
+            ? `<a href="${s.map_url}" target="_blank" rel="noopener"
+                style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};font-size:11px;font-weight:700;text-decoration:none;">
+                ${MAP_LABELS[s.map_provider]} ↗
+               </a>` : '';
+          return `<div class="bg-white rounded-2xl p-5 shadow-sm border border-ink/8 flex flex-col gap-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-lg mr-1">${s.type_icon || '📌'}</span>
+                <span class="text-[11px] font-bold text-ink-3 bg-ink/6 rounded px-1.5 py-0.5">${s.type}</span>
+              </div>
+              <span class="text-[10px] text-ink-3 opacity-50 shrink-0">${new Date(s.created_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric'})}</span>
+            </div>
+            <h3 class="font-display text-xl leading-tight">${s.title}</h3>
+            ${s.time_str || s.place ? `<div class="flex flex-wrap gap-x-3 gap-y-1 text-sm text-ink-2">
+              ${s.time_str ? `<span>⏰ ${s.time_str.replace(':','시 ')}분</span>` : ''}
+              ${s.place ? `<span>📍 ${s.place}</span>` : ''}
+            </div>` : ''}
+            ${s.addr ? `<div class="text-xs text-ink-3">🏠 ${s.addr}</div>` : ''}
+            ${s.memo ? `<div class="text-xs text-ink-3 italic">📝 ${s.memo}</div>` : ''}
+            ${dates ? `<div class="flex flex-wrap gap-1.5">${dates}</div>` : ''}
+            ${mapBtn ? `<div>${mapBtn}</div>` : ''}
+          </div>`;
+        }).join('');
+      }
+
+      // 페이지 로드 시 실행
+      loadProposed();
     </script>
 
     <script>
