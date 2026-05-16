@@ -398,6 +398,27 @@
                 <button onclick="submitRsvp('decline')" class="bg-white border-2 border-ink/20 font-display text-xl py-4 rounded-lg hover:border-line-l transition">불참</button>
               </div>
 
+              <!-- 댓글 위젯 -->
+              <div class="cmt-widget mt-4" data-target="meet">
+                <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)">
+                  <span>💬</span>
+                  <span class="cmt-label">한마디</span>
+                  <span class="cmt-count font-mono text-[10px] opacity-60"></span>
+                </button>
+                <div class="cmt-body hidden mt-2.5">
+                  <div class="cmt-list space-y-1.5 mb-2.5 max-h-32 overflow-y-auto"></div>
+                  <div class="flex gap-1.5">
+                    <select class="cmt-name-sel text-xs border border-ink/20 rounded px-1.5 py-1 bg-white text-ink flex-shrink-0">
+                      <option value="">이름</option>
+                      <option>이태화</option><option>나준민</option><option>한동명</option>
+                      <option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option>
+                    </select>
+                    <input type="text" placeholder="한마디..." maxlength="80" class="cmt-input flex-1 text-xs border border-ink/20 rounded px-2 py-1 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))">
+                    <button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-xs font-bold px-2.5 py-1 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="mt-4 pt-4 border-t border-dashed border-ink/15 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
                 <a href="https://bojagicard.com/i/home.php?uid=o5hladp5&inflow_suid=1" target="_blank" class="text-line-l underline font-mono">📩 청첩장 열기 ↗</a>
               </div>
@@ -633,7 +654,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2">려강족발 스토어 팀장</div>
-            <a href="tel:01080741639" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-8074-1639</a>
+            <a href="tel:01080741639" class="font-mono text-xs text-ink-3 hover:text-line-l">010-8074-1639</a>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-나준민">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
           <!-- 한동명 -->
@@ -646,7 +671,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2">전기기사 · 유일한 본업 전기직</div>
-            <a href="tel:01030113744" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-3011-3744</a>
+            <a href="tel:01030113744" class="font-mono text-xs text-ink-3 hover:text-line-l">010-3011-3744</a>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-한동명">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
           <!-- 이은준 -->
@@ -659,7 +688,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2">갤러리아 프라다 스토어 팀장</div>
-            <a href="tel:01026231118" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-2623-1118</a>
+            <a href="tel:01026231118" class="font-mono text-xs text-ink-3 hover:text-line-l">010-2623-1118</a>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-이은준">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
           <!-- 김하람 -->
@@ -672,7 +705,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2">자동차 부품업</div>
-            <a href="tel:01072705264" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-7270-5264</a>
+            <a href="tel:01072705264" class="font-mono text-xs text-ink-3 hover:text-line-l">010-7270-5264</a>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-김하람">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
           <!-- 김상현 -->
@@ -685,7 +722,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2">원단시장 마스터</div>
-            <a href="tel:01028422400" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-2842-2400</a>
+            <a href="tel:01028422400" class="font-mono text-xs text-ink-3 hover:text-line-l">010-2842-2400</a>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-김상현">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
           <!-- 김건우 -->
@@ -698,7 +739,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2"></div>
-            <span class="mt-auto font-mono text-xs text-ink-3/50">연락처 없음</span>
+            <span class="font-mono text-xs text-ink-3/50">연락처 없음</span>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-김건우">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
           <!-- 이태화 -->
@@ -711,7 +756,11 @@
               </div>
             </div>
             <div class="text-sm text-ink-2">기획 · 마케팅 · AI개발</div>
-            <a href="tel:01041960532" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-4196-0532</a>
+            <a href="tel:01041960532" class="font-mono text-xs text-ink-3 hover:text-line-l">010-4196-0532</a>
+            <div class="cmt-widget pt-2 border-t border-dashed border-ink/15" data-target="member-이태화">
+              <button class="cmt-toggle flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)"><span>💬</span><span class="cmt-label">한마디</span><span class="cmt-count font-mono text-[10px] opacity-60"></span></button>
+              <div class="cmt-body hidden mt-2"><div class="cmt-list space-y-1 mb-2 max-h-24 overflow-y-auto"></div><div class="flex gap-1"><select class="cmt-name-sel text-[11px] border border-ink/20 rounded px-1 py-0.5 bg-white text-ink flex-shrink-0"><option value="">이름</option><option>이태화</option><option>나준민</option><option>한동명</option><option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option></select><input type="text" placeholder="한마디..." maxlength="60" class="cmt-input flex-1 text-[11px] border border-ink/20 rounded px-1.5 py-0.5 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))"><button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-[11px] font-bold px-2 py-0.5 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button></div></div>
+            </div>
           </div>
 
         </div>
@@ -761,6 +810,28 @@
             <div class="font-mono text-[9px] text-ink-3 text-center mt-2">사진 추가</div>
           </div>
         </div>
+
+        <!-- 추억 댓글 위젯 -->
+        <div class="cmt-widget mt-6 pt-5 border-t border-dashed border-ink/20" data-target="memory">
+          <button class="cmt-toggle flex items-center gap-2 text-sm text-ink-3 hover:text-ink-2 transition" onclick="toggleCmt(this)">
+            <span>💬</span>
+            <span class="cmt-label">추억 한마디</span>
+            <span class="cmt-count font-mono text-xs opacity-60"></span>
+          </button>
+          <div class="cmt-body hidden mt-3">
+            <div class="cmt-list space-y-2 mb-3 max-h-40 overflow-y-auto"></div>
+            <div class="flex gap-1.5">
+              <select class="cmt-name-sel text-xs border border-ink/20 rounded px-1.5 py-1 bg-white text-ink flex-shrink-0">
+                <option value="">이름</option>
+                <option>이태화</option><option>나준민</option><option>한동명</option>
+                <option>이은준</option><option>김상현</option><option>김하람</option><option>김건우</option>
+              </select>
+              <input type="text" placeholder="추억 한마디..." maxlength="80" class="cmt-input flex-1 text-xs border border-ink/20 rounded px-2 py-1 bg-white text-ink min-w-0" onkeydown="if(event.key==='Enter')submitCmt(this.closest('.cmt-widget'))">
+              <button onclick="submitCmt(this.closest('.cmt-widget'))" class="text-xs font-bold px-2.5 py-1 bg-ink text-white rounded hover:bg-line-l transition flex-shrink-0">↑</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -827,6 +898,90 @@
         '김건우': '전기과 멤버',
       };
 
+    </script>
+
+    <script>
+      // ── 댓글 시스템 ──
+      function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      function timeAgo(iso) {
+        const d = Math.floor((Date.now() - new Date(iso)) / 60000);
+        if (d < 1) return '방금';
+        if (d < 60) return d + '분 전';
+        if (d < 1440) return Math.floor(d/60) + '시간 전';
+        return Math.floor(d/1440) + '일 전';
+      }
+
+      async function loadCmt(widget) {
+        const target = widget.dataset.target;
+        const { data, error } = await sb.from('comments')
+          .select('author, content, created_at')
+          .eq('target', target)
+          .order('created_at', { ascending: true })
+          .limit(30);
+        if (error) return;
+        const list = widget.querySelector('.cmt-list');
+        const countEl = widget.querySelector('.cmt-count');
+        if (data && data.length) {
+          list.innerHTML = data.map(c =>
+            `<div class="flex gap-1.5 text-xs leading-snug">
+              <span class="font-mono text-[10px] text-ink-3 flex-shrink-0 pt-px">${escHtml(c.author)}</span>
+              <span class="text-ink-2 flex-1">${escHtml(c.content)}</span>
+              <span class="text-[9px] text-ink-3/60 flex-shrink-0 pt-px font-mono">${timeAgo(c.created_at)}</span>
+            </div>`
+          ).join('');
+          countEl.textContent = data.length;
+          list.scrollTop = list.scrollHeight;
+        } else {
+          list.innerHTML = '<div class="text-[11px] text-ink-3/60 py-1">아직 댓글이 없어요.</div>';
+          countEl.textContent = '';
+        }
+      }
+
+      function toggleCmt(btn) {
+        const widget = btn.closest('.cmt-widget');
+        const body = widget.querySelector('.cmt-body');
+        const opening = body.classList.contains('hidden');
+        body.classList.toggle('hidden');
+        if (opening) loadCmt(widget);
+      }
+
+      async function submitCmt(widget) {
+        const nameEl = widget.querySelector('.cmt-name-sel');
+        const inputEl = widget.querySelector('.cmt-input');
+        const name = nameEl.value.trim();
+        const content = inputEl.value.trim();
+        if (!name) { nameEl.focus(); return; }
+        if (!content) { inputEl.focus(); return; }
+        const btn = widget.querySelector('button[onclick^="submitCmt"]');
+        btn.disabled = true;
+        btn.textContent = '…';
+        const { error } = await sb.from('comments').insert({
+          target: widget.dataset.target,
+          author: name,
+          content
+        });
+        btn.disabled = false;
+        btn.textContent = '↑';
+        if (!error) {
+          inputEl.value = '';
+          await loadCmt(widget);
+        }
+      }
+
+      // 페이지 로드 시 모든 위젯의 댓글 수 표시
+      (async () => {
+        const { data, error } = await sb.from('comments').select('target');
+        if (error || !data) return;
+        const counts = {};
+        data.forEach(r => { counts[r.target] = (counts[r.target] || 0) + 1; });
+        document.querySelectorAll('.cmt-widget').forEach(w => {
+          const n = counts[w.dataset.target];
+          if (n) w.querySelector('.cmt-count').textContent = n;
+        });
+      })();
     </script>
   </body>
 </html>
