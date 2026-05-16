@@ -616,117 +616,92 @@
     <!-- ===== 멤버 ===== -->
     <section id="status" class="workboard-light py-10 sm:py-14 border-b-2 border-ink/10">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
-        <div class="flex items-end justify-between mb-5 flex-wrap gap-3">
-          <div>
-            <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-03</div>
-            <h2 class="font-display text-2xl sm:text-3xl mt-2">멤버</h2>
-            <p class="text-ink-2 text-sm mt-1">인스타 연동된 동기는 자동, 나머지는 한 줄.</p>
-          </div>
-          <button class="wago-btn font-bold text-sm px-4 py-2.5 rounded">＋ 소식 올리기</button>
+        <div class="mb-7">
+          <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-03</div>
+          <h2 class="font-display text-2xl sm:text-3xl mt-2">멤버</h2>
+          <p class="text-ink-2 text-sm mt-1">북공고 전기과 동창회 · 6인</p>
         </div>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- 1. 인스타 -->
-          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
-            <div class="aspect-video bg-gradient-to-br from-line-l/40 to-line-y/40 flex items-center justify-center text-5xl relative">
-              🏪
-              <span class="absolute top-2 left-2 inline-flex items-center gap-0.5 text-[9px] font-mono bg-gradient-to-r from-line-l to-line-y text-white px-1.5 py-0.5 rounded">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
-                IG
-              </span>
-            </div>
-            <div class="p-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-line-l text-white font-bold flex items-center justify-center text-sm">박</div>
-                <div class="min-w-0 flex-1">
-                  <div class="font-bold text-sm">박영수</div>
-                  <div class="text-[10px] font-mono text-ink-3">@youngsoo_elec · 2일 전</div>
-                </div>
-              </div>
-              <p class="mt-2 text-sm">가게 오픈했다 🎉 동창들 와라.</p>
-              <div class="mt-3 flex items-center justify-between text-xs text-ink-2">
-                <a href="#" class="text-line-l underline">원본 ↗</a>
-                <div class="flex gap-3">
-                  <button>💬 4</button>
-                  <button>⚡ 7</button>
-                </div>
-              </div>
-            </div>
-          </article>
 
-          <!-- 2. 직접 작성 -->
-          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
-            <div class="p-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-line-e text-white font-bold flex items-center justify-center text-sm">김</div>
-                <div class="min-w-0 flex-1">
-                  <div class="font-bold text-sm">김철수</div>
-                  <div class="text-[10px] font-mono text-ink-3">직접 작성 · 4일 전</div>
-                </div>
-              </div>
-              <p class="mt-3 text-sm leading-relaxed">드디어 장가갑니다 💍 5/30 강남 ○○웨딩홀. 다들 시간 비워둬!</p>
-              <div class="mt-3 flex flex-wrap gap-1">
-                <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">#결혼</span>
-              </div>
-              <div class="mt-3 flex items-center justify-end text-xs text-ink-2 gap-3">
-                <button>💬 12</button>
-                <button>⚡ 10</button>
+          <!-- 나준민 -->
+          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-line-l text-white font-display text-xl flex items-center justify-center flex-shrink-0">준</div>
+              <div>
+                <div class="font-bold text-base">나준민</div>
+                <div class="text-[11px] font-mono text-ink-3 mt-0.5">모임 프로듀서</div>
               </div>
             </div>
-          </article>
+            <div class="text-sm text-ink-2">려강족발 스토어 팀장</div>
+            <a href="tel:01080741639" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-8074-1639</a>
+          </div>
 
-          <!-- 3. 인스타 -->
-          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
-            <div class="aspect-video bg-gradient-to-br from-line-y/40 to-line-e/30 flex items-center justify-center text-5xl relative">
-              👶
-              <span class="absolute top-2 left-2 inline-flex items-center gap-0.5 text-[9px] font-mono bg-gradient-to-r from-line-l to-line-y text-white px-1.5 py-0.5 rounded">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
-                IG
-              </span>
-            </div>
-            <div class="p-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-line-y text-ink font-bold flex items-center justify-center text-sm">최</div>
-                <div class="min-w-0 flex-1">
-                  <div class="font-bold text-sm">최기태</div>
-                  <div class="text-[10px] font-mono text-ink-3">@kitae_design · 1주 전</div>
-                </div>
-              </div>
-              <p class="mt-2 text-sm">둘째 태어났습니다 👶 또 남자입니다...</p>
-              <div class="mt-3 flex items-center justify-between text-xs text-ink-2">
-                <a href="#" class="text-line-l underline">원본 ↗</a>
-                <div class="flex gap-3">
-                  <button>💬 9</button>
-                  <button>⚡ 10</button>
-                </div>
+          <!-- 한동명 -->
+          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-line-y text-ink font-display text-xl flex items-center justify-center flex-shrink-0">동</div>
+              <div>
+                <div class="font-bold text-base">한동명</div>
+                <div class="text-[11px] font-mono text-ink-3 mt-0.5">전기과 실세</div>
               </div>
             </div>
-          </article>
+            <div class="text-sm text-ink-2">전기기사 · 유일한 본업 전기직</div>
+            <a href="tel:01030113744" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-3011-3744</a>
+          </div>
 
-          <!-- 4. 직접 -->
-          <article class="bg-white rounded-lg overflow-hidden border border-ink/10 hover:border-line-l transition">
-            <div class="p-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-ink-2 text-white font-bold flex items-center justify-center text-sm">이</div>
-                <div class="min-w-0 flex-1">
-                  <div class="font-bold text-sm">이민호</div>
-                  <div class="text-[10px] font-mono text-ink-3">직접 작성 · 2주 전</div>
-                </div>
-              </div>
-              <p class="mt-3 text-sm leading-relaxed">9급 공무원 합격 🎓 5수만에... 다들 고맙다.</p>
-              <div class="mt-3 flex flex-wrap gap-1">
-                <span class="text-[10px] font-mono bg-line-e/15 text-line-e px-1.5 py-0.5 rounded">#합격</span>
-              </div>
-              <div class="mt-3 flex items-center justify-end text-xs text-ink-2 gap-3">
-                <button>💬 7</button>
-                <button>⚡ 10</button>
+          <!-- 이은준 -->
+          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-line-e text-white font-display text-xl flex items-center justify-center flex-shrink-0">은</div>
+              <div>
+                <div class="font-bold text-base">이은준</div>
+                <div class="text-[11px] font-mono text-ink-3 mt-0.5">전기과 마스코트</div>
               </div>
             </div>
-          </article>
-        </div>
+            <div class="text-sm text-ink-2">갤러리아 프라다 스토어 팀장</div>
+            <a href="tel:01026231118" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-2623-1118</a>
+          </div>
 
-        <div class="mt-4 text-center">
-          <a href="#" class="text-sm text-ink-3 hover:text-line-l">더 보기 →</a>
+          <!-- 김하람 -->
+          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-panel-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0">하</div>
+              <div>
+                <div class="font-bold text-base">김하람</div>
+                <div class="text-[11px] font-mono text-ink-3 mt-0.5">전기과 개그맨</div>
+              </div>
+            </div>
+            <div class="text-sm text-ink-2">자동차 부품업</div>
+            <span class="mt-auto font-mono text-xs text-ink-3/50">연락처 없음</span>
+          </div>
+
+          <!-- 김상현 -->
+          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-board-dark text-white font-display text-xl flex items-center justify-center flex-shrink-0">상</div>
+              <div>
+                <div class="font-bold text-base">김상현</div>
+                <div class="text-[11px] font-mono text-ink-3 mt-0.5">분위기메이커</div>
+              </div>
+            </div>
+            <div class="text-sm text-ink-2">원단시장 마스터</div>
+            <a href="tel:01028422400" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-2842-2400</a>
+          </div>
+
+          <!-- 이태화 -->
+          <div class="bg-panel rounded-xl border border-board shadow-sm p-5 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-ink text-line-y font-display text-xl flex items-center justify-center flex-shrink-0">태</div>
+              <div>
+                <div class="font-bold text-base">이태화</div>
+                <div class="text-[11px] font-mono text-ink-3 mt-0.5">사이트 만든 놈</div>
+              </div>
+            </div>
+            <div class="text-sm text-ink-2">비주얼디렉 · 마케팅 · AI개발</div>
+            <a href="tel:01041960532" class="mt-auto font-mono text-xs text-ink-3 hover:text-line-l">010-4196-0532</a>
+          </div>
+
         </div>
       </div>
     </section>
