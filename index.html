@@ -716,7 +716,6 @@
         const extras = (data || []).filter(s => s.title !== '이은준 결혼식');
         if (!extras.length) return;
         const DOW = ['일','월','화','수','목','금','토'];
-        const myName = localStorage.getItem('rsvpName') || '';
         meetSlides.insertAdjacentHTML('beforeend', extras.map(s => {
           const fd = s.candidate_dates?.[0];
           const diff = fd?Math.ceil((new Date(fd+'T00:00:00+09:00')-new Date())/86400000):null;
@@ -730,27 +729,21 @@
           const mapLinks = [
             s.map_url&&s.map_provider?`<a href="${s.map_url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold" style="background:${MAP_COLORS[s.map_provider]};color:${MAP_TEXT[s.map_provider]};">${MAP_LABELS[s.map_provider]}</a>`:''
           ].filter(Boolean).join('');
-          // RSVP
           const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
           const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
-          const declining = sRsvps.filter(r => r.status === 'decline').map(r => r.member_name);
-          const myRsvp = sRsvps.find(r => r.member_name === myName)?.status || '';
-          const attendPct = Math.round(attending.length / MEMBER_LIST.length * 100);
           const avatars = MEMBER_LIST.map(m => {
-            const isA = attending.includes(m.name), isD = declining.includes(m.name);
-            const cls = isA ? 'bg-green-100 text-green-700 ring-2 ring-green-400' : isD ? 'bg-ink/8 text-ink/20' : 'bg-ink/15 text-ink/40';
-            return `<div class="flex flex-col items-center gap-1">
-              <div class="relative w-10 h-10 rounded-full ${cls} font-display text-base flex items-center justify-center">
-                ${m.ch}${isA?'<span class="absolute -bottom-0.5 -right-0.5 text-[9px]">✓</span>':''}
-              </div>
-              <span class="text-[9px] font-mono text-ink-3">${m.name}</span>
-            </div>`;
+            const isA = attending.includes(m.name);
+            const cls = isA ? 'bg-green-400 text-white ring-2 ring-green-300' : 'bg-ink/15 text-ink/40 hover:bg-ink/25';
+            return `<button type="button" onclick="toggleDbRsvp(${s.id},'${m.name}',${isA})"
+              class="flex flex-col items-center gap-1 hover:scale-110 transition-transform active:scale-95">
+              <div class="w-10 h-10 rounded-full ${cls} font-display text-base flex items-center justify-center transition">${m.ch}</div>
+              <span class="text-[9px] font-mono ${isA?'text-green-500 font-bold':'text-ink-3'}">${m.name}</span>
+            </button>`;
           }).join('');
           const actionLink = s.action_url?`<a href="${s.action_url}" target="_blank" rel="noopener" class="text-line-l underline font-mono text-xs">↗ ${s.action_label||'링크'}</a>`:'';
           return `<div class="shrink-0 w-full">
             <div class="distribution rounded-xl p-3 sm:p-4">
               <div class="metal-panel rounded-lg overflow-hidden">
-                <!-- 커버 -->
                 <div class="relative" style="height:220px;${coverStyle}">
                   <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent"></div>
                   <div class="absolute bottom-0 left-0 p-4 text-white">
@@ -760,7 +753,6 @@
                   ${dday?`<div class="absolute top-3 right-3"><span class="new-badge dday-badge font-mono text-xs">${dday}</span></div>`:''}
                 </div>
                 <div class="p-5 sm:p-6">
-                  <!-- 장소 -->
                   ${s.place||s.addr||mapLinks?`<div class="flex items-start gap-3 pb-4 border-b border-dashed border-ink/15">
                     <div class="text-xl flex-shrink-0 mt-0.5">📍</div>
                     <div>
@@ -770,20 +762,9 @@
                     </div>
                   </div>`:''}
                   ${s.memo?`<p class="text-xs text-ink-3 italic mt-3 border-l-2 border-ink/10 pl-3">${s.memo}</p>`:''}
-                  <!-- 멤버 아바타 -->
                   <div class="mt-4">
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-[10px] font-mono text-ink-3">참석 ${attending.length}/${MEMBER_LIST.length}</span>
-                    </div>
-                    <div class="bg-ink/10 rounded h-1.5 overflow-hidden mb-3"><div class="h-full bg-green-400 transition-all" style="width:${attendPct}%"></div></div>
+                    <div class="text-[10px] font-mono text-ink-3 mb-3">이름 눌러서 참석 ✓</div>
                     <div class="grid grid-cols-7 gap-1">${avatars}</div>
-                  </div>
-                  <!-- 참석/불참 -->
-                  <div class="mt-5 grid grid-cols-2 gap-3">
-                    <button onclick="submitRsvp(${s.id},'attend')"
-                      class="font-display text-xl py-4 rounded-lg transition ${myRsvp==='attend'?'bg-green-500 text-white':'wago-btn'}">참석 ✓</button>
-                    <button onclick="submitRsvp(${s.id},'decline')"
-                      class="font-display text-xl py-4 rounded-lg transition ${myRsvp==='decline'?'bg-ink/40 text-white':'bg-white border-2 border-ink/20'}">불참</button>
                   </div>
                   ${actionLink?`<div class="mt-4 pt-4 border-t border-dashed border-ink/15">${actionLink}</div>`:''}
                 </div>
@@ -1836,18 +1817,7 @@
       </div>
     </div>
 
-    <!-- ===== RSVP 이름 선택 ===== -->
-    <div id="rsvp-picker" class="hidden fixed inset-0 bg-ink/50 z-[300] flex items-end justify-center" onclick="if(event.target===this)closeRsvpPicker()">
-      <div class="bg-white rounded-t-2xl w-full max-w-sm">
-        <div class="px-5 pt-5 pb-3">
-          <p class="font-bold text-sm text-center mb-4">참석 여부를 남길 이름을 선택해주세요</p>
-          <div id="rsvp-picker-names" class="grid grid-cols-2 gap-2 mb-2"></div>
-        </div>
-        <button onclick="closeRsvpPicker()" class="w-full py-4 text-sm text-ink-3 border-t border-ink/10">취소</button>
-      </div>
-    </div>
-
-    <!-- ===== 플로팅 일정잡기 버튼 ===== -->
+<!-- ===== 플로팅 일정잡기 버튼 ===== -->
     <button onclick="openSchedule()" class="fab kakao-btn font-bold px-5 py-3 rounded-full flex items-center gap-2">
       <span class="text-xl">⚡</span>
       <span class="hidden sm:inline">이벤트 생성</span>
@@ -2291,47 +2261,21 @@
         initMeetSlider();
       }
 
-      /* ── RSVP ── */
-      let _pendingRsvp = null;
-
-      function submitRsvp(sessionId, status) {
-        const name = localStorage.getItem('rsvpName') || '';
-        if (!name || !MEMBER_LIST.find(m => m.name === name)) {
-          _pendingRsvp = { sessionId, status };
-          const namesDiv = document.getElementById('rsvp-picker-names');
-          namesDiv.innerHTML = MEMBER_LIST.map(m =>
-            `<button onclick="pickRsvpName('${m.name}')"
-              class="py-3 rounded-xl bg-ink/6 hover:bg-ink/12 font-bold text-sm transition">${m.name}</button>`
-          ).join('');
-          document.getElementById('rsvp-picker').classList.remove('hidden');
-          return;
+      /* ── RSVP (이름 누르면 바로 토글) ── */
+      async function toggleDbRsvp(sessionId, memberName, isAttending) {
+        if (isAttending) {
+          const { error } = await sb.from('event_rsvps').delete()
+            .eq('session_id', sessionId).eq('member_name', memberName);
+          if (error) { alert('오류: ' + error.message); return; }
+          showToast(`${memberName} 참석 취소`);
+        } else {
+          const { error } = await sb.from('event_rsvps').upsert(
+            { session_id: Number(sessionId), member_name: memberName, status: 'attend', updated_at: new Date().toISOString() },
+            { onConflict: 'session_id,member_name' }
+          );
+          if (error) { alert('오류: ' + error.message); return; }
+          showToast(`${memberName} 참석 ✓`);
         }
-        doRsvp(sessionId, status, name);
-      }
-
-      function closeRsvpPicker() {
-        document.getElementById('rsvp-picker').classList.add('hidden');
-        _pendingRsvp = null;
-      }
-
-      async function pickRsvpName(name) {
-        localStorage.setItem('rsvpName', name);
-        document.getElementById('rsvp-picker').classList.add('hidden');
-        if (_pendingRsvp) {
-          const { sessionId, status } = _pendingRsvp;
-          _pendingRsvp = null;
-          await doRsvp(sessionId, status, name);
-        }
-      }
-
-      async function doRsvp(sessionId, status, name) {
-        const { error } = await sb.from('event_rsvps').upsert(
-          { session_id: Number(sessionId), member_name: name, status, updated_at: new Date().toISOString() },
-          { onConflict: 'session_id,member_name' }
-        );
-        if (error) { alert('오류: ' + error.message); return; }
-        showToast(status === 'attend' ? `${name} 참석 ✓` : `${name} 불참`);
-        loadEvents();
         meetCur = 0;
         document.getElementById('meet-slides').style.transform = 'translateX(0)';
         initMeetSlider();
