@@ -100,3 +100,55 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
+
+// ===== Web Push =====
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {
+    data = { title: '최강전기', body: event.data ? event.data.text() : '' };
+  }
+  const title = data.title || '최강전기';
+  const options = {
+    body: data.body || '',
+    icon: data.icon || './icons/icon-192.png',
+    badge: data.badge || './icons/icon-192.png',
+    tag: data.tag || 'choigang-default',
+    renotify: data.renotify ?? true,
+    requireInteraction: data.requireInteraction ?? false,
+    vibrate: [80, 40, 80],
+    data: {
+      url: data.url || './',
+      sessionId: data.sessionId || null,
+    },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || './';
+  event.waitUntil((async () => {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of allClients) {
+      if ('focus' in c) {
+        c.navigate(targetUrl).catch(() => {});
+        return c.focus();
+      }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+  })());
+});
+
+// 구독 만료 시 자동 재구독 (브라우저가 주기적으로 갱신)
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil((async () => {
+    try {
+      const sub = await self.registration.pushManager.subscribe(
+        event.oldSubscription?.options || { userVisibleOnly: true }
+      );
+      // 클라이언트에 알려서 Supabase에 다시 저장하도록
+      const allClients = await self.clients.matchAll();
+      allClients.forEach((c) => c.postMessage({ type: 'PUSH_RESUBSCRIBED', subscription: sub.toJSON() }));
+    } catch (_) {}
+  })());
+});

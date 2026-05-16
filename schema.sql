@@ -168,6 +168,70 @@ create policy "rsvp_delete" on event_rsvps for delete using (true);
 -- create table help_requests ( ... );
 
 -- ============================================================
+-- [LIVE] 5. PUSH_SUBSCRIPTIONS  ─ Web Push 구독 정보
+-- ============================================================
+-- 사용처: 모임 D-day 알림 (Edge Function: send-event-reminders)
+-- 각 디바이스(브라우저)마다 endpoint 하나씩 발급 — 1유저 N디바이스
+create table if not exists push_subscriptions (
+  id          bigserial primary key,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  member_name text,                                              -- 표시용 (이태화/나준민/...)
+  endpoint    text not null unique,                              -- 브라우저별 푸시 endpoint
+  p256dh      text not null,                                     -- 암호화 공개키
+  auth        text not null,                                     -- 인증 비밀값
+  user_agent  text,
+  created_at  timestamptz not null default now(),
+  last_seen_at timestamptz not null default now()
+);
+
+create index if not exists push_subs_user_idx on push_subscriptions (user_id);
+
+alter table push_subscriptions enable row level security;
+create policy "push_read_own"   on push_subscriptions for select using (auth.uid() = user_id);
+create policy "push_insert_own" on push_subscriptions for insert with check (auth.uid() = user_id);
+create policy "push_delete_own" on push_subscriptions for delete using (auth.uid() = user_id);
+-- 서비스 롤(Edge Function)은 RLS 우회 → 전체 발송 가능
+
+-- ============================================================
+-- [LIVE] 6. NOTIFICATION_LOG  ─ 중복 발송 방지
+-- ============================================================
+-- 같은 (session_id, kind, target_date)는 하루 한 번만 발송
+create table if not exists notification_log (
+  id            bigserial primary key,
+  session_id    bigint references schedule_sessions(id) on delete cascade,
+  kind          text not null,                                    -- 'd_day' | 'd_1' | 'manual'
+  target_date   date not null,
+  sent_count    int not null default 0,
+  created_at    timestamptz not null default now(),
+  unique (session_id, kind, target_date)
+);
+
+alter table notification_log enable row level security;
+create policy "notif_log_read" on notification_log for select using (true);
+-- INSERT/UPDATE는 서비스 롤만 (Edge Function)
+
+-- ============================================================
+-- [CRON] pg_cron으로 매일 Edge Function 호출
+-- ============================================================
+-- 1) 확장 활성화 (Supabase Dashboard → Database → Extensions에서 pg_cron, pg_net 켜기)
+-- 2) 아래 SQL 한 번 실행 (PROJECT_REF / CRON_SECRET / 시간 본인 환경에 맞게 수정)
+--
+-- select cron.schedule(
+--   'send-event-reminders-daily',
+--   '0 0 * * *',   -- UTC 00:00 = KST 09:00 매일
+--   $$
+--   select net.http_post(
+--     url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-event-reminders',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer YOUR_CRON_SECRET'
+--     ),
+--     body := jsonb_build_object('source','pg_cron')
+--   );
+--   $$
+-- );
+
+-- ============================================================
 -- updated_at 자동 갱신 트리거 (LIVE 테이블용)
 -- ============================================================
 create or replace function set_updated_at()

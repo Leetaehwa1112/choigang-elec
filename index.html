@@ -3490,6 +3490,17 @@
       </div>
     </nav>
 
+    <!-- ===== 알림 권한 배너 (로그인 후) ===== -->
+    <div id="notifBanner" class="install-banner" role="dialog" aria-label="알림 받기" style="bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px)">
+      <div style="font-size:24px">🔔</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">모임 알림 받기</div>
+        <div style="font-size:11px;opacity:0.75">D-day 아침에 푸시로 알려드려요</div>
+      </div>
+      <button id="notifAccept" style="background:#16a34a;color:#fff;font-weight:700;font-size:12px;padding:8px 14px;border-radius:10px;border:none">허용</button>
+      <button id="notifDismiss" aria-label="닫기" style="background:transparent;color:#fff;opacity:0.6;font-size:18px;padding:4px 8px;border:none">×</button>
+    </div>
+
     <!-- ===== PWA 설치 배너 ===== -->
     <div id="installBanner" class="install-banner" role="dialog" aria-label="앱 설치">
       <div style="font-size:24px">⚡</div>
@@ -3510,7 +3521,128 @@
             console.warn('[SW] 등록 실패:', err);
           });
         });
+        // SW가 pushsubscriptionchange 후 재구독한 결과 받기
+        navigator.serviceWorker.addEventListener('message', (e) => {
+          if (e.data?.type === 'PUSH_RESUBSCRIBED') {
+            savePushSubscription(e.data.subscription).catch(() => {});
+          }
+        });
       }
+
+      // ===== Web Push 구독 =====
+      const VAPID_PUBLIC_KEY = 'BKN_42BLXAEFw1b912ap0ebSZ-fRRmazrY9Hhw5328s5-GsMPg6MOi2eWUewfyLmj6wJIBEtJpp9EYujGoFVZB0';
+
+      function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw = atob(base64);
+        const out = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+        return out;
+      }
+
+      async function savePushSubscription(subJSON) {
+        const session = (await sb.auth.getSession()).data.session;
+        if (!session) return;
+        const name = session.user.user_metadata?.name || session.user.user_metadata?.username || null;
+        await sb.from('push_subscriptions').upsert(
+          {
+            user_id: session.user.id,
+            member_name: name,
+            endpoint: subJSON.endpoint,
+            p256dh: subJSON.keys.p256dh,
+            auth: subJSON.keys.auth,
+            user_agent: navigator.userAgent.slice(0, 200),
+            last_seen_at: new Date().toISOString(),
+          },
+          { onConflict: 'endpoint' }
+        );
+      }
+
+      async function enablePushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          alert('이 브라우저는 푸시 알림을 지원하지 않아요.');
+          return false;
+        }
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            alert('알림 권한이 거부되었어요. 설정에서 변경할 수 있어요.');
+            return false;
+          }
+          const reg = await navigator.serviceWorker.ready;
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+            });
+          }
+          await savePushSubscription(sub.toJSON());
+          localStorage.setItem('push-enabled', '1');
+          return true;
+        } catch (err) {
+          console.warn('[Push] 구독 실패:', err);
+          alert('알림 설정 중 오류가 발생했어요.');
+          return false;
+        }
+      }
+
+      // 알림 권한 배너 (로그인 후 + 권한 default 상태)
+      (function () {
+        const banner = document.getElementById('notifBanner');
+        const accept = document.getElementById('notifAccept');
+        const dismiss = document.getElementById('notifDismiss');
+        const STORAGE_KEY = 'notif-banner-dismissed';
+
+        function maybeShow() {
+          if (!banner) return;
+          if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+          if (Notification.permission !== 'default') return;          // 이미 허용/거부됨
+          if (localStorage.getItem(STORAGE_KEY)) return;
+          if (!_authSession) return;                                   // 로그인 전엔 안 띄움
+          // iOS는 standalone에서만 푸시 가능
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const isStandalone =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+          if (isIOS && !isStandalone) return;
+          banner.classList.add('show');
+        }
+
+        // 세션 변할 때마다 체크
+        sb?.auth?.onAuthStateChange?.(() => setTimeout(maybeShow, 800));
+        setTimeout(maybeShow, 1500);
+
+        accept?.addEventListener('click', async () => {
+          banner.classList.remove('show');
+          const ok = await enablePushNotifications();
+          if (ok) {
+            // 짧은 피드백
+            try { showToast?.('알림이 켜졌어요 🔔'); } catch (_) {}
+          }
+        });
+        dismiss?.addEventListener('click', () => {
+          banner.classList.remove('show');
+          localStorage.setItem(STORAGE_KEY, '1');
+        });
+      })();
+
+      // 이미 권한 허용된 사용자도 구독 갱신 (브라우저 데이터 삭제 대비)
+      window.addEventListener('load', async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        if (Notification.permission !== 'granted') return;
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            // 로그인 상태 기다렸다가 저장
+            sb.auth.getSession().then(({ data }) => {
+              if (data.session) savePushSubscription(sub.toJSON()).catch(() => {});
+            });
+          }
+        } catch (_) {}
+      });
 
       // 하단 탭바 활성 상태 동기화
       (function () {
