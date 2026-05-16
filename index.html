@@ -2569,7 +2569,34 @@
         } else {
           loginBtn.classList.remove('hidden');
         }
+        highlightRegisteredMembers();
       });
+
+      // 가입완료 멤버 카드 강조
+      async function highlightRegisteredMembers() {
+        const { data: profiles } = await sb.from('profiles').select('name');
+        if (!profiles) return;
+        const registered = new Set(profiles.map(p => p.name));
+        document.querySelectorAll('#status .grid > div').forEach(card => {
+          const nameEl = card.querySelector('.font-bold.text-base');
+          if (!nameEl) return;
+          const name = nameEl.textContent.trim();
+          if (registered.has(name)) {
+            card.classList.remove('border-board');
+            card.classList.add('border-line-l', 'border-2');
+            if (!card.querySelector('.reg-badge')) {
+              const badge = document.createElement('span');
+              badge.className = 'reg-badge text-[10px] font-mono font-bold text-line-l bg-line-l/10 px-1.5 py-0.5 rounded-full ml-1.5';
+              badge.textContent = '가입완료';
+              nameEl.after(badge);
+            }
+          } else {
+            card.classList.remove('border-line-l', 'border-2');
+            card.classList.add('border-board');
+            card.querySelector('.reg-badge')?.remove();
+          }
+        });
+      }
     </script>
 
     <script>
