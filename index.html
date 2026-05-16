@@ -271,43 +271,55 @@
             { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778864628/hvynbl7w5vaxvuowe0z7.jpg' },
             { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919213/qcdojtndmqhpx5qthwf9.png' },
             { type: 'photo', src: 'https://res.cloudinary.com/dhk87y1nb/image/upload/v1778919215/v6hpvro1jzakxnxphwfm.jpg' },
-            // 유튜브 예시: { type: 'youtube', ytId: 'VIDEO_ID', isShort: false }
           ];
 
           (function() {
             const container = document.getElementById('hero-slides');
             const dotsEl = document.getElementById('hero-dots');
-            const total = HERO_SLIDES.length;
             window.heroCur = 0;
-            let timer;
+            let heroTimer;
 
-            // 슬라이드 엘리먼트 생성
-            HERO_SLIDES.forEach((s, i) => {
+            function buildSlide(s, i, total) {
               const wrap = document.createElement('div');
               wrap.style.cssText = 'position:absolute;inset:0;opacity:0;transition:opacity 0.7s;';
               wrap.id = 'hslide-' + i;
-
               if (s.type === 'youtube') {
-                const src = `https://www.youtube.com/embed/${s.ytId}?autoplay=0&mute=1&loop=1&playlist=${s.ytId}&controls=0&playsinline=1`;
-                wrap.innerHTML = `<iframe src="${src}" class="w-full h-full" style="pointer-events:none" frameborder="0" allow="autoplay; fullscreen"></iframe>
-                  <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                const embedSrc = `https://www.youtube.com/embed/${s.ytId}?autoplay=0&mute=1&loop=1&playlist=${s.ytId}&controls=0&playsinline=1`;
+                const badge = s.isShort ? '▼ Shorts' : '▶ 영상';
+                wrap.innerHTML = `<iframe src="${embedSrc}" class="w-full h-full" style="pointer-events:none" frameborder="0" allow="autoplay; fullscreen"></iframe>
+                  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-14 h-14 rounded-full bg-black/50 flex items-center justify-center">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
                     </div>
-                  </div>`;
+                  </div>
+                  <span class="absolute top-3 left-3 text-[10px] font-bold bg-black/60 text-white px-2 py-0.5 rounded">${badge}</span>`;
               } else {
                 wrap.innerHTML = `<img src="${s.src}" class="w-full h-full object-cover">`;
               }
-              container.appendChild(wrap);
+              return wrap;
+            }
 
-              // 도트
-              const d = document.createElement('div');
-              d.className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer ' + (i === 0 ? 'bg-white scale-125' : 'bg-white/40');
-              d.onclick = () => heroGo(i);
-              dotsEl.appendChild(d);
-            });
+            window.heroInit = function() {
+              const total = HERO_SLIDES.length;
+              container.innerHTML = '';
+              dotsEl.innerHTML = '';
+              heroCur = 0;
+              clearInterval(heroTimer);
+
+              HERO_SLIDES.forEach((s, i) => {
+                container.appendChild(buildSlide(s, i, total));
+                const d = document.createElement('div');
+                d.className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer ' + (i === 0 ? 'bg-white scale-125' : 'bg-white/40');
+                d.onclick = () => heroGo(i);
+                dotsEl.appendChild(d);
+              });
+
+              container.children[0].style.opacity = '1';
+              heroResetTimer();
+            };
 
             window.heroGo = function(n) {
+              const total = HERO_SLIDES.length;
               const slides = container.children;
               const dots = dotsEl.children;
               slides[heroCur].style.opacity = '0';
@@ -315,8 +327,6 @@
               heroCur = (n + total) % total;
               slides[heroCur].style.opacity = '1';
               dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white scale-125';
-
-              // 영상 슬라이드면 자동재생 시작
               if (HERO_SLIDES[heroCur].type === 'youtube') {
                 const iframe = slides[heroCur].querySelector('iframe');
                 if (iframe) {
@@ -324,18 +334,17 @@
                   iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1`;
                 }
               }
-              resetTimer();
+              heroResetTimer();
             };
 
-            // 첫 슬라이드 표시
-            container.children[0].style.opacity = '1';
-
-            function resetTimer() {
-              clearInterval(timer);
-              const delay = HERO_SLIDES[heroCur].type === 'youtube' ? 8000 : 3800;
-              timer = setInterval(() => heroGo(heroCur + 1), delay);
+            function heroResetTimer() {
+              clearInterval(heroTimer);
+              const delay = HERO_SLIDES[heroCur].type === 'youtube' ? 9000 : 3800;
+              heroTimer = setInterval(() => heroGo(heroCur + 1), delay);
             }
-            resetTimer();
+            window.heroResetTimer = heroResetTimer;
+
+            heroInit();
 
             // 스와이프 지원
             let tsx = 0;
@@ -1009,13 +1018,21 @@
         try {
           const { data, error } = await sb.from('photo_memories').select('*').order('created_at', { ascending: true });
           if (error || !data || !data.length) return;
+          let heroUpdated = false;
           data.forEach(row => {
             if (row.type === 'youtube') {
-              MEMORIES.push({ type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name });
+              const m = { type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name };
+              MEMORIES.push(m);
+              // 메인 슬라이더에도 추가 (중복 방지)
+              if (!HERO_SLIDES.some(s => s.type === 'youtube' && s.ytId === row.src)) {
+                HERO_SLIDES.push({ type: 'youtube', ytId: row.src, isShort: row.is_short });
+                heroUpdated = true;
+              }
             } else {
               MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name });
             }
           });
+          if (heroUpdated && typeof heroInit === 'function') heroInit();
           rebuildAndRender();
         } catch(e) { console.warn('photo_memories load failed', e); }
       }
