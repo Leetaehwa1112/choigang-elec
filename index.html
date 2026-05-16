@@ -848,7 +848,7 @@
         errEl.classList.add('hidden');
         const { error } = await sb.auth.signInWithOAuth({
           provider: 'kakao',
-          options: { redirectTo: window.location.href.split('#')[0] }
+          options: { redirectTo: window.location.href.split('#')[0], scopes: 'profile_nickname profile_image' }
         });
         if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
       }
