@@ -743,10 +743,11 @@
                 </div>
                 <div class="p-5 sm:p-6">
                   <!-- 장소 -->
-                  ${s.place||mapLinks?`<div class="flex items-start gap-3 pb-4 border-b border-dashed border-ink/15">
+                  ${s.place||s.addr||mapLinks?`<div class="flex items-start gap-3 pb-4 border-b border-dashed border-ink/15">
                     <div class="text-xl flex-shrink-0 mt-0.5">📍</div>
                     <div>
                       ${s.place?`<div class="font-bold text-sm">${s.place}</div>`:''}
+                      ${s.addr?`<div class="text-xs text-ink-3 mt-0.5">${s.addr}</div>`:''}
                       ${mapLinks?`<div class="flex gap-2 mt-2 flex-wrap">${mapLinks}</div>`:''}
                     </div>
                   </div>`:''}
@@ -1745,22 +1746,25 @@
                 <input id="sched-time" type="time" value="18:00" oninput="saveSchedDetail()"
                   class="flex-1 bg-transparent text-sm font-mono text-ink focus:outline-none">
               </label>
-              <!-- 장소명 -->
-              <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
-                <span class="text-lg w-6 text-center">📍</span>
-                <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">장소</span>
-                <input id="sched-place" type="text" placeholder="예) 르한스, 서울 성북구 정릉로10길 127" oninput="saveSchedDetail()"
-                  class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none">
-              </label>
-              <!-- 지도 링크 (붙여넣기) -->
-              <div class="bg-ink/4 rounded-xl px-4 py-3">
+              <!-- 장소 + 지도 통합 검색 -->
+              <div class="bg-ink/4 rounded-xl px-4 py-3 relative" id="sched-place-wrap">
                 <div class="flex items-center gap-3">
-                  <span class="text-lg w-6 text-center">🔗</span>
-                  <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">지도</span>
-                  <input id="sched-map" type="url" placeholder="카카오·네이버·티맵 링크 붙여넣기" oninput="saveSchedDetail(); renderMapPreview()"
+                  <span class="text-lg w-6 text-center">📍</span>
+                  <span class="text-xs font-bold text-ink-3 w-10 flex-shrink-0">장소</span>
+                  <input id="sched-place-search" type="text" placeholder="장소 검색 (예: 르한스)"
+                    oninput="onPlaceInput(this.value)" autocomplete="off"
                     class="flex-1 bg-transparent text-sm text-ink placeholder-ink/25 focus:outline-none min-w-0">
+                  <button type="button" id="sched-place-clear" onclick="clearSelectedPlace()"
+                    class="hidden text-ink/30 hover:text-ink/70 text-xl leading-none w-5 text-center flex-shrink-0">×</button>
                 </div>
+                <input type="hidden" id="sched-place">
+                <input type="hidden" id="sched-addr">
+                <input type="hidden" id="sched-map">
                 <div id="sched-map-preview" class="mt-2.5 ml-14 hidden"></div>
+                <ul id="sched-place-dropdown"
+                  class="hidden absolute left-0 right-0 bg-white rounded-xl shadow-xl overflow-hidden divide-y divide-ink/8"
+                  style="top:calc(100% + 4px);z-index:999;max-height:220px;overflow-y:auto">
+                </ul>
               </div>
               <!-- 링크 (청첩장 등) -->
               <label class="flex items-center gap-3 bg-ink/4 rounded-xl px-4 py-3">
@@ -1852,7 +1856,10 @@
           const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
           set('sched-title',        session.title);
           set('sched-time',         session.time_str || '18:00');
-          set('sched-place',        [session.place, session.addr].filter(Boolean).join(' '));
+          set('sched-place-search', session.place || '');
+          set('sched-place',        session.place || '');
+          set('sched-addr',         session.addr  || '');
+          document.getElementById('sched-place-clear')?.classList.toggle('hidden', !session.place);
           set('sched-map',          session.map_url);
           set('sched-memo',         session.memo);
           set('sched-action-label', session.action_label);
@@ -1983,8 +1990,9 @@
       function saveSchedDetail() {
         const g = id => document.getElementById(id)?.value || '';
         localStorage.setItem('schedDetail', JSON.stringify({
-          title: g('sched-title'), time: g('sched-time'), place: g('sched-place'),
-          map: g('sched-map'), memo: g('sched-memo'),
+          title: g('sched-title'), time: g('sched-time'),
+          placeSearch: g('sched-place-search'), place: g('sched-place'),
+          addr: g('sched-addr'), map: g('sched-map'), memo: g('sched-memo'),
           actionLabel: g('sched-action-label'), actionUrl: g('sched-action-url'),
         }));
       }
@@ -1992,16 +2000,92 @@
         try {
           const d = JSON.parse(localStorage.getItem('schedDetail') || '{}');
           const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-          set('sched-title', d.title || '');
-          set('sched-time',  d.time  || '18:00');
-          set('sched-place', d.place || '');
-          set('sched-map',   d.map   || '');
-          set('sched-memo',  d.memo  || '');
+          set('sched-title',        d.title || '');
+          set('sched-time',         d.time  || '18:00');
+          set('sched-place-search', d.placeSearch || d.place || '');
+          set('sched-place',        d.place || '');
+          set('sched-addr',         d.addr  || '');
+          set('sched-map',          d.map   || '');
+          set('sched-memo',         d.memo  || '');
           set('sched-action-label', d.actionLabel || '');
           set('sched-action-url',   d.actionUrl   || '');
+          const hasPlace = !!(d.placeSearch || d.place);
+          document.getElementById('sched-place-clear')?.classList.toggle('hidden', !hasPlace);
           renderMapPreview();
         } catch(e) {}
       }
+
+      /* ── 카카오 장소 검색 ── */
+      const KAKAO_REST_KEY = '68287e0ee85dbecf5e94838fc9dec108';
+      let _placeTimer = null;
+      let _placeResults = [];
+
+      function onPlaceInput(q) {
+        document.getElementById('sched-place').value = q;
+        document.getElementById('sched-addr').value = '';
+        document.getElementById('sched-map').value = '';
+        document.getElementById('sched-place-clear').classList.toggle('hidden', !q);
+        renderMapPreview();
+        clearTimeout(_placeTimer);
+        if (!q.trim()) { closePlaceDropdown(); saveSchedDetail(); return; }
+        _placeTimer = setTimeout(() => searchPlace(q), 300);
+        saveSchedDetail();
+      }
+
+      async function searchPlace(q) {
+        try {
+          const res = await fetch(
+            `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(q)}&size=8`,
+            { headers: { Authorization: 'KakaoAK ' + KAKAO_REST_KEY } }
+          );
+          const data = await res.json();
+          _placeResults = data.documents || [];
+          renderPlaceDropdown();
+        } catch(e) { closePlaceDropdown(); }
+      }
+
+      function renderPlaceDropdown() {
+        const dd = document.getElementById('sched-place-dropdown');
+        if (!_placeResults.length) { closePlaceDropdown(); return; }
+        dd.innerHTML = _placeResults.map((p, i) => `<li>
+          <button type="button" onclick="selectPlace(${i})"
+            class="w-full text-left px-4 py-3 hover:bg-ink/5 transition-colors">
+            <div class="text-sm font-bold text-ink">${p.place_name}</div>
+            <div class="text-xs text-ink-3 mt-0.5">${p.road_address_name || p.address_name || ''}${p.category_group_name ? ' · ' + p.category_group_name : ''}</div>
+          </button>
+        </li>`).join('');
+        dd.classList.remove('hidden');
+      }
+
+      function selectPlace(i) {
+        const p = _placeResults[i];
+        document.getElementById('sched-place-search').value = p.place_name;
+        document.getElementById('sched-place').value = p.place_name;
+        document.getElementById('sched-addr').value = p.road_address_name || p.address_name || '';
+        document.getElementById('sched-map').value = p.place_url || '';
+        document.getElementById('sched-place-clear').classList.remove('hidden');
+        closePlaceDropdown();
+        saveSchedDetail();
+        renderMapPreview();
+      }
+
+      function clearSelectedPlace() {
+        ['sched-place-search','sched-place','sched-addr','sched-map'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.value = '';
+        });
+        document.getElementById('sched-place-clear').classList.add('hidden');
+        closePlaceDropdown();
+        renderMapPreview();
+        saveSchedDetail();
+      }
+
+      function closePlaceDropdown() {
+        document.getElementById('sched-place-dropdown')?.classList.add('hidden');
+      }
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('#sched-place-wrap')) closePlaceDropdown();
+      });
 
       /* ── 지도 링크 자동 감지 ── */
       function detectMapProvider(url) {
@@ -2028,8 +2112,9 @@
       async function submitSchedule() {
         const title = document.getElementById('sched-title')?.value.trim() || '';
         const time  = document.getElementById('sched-time')?.value  || '';
-        const place = document.getElementById('sched-place')?.value.trim() || '';
-        const mapUrl = document.getElementById('sched-map')?.value.trim()  || '';
+        const place  = document.getElementById('sched-place')?.value.trim() || '';
+        const addr   = document.getElementById('sched-addr')?.value.trim()  || '';
+        const mapUrl = document.getElementById('sched-map')?.value.trim()   || '';
         const memo  = document.getElementById('sched-memo')?.value.trim()  || '';
         const typeIcon = SCHED_TYPES.find(t => t.key === schedType)?.icon || '📌';
 
@@ -2047,7 +2132,7 @@
           type_icon: typeIcon,
           time_str: time,
           place,
-          addr: null,
+          addr: addr || null,
           map_url: mapUrl || null,
           map_provider: mapProvider,
           memo: memo || null,
