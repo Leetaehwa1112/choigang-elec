@@ -1704,30 +1704,23 @@
         ).join('');
       }
 
-      async function schedToggleDate(dateStr) {
+      function schedToggleDate(dateStr) {
         const idx = schedDates.findIndex(d => d.date_str === dateStr);
-        if (idx >= 0) { await schedRemoveDate(dateStr); return; }
+        if (idx >= 0) { schedRemoveDate(dateStr); return; }
         const dt = new Date(dateStr + 'T12:00:00+09:00');
         const label = `${dt.getMonth()+1}/${dt.getDate()} (${SCHED_DAYS[dt.getDay()]})`;
-        const { error } = await sb.from('schedule_dates').insert({ date_str: dateStr, date_label: label });
-        if (!error) { schedDates.push({ date_str: dateStr, date_label: label }); schedDates.sort((a,b)=>a.date_str.localeCompare(b.date_str)); }
-        renderSchedCal(); renderSchedGrid();
+        schedDates.push({ date_str: dateStr, date_label: label });
+        schedDates.sort((a,b) => a.date_str.localeCompare(b.date_str));
+        renderSchedCal();
       }
 
-      async function schedRemoveDate(dateStr) {
-        await Promise.all([
-          sb.from('schedule_dates').delete().eq('date_str', dateStr),
-          sb.from('schedule_votes').delete().eq('date_str', dateStr),
-        ]);
+      function schedRemoveDate(dateStr) {
         schedDates = schedDates.filter(d => d.date_str !== dateStr);
-        delete schedVotes[dateStr];
-        renderSchedCal(); renderSchedGrid();
+        renderSchedCal();
       }
 
-      /* ── 데이터 로드 ── */
-      async function loadScheduleData() {
-        const { data: dates } = await sb.from('schedule_dates').select('*').order('date_str');
-        schedDates = dates || [];
+      function loadScheduleData() {
+        schedDates = [];
         renderSchedCal();
       }
 
