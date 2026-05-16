@@ -362,15 +362,15 @@
                 <!-- 7명 아바타 -->
                 <div class="mt-3 grid grid-cols-7 gap-2">
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-이태화" class="w-10 h-10 rounded-full bg-ink text-line-y font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('이태화')" title="이태화 · 미응답">태</div>
+                    <div id="av-이태화" class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('이태화')" title="이태화 · 미응답">태</div>
                     <span class="text-[9px] font-mono text-ink-3">이태화</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-나준민" class="w-10 h-10 rounded-full bg-line-l text-white font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('나준민')" title="나준민 · 미응답">준</div>
+                    <div id="av-나준민" class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('나준민')" title="나준민 · 미응답">준</div>
                     <span class="text-[9px] font-mono text-ink-3">나준민</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-한동명" class="w-10 h-10 rounded-full bg-line-y text-ink font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('한동명')" title="한동명 · 미응답">동</div>
+                    <div id="av-한동명" class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('한동명')" title="한동명 · 미응답">동</div>
                     <span class="text-[9px] font-mono text-ink-3">한동명</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
@@ -378,15 +378,15 @@
                     <span class="text-[9px] font-mono text-line-e font-bold">이은준</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-김상현" class="w-10 h-10 rounded-full bg-board-dark text-white font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('김상현')" title="김상현 · 미응답">상</div>
+                    <div id="av-김상현" class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('김상현')" title="김상현 · 미응답">상</div>
                     <span class="text-[9px] font-mono text-ink-3">김상현</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-김하람" class="w-10 h-10 rounded-full bg-panel-dark text-white font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('김하람')" title="김하람 · 미응답">하</div>
+                    <div id="av-김하람" class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('김하람')" title="김하람 · 미응답">하</div>
                     <span class="text-[9px] font-mono text-ink-3">김하람</span>
                   </div>
                   <div class="flex flex-col items-center gap-1">
-                    <div id="av-김건우" class="w-10 h-10 rounded-full bg-line-n text-white font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('김건우')" title="김건우 · 미응답">건</div>
+                    <div id="av-김건우" class="w-10 h-10 rounded-full bg-ink/15 text-ink/30 font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="toggleRsvp('김건우')" title="김건우 · 미응답">건</div>
                     <span class="text-[9px] font-mono text-ink-3">김건우</span>
                   </div>
                 </div>
@@ -492,11 +492,11 @@
           const el = document.getElementById('av-' + name);
           if (!el) return;
           const s = rsvpState[name];
-          const base = MEMBER_COLORS[name] || 'bg-ink/15 text-ink-2';
+          const base = MEMBER_COLORS[name] || 'bg-ink text-white';
           el.className = 'w-10 h-10 rounded-full font-display text-base flex items-center justify-center cursor-pointer hover:scale-105 transition ' +
             (s === 'attend'  ? base + ' ring-2 ring-offset-1 ring-line-e' :
-             s === 'decline' ? 'bg-ink/10 text-ink/25'                    :
-                               base);
+             s === 'decline' ? 'bg-ink/10 text-ink/20'                    :
+                               'bg-ink/15 text-ink/30');
         });
         document.getElementById('rsvp-count').innerHTML = attend + '<span class="text-white/50 text-xl">/7</span>';
         document.getElementById('rsvp-bar').style.width = (attend / 7 * 100) + '%';
