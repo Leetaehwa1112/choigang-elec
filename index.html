@@ -1251,7 +1251,11 @@
       <!-- 헤더 -->
       <div class="flex items-center justify-between px-4 py-3 flex-shrink-0">
         <span id="lb-label" class="text-white/70 font-mono text-xs"></span>
-        <button onclick="lbClose()" class="text-white/60 hover:text-white text-2xl leading-none px-2">✕</button>
+        <div class="flex items-center gap-0.5">
+          <button id="lb-edit-btn" onclick="lbEdit()" class="hidden text-white/50 hover:text-white text-sm px-2 py-1 rounded hover:bg-white/10 transition" title="수정">✏️</button>
+          <button id="lb-delete-btn" onclick="lbDelete()" class="hidden text-white/50 hover:text-red-400 text-sm px-2 py-1 rounded hover:bg-white/10 transition" title="삭제">🗑️</button>
+          <button onclick="lbClose()" class="text-white/60 hover:text-white text-2xl leading-none px-2">✕</button>
+        </div>
       </div>
       <!-- 미디어 -->
       <div class="flex-1 flex items-center justify-center relative min-h-0 px-12" style="min-height:0">
@@ -1278,6 +1282,20 @@
             class="flex-1 text-xs border border-white/20 rounded px-2 py-1 bg-white/10 text-white placeholder-white/40 min-w-0"
             onkeydown="if(event.key==='Enter')lbSubmitCmt()">
           <button id="lb-cmt-submit" onclick="lbSubmitCmt()" class="text-xs font-bold px-2.5 py-1 bg-white text-ink rounded hover:bg-line-y transition flex-shrink-0">↑</button>
+        </div>
+      </div>
+      <!-- 수정 패널 -->
+      <div id="lb-edit-panel" class="hidden flex-shrink-0 border-t border-white/10 bg-black/60 px-4 pt-3 pb-4" onclick="event.stopPropagation()">
+        <div class="text-[10px] text-white/50 font-mono mb-2">미디어 수정</div>
+        <div class="flex gap-2 mb-2">
+          <input id="lb-edit-label" type="text" placeholder="설명 (선택)" maxlength="60"
+            class="flex-1 bg-white/10 text-white text-xs rounded px-2 py-1.5 border border-white/20 placeholder-white/30 focus:outline-none focus:border-white/50"/>
+          <input id="lb-edit-group" type="text" placeholder="앨범 이름" maxlength="40"
+            class="flex-1 bg-white/10 text-white text-xs rounded px-2 py-1.5 border border-white/20 placeholder-white/30 focus:outline-none focus:border-white/50"/>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="lbEditCancel()" class="flex-1 py-1.5 text-xs text-white/60 border border-white/20 rounded hover:bg-white/10 transition">취소</button>
+          <button id="lb-edit-save-btn" onclick="lbEditSave()" class="flex-1 py-1.5 text-xs font-bold bg-white text-ink rounded hover:bg-line-y transition">저장</button>
         </div>
       </div>
     </div>
@@ -1548,11 +1566,11 @@
             // 유튜브 저장 (Cloudinary 불필요)
             progressBar.style.width = '60%';
             statusText.textContent = 'Supabase에 저장 중...';
-            const { error } = await sb.from('photo_memories').insert({
+            const { data: ytRow, error } = await sb.from('photo_memories').insert({
               src: _ytId, label, group_name: groupName, type: 'youtube', is_short: _ytIsShort
-            });
+            }).select('id').single();
             if (error) throw error.message;
-            MEMORIES.push({ type: 'youtube', ytId: _ytId, isShort: _ytIsShort, label, group: groupName });
+            MEMORIES.push({ type: 'youtube', ytId: _ytId, isShort: _ytIsShort, label, group: groupName, dbId: ytRow?.id });
 
           } else {
             // 사진: Cloudinary 업로드
@@ -1574,9 +1592,9 @@
             });
             progressBar.style.width = '80%';
             statusText.textContent = 'Supabase에 저장 중...';
-            const { error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName, type: 'photo', is_short: false });
+            const { data: photoRow, error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName, type: 'photo', is_short: false }).select('id').single();
             if (error) throw error.message;
-            MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName });
+            MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName, dbId: photoRow?.id });
           }
 
           progressBar.style.width = '100%';
@@ -1630,6 +1648,7 @@
         document.body.style.overflow = '';
         lbMedia.innerHTML = '';
         _lbCmtTarget = '';
+        lbEditCancel();
         const list = document.getElementById('lb-cmt-list');
         if (list) list.innerHTML = '';
       }
@@ -1655,6 +1674,12 @@
         lbDots.innerHTML = lbItems.map((_, i) =>
           `<div class="w-1.5 h-1.5 rounded-full transition-all ${i === lbIdx ? 'bg-white' : 'bg-white/30'}"></div>`
         ).join('');
+
+        // 수정/삭제 버튼: 로그인 + DB 항목일 때만 표시
+        const canEdit = !!_authSession && !!m.dbId;
+        document.getElementById('lb-edit-btn')?.classList.toggle('hidden', !canEdit);
+        document.getElementById('lb-delete-btn')?.classList.toggle('hidden', !canEdit);
+        lbEditCancel(); // 항목 바뀔 때 수정 패널 닫기
 
         // 댓글 로드
         _lbCmtTarget = mediaTarget(m);
@@ -1725,6 +1750,64 @@
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '↑'; }
         if (!error) { inputEl.value = ''; lbLoadCmt(); }
         else showToast('댓글 등록 실패 😢');
+      }
+
+      function lbEdit() {
+        const m = lbItems[lbIdx];
+        if (!m?.dbId || !_authSession) return;
+        document.getElementById('lb-edit-label').value = m.label || '';
+        document.getElementById('lb-edit-group').value = m.group || '';
+        document.getElementById('lb-edit-panel').classList.remove('hidden');
+        document.getElementById('lb-edit-group').focus();
+      }
+
+      function lbEditCancel() {
+        document.getElementById('lb-edit-panel')?.classList.add('hidden');
+      }
+
+      async function lbEditSave() {
+        const m = lbItems[lbIdx];
+        if (!m?.dbId) return;
+        const label    = document.getElementById('lb-edit-label').value.trim();
+        const groupName = document.getElementById('lb-edit-group').value.trim();
+        if (!groupName) { showToast('앨범 이름을 입력해주세요'); return; }
+        const saveBtn = document.getElementById('lb-edit-save-btn');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '저장 중…'; }
+        const { error } = await sb.from('photo_memories')
+          .update({ label: label || groupName, group_name: groupName })
+          .eq('id', m.dbId);
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
+        if (error) { showToast('수정 실패 😢'); return; }
+        m.label = label || groupName;
+        m.group = groupName;
+        // MEMORIES 배열에도 반영
+        const mem = MEMORIES.find(x => x.dbId === m.dbId);
+        if (mem) { mem.label = m.label; mem.group = m.group; }
+        lbEditCancel();
+        lbRender();
+        rebuildAndRender();
+        loadLatestUpdates();
+        showToast('수정됐어요 ✏️');
+      }
+
+      async function lbDelete() {
+        const m = lbItems[lbIdx];
+        if (!m?.dbId || !_authSession) return;
+        if (!confirm('이 미디어를 삭제할까요?')) return;
+        const { error } = await sb.from('photo_memories').delete().eq('id', m.dbId);
+        if (error) { showToast('삭제 실패 😢'); return; }
+        const memIdx = MEMORIES.findIndex(x => x.dbId === m.dbId);
+        if (memIdx >= 0) MEMORIES.splice(memIdx, 1);
+        lbItems = lbItems.filter(x => x.dbId !== m.dbId);
+        if (!lbItems.length) {
+          lbClose();
+        } else {
+          lbIdx = Math.min(lbIdx, lbItems.length - 1);
+          lbRender();
+        }
+        rebuildAndRender();
+        loadLatestUpdates();
+        showToast('삭제됐어요 🗑️');
       }
 
       document.addEventListener('keydown', e => {
