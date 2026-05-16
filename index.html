@@ -36,6 +36,8 @@
       href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Pretendard:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="preconnect" href="https://mspwdasiewqtwfyngdhy.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
@@ -1072,7 +1074,7 @@
         meetTotal = 1;
 
         const [{ data }, { data: rsvps }] = await Promise.all([
-          sb.from('schedule_sessions').select('*').eq('is_active', true).order('created_at', { ascending: true }),
+          sb.from('schedule_sessions').select('id,title,type,type_icon,time_str,place,candidate_dates,action_url,action_label,cover_url').eq('is_active', true).order('created_at', { ascending: true }),
           sb.from('event_rsvps').select('session_id, member_name, status')
         ]);
         const extras = (data || []).filter(s => s.title !== '이은준 결혼식');
@@ -1236,7 +1238,8 @@
       async function loadEvents() {
         const el = document.getElementById('event-list');
         const { data, error } = await sb.from('schedule_sessions')
-          .select('*').eq('is_active', true).order('created_at', { ascending: true });
+          .select('id,title,type,type_icon,time_str,place,addr,map_url,candidate_dates,action_url,action_label,cover_url')
+          .eq('is_active', true).order('created_at', { ascending: true });
 
         calEvents = {};
         if (data) {
@@ -1287,7 +1290,7 @@
             `<a href="tmap://search?name=${_spn}" class="sm:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap" style="background:#1a6dff;color:#fff;">티맵</a>`,
           ].filter(Boolean).join('') : '';
 
-          const coverBg = s.cover_url ? `<div class="relative h-28 overflow-hidden"><img src="${s.cover_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/60"></div></div>` : '';
+          const coverBg = s.cover_url ? `<div class="relative h-28 overflow-hidden"><img src="${escHtml(s.cover_url)}" loading="lazy" decoding="async" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/60"></div></div>` : '';
 
           return `<div class="rounded-2xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-ink/8">
             ${coverBg}
@@ -1715,7 +1718,7 @@
           const backCards = backs.map((b, bi) => {
             const rot = BACK_ROTS[bi];
             return `<div class="absolute inset-0 bg-white p-1.5 shadow-sm overflow-hidden" style="rotate:${rot};z-index:${bi+1}">
-              <img src="${thumbOf(b)}" class="w-full aspect-square object-cover opacity-70"/>
+              <img src="${thumbOf(b)}" loading="lazy" decoding="async" class="w-full aspect-square object-cover opacity-70"/>
             </div>`;
           }).join('');
 
@@ -1731,7 +1734,7 @@
               ${backCards}
               <div class="relative bg-white p-1.5 pb-6 shadow-md hover:scale-105 transition-transform duration-200 overflow-hidden cursor-pointer" style="rotate:-1.5deg;z-index:10" onclick="lbOpenGroup(${gi},0)">
                 <div class="relative aspect-square overflow-hidden">
-                  <img src="${thumbOf(first)}" alt="${first.label}" class="w-full h-full object-cover"/>
+                  <img src="${thumbOf(first)}" alt="${escHtml(first.label||'')}" loading="lazy" decoding="async" class="w-full h-full object-cover"/>
                   ${playIcon}
                   ${badge}
                   ${countBadge}
@@ -3581,7 +3584,7 @@
             const _au = s.action_url ? (s.action_url.match(/^https?:\/\//) ? s.action_url : 'https://'+s.action_url) : null;
             const dateStr = (s.candidate_dates?.[0] || '').replace(/-/g, '.');
             const thumb = s.cover_url
-              ? `<img src="${s.cover_url}" class="w-12 h-12 rounded object-cover flex-shrink-0"/>`
+              ? `<img src="${escHtml(s.cover_url)}" loading="lazy" decoding="async" class="w-12 h-12 rounded object-cover flex-shrink-0"/>`
               : `<div class="w-12 h-12 rounded bg-ink text-white flex items-center justify-center text-xl flex-shrink-0">${s.type_icon || '📌'}</div>`;
             const bottomText = _au && s.action_label
               ? `<div class="text-[10px] text-line-l font-mono">${_esc(s.action_label)} ↗</div>`
@@ -3610,7 +3613,7 @@
             const typeLabel = p.type === 'youtube' ? '영상' : '사진';
             items.push({ ts: p.created_at, html:
               `<a href="#memory" class="flex-shrink-0 flex items-center gap-3 bg-panel rounded-lg px-3 py-2.5 hover:bg-board/60 transition border border-ink/10 hover:border-line-l min-w-0 max-w-[260px]">
-                <img src="${thumb}" class="w-12 h-12 rounded object-cover flex-shrink-0"/>
+                <img src="${thumb}" loading="lazy" decoding="async" class="w-12 h-12 rounded object-cover flex-shrink-0"/>
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5">${_newBadge(p.created_at)}<span class="text-[10px] font-mono text-ink-3">${typeLabel}</span></div>
                   <div class="font-bold text-sm truncate mt-0.5">${_esc(label)}</div>
