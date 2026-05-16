@@ -1796,7 +1796,10 @@
                   <img id="sched-cover-preview" class="hidden w-full max-h-44 object-cover">
                   <div id="sched-cover-hint" class="flex items-center gap-3 px-4 py-4 text-ink-3 pointer-events-none">
                     <span class="text-2xl">🖼️</span>
-                    <span class="text-xs font-bold">커버 사진 추가 (선택)</span>
+                    <div>
+                      <div class="text-xs font-bold">커버 사진 추가 (선택)</div>
+                      <div class="hidden sm:block text-[10px] text-ink-3/60 mt-0.5">드래그 앤 드롭 또는 클릭</div>
+                    </div>
                   </div>
                   <button id="sched-cover-remove" type="button" onclick="event.stopPropagation();removeCoverPhoto()"
                     class="hidden absolute top-2 right-2 w-7 h-7 rounded-full bg-ink/60 text-white text-base flex items-center justify-center">×</button>
@@ -1989,6 +1992,35 @@
         document.getElementById('sched-cover-url').value = '';
         document.getElementById('sched-cover-file').value = '';
       }
+
+      // 커버 사진 드래그 앤 드롭
+      (() => {
+        const wrap = document.getElementById('sched-cover-wrap');
+        if (!wrap) return;
+        wrap.addEventListener('dragover', e => {
+          e.preventDefault();
+          wrap.classList.add('ring-2', 'ring-line-l');
+        });
+        wrap.addEventListener('dragleave', e => {
+          if (!wrap.contains(e.relatedTarget)) wrap.classList.remove('ring-2', 'ring-line-l');
+        });
+        wrap.addEventListener('drop', e => {
+          e.preventDefault();
+          wrap.classList.remove('ring-2', 'ring-line-l');
+          const file = e.dataTransfer.files[0];
+          if (!file || !file.type.startsWith('image/')) return;
+          _coverFile = file;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const img = document.getElementById('sched-cover-preview');
+            img.src = ev.target.result;
+            img.classList.remove('hidden');
+            document.getElementById('sched-cover-hint').classList.add('hidden');
+            document.getElementById('sched-cover-remove').classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+        });
+      })();
 
       function resetCoverUI() {
         _coverFile = null;
