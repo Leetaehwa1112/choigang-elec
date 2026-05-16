@@ -106,6 +106,9 @@ create policy "rsvp_delete" on event_rsvps for delete using (true);
 -- schedule_sessions.cover_url (ALTER 별도 실행)
 -- ALTER TABLE schedule_sessions ADD COLUMN IF NOT EXISTS cover_url text;
 
+-- photo_memories.uploaded_by (실행 완료 2026-05-17)
+-- ALTER TABLE photo_memories ADD COLUMN IF NOT EXISTS uploaded_by text;
+
 -- ============================================================
 -- [PLANNED] 5. MEMBERS  ─ 회원 프로필 (로그인 구현 후 활성화)
 -- ============================================================

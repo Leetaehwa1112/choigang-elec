@@ -1328,7 +1328,7 @@
       async function loadDbMemories() {
         try {
           const { data, error } = await sb.from('photo_memories')
-            .select('id, type, src, label, group_name, is_short, created_at')
+            .select('id, type, src, label, group_name, is_short, created_at, uploaded_by')
             .order('created_at', { ascending: true });
           if (error) { console.warn('photo_memories load failed', error.message); return; }
           if (!data || !data.length) return;
@@ -1340,7 +1340,7 @@
             if (row.type === 'youtube') {
               if (!/^[A-Za-z0-9_-]{11}$/.test(row.src)) return;
               if (MEMORIES.some(m => m.type === 'youtube' && m.ytId === row.src)) return;
-              MEMORIES.push({ type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name, dbId: row.id, createdAt: row.created_at });
+              MEMORIES.push({ type: 'youtube', ytId: row.src, isShort: row.is_short, label: row.label || row.group_name, group: row.group_name, dbId: row.id, createdAt: row.created_at, uploadedBy: row.uploaded_by || null });
               if (!HERO_SLIDES.some(s => s.type === 'youtube' && s.ytId === row.src)) {
                 const slide = { type: 'youtube', ytId: row.src, isShort: row.is_short };
                 row.is_short ? HERO_SLIDES.unshift(slide) : HERO_SLIDES.push(slide);
@@ -1348,7 +1348,7 @@
               }
             } else {
               if (!row.src.startsWith('https://')) return;
-              MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name, dbId: row.id, createdAt: row.created_at });
+              MEMORIES.push({ type: 'photo', src: row.src, label: row.label || row.group_name, group: row.group_name, dbId: row.id, createdAt: row.created_at, uploadedBy: row.uploaded_by || null });
             }
           });
 
@@ -1557,11 +1557,12 @@
             // 유튜브 저장 (Cloudinary 불필요)
             progressBar.style.width = '60%';
             statusText.textContent = 'Supabase에 저장 중...';
+            const _uploader = _authSession?.user?.user_metadata?.name || '';
             const { data: ytRow, error } = await sb.from('photo_memories').insert({
-              src: _ytId, label, group_name: groupName, type: 'youtube', is_short: _ytIsShort
-            }).select('id').single();
+              src: _ytId, label, group_name: groupName, type: 'youtube', is_short: _ytIsShort, uploaded_by: _uploader || null
+            }).select('id, created_at, uploaded_by').single();
             if (error) throw error.message;
-            MEMORIES.push({ type: 'youtube', ytId: _ytId, isShort: _ytIsShort, label, group: groupName, dbId: ytRow?.id, createdAt: ytRow?.created_at });
+            MEMORIES.push({ type: 'youtube', ytId: _ytId, isShort: _ytIsShort, label, group: groupName, dbId: ytRow?.id, createdAt: ytRow?.created_at, uploadedBy: ytRow?.uploaded_by || null });
 
           } else {
             // 사진: Cloudinary 업로드
@@ -1583,9 +1584,10 @@
             });
             progressBar.style.width = '80%';
             statusText.textContent = 'Supabase에 저장 중...';
-            const { data: photoRow, error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName, type: 'photo', is_short: false }).select('id').single();
+            const _uploader2 = _authSession?.user?.user_metadata?.name || '';
+            const { data: photoRow, error } = await sb.from('photo_memories').insert({ src: cloudUrl, label, group_name: groupName, type: 'photo', is_short: false, uploaded_by: _uploader2 || null }).select('id, created_at, uploaded_by').single();
             if (error) throw error.message;
-            MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName, dbId: photoRow?.id, createdAt: photoRow?.created_at });
+            MEMORIES.push({ type: 'photo', src: cloudUrl, label, group: groupName, dbId: photoRow?.id, createdAt: photoRow?.created_at, uploadedBy: photoRow?.uploaded_by || null });
           }
 
           progressBar.style.width = '100%';
@@ -1666,8 +1668,9 @@
           `<div class="w-1.5 h-1.5 rounded-full transition-all ${i === lbIdx ? 'bg-white' : 'bg-white/30'}"></div>`
         ).join('');
 
-        // 수정/삭제 버튼: 로그인 + DB 항목일 때만 표시
-        const canEdit = !!_authSession && !!m.dbId;
+        // 수정/삭제 버튼: 로그인 + DB 항목 + 본인이 올린 것만
+        const _myName = _authSession?.user?.user_metadata?.name || '';
+        const canEdit = !!_authSession && !!m.dbId && (!m.uploadedBy || m.uploadedBy === _myName);
         document.getElementById('lb-edit-btn')?.classList.toggle('hidden', !canEdit);
         document.getElementById('lb-delete-btn')?.classList.toggle('hidden', !canEdit);
         lbEditCancel(); // 항목 바뀔 때 수정 패널 닫기
@@ -1759,6 +1762,8 @@
       async function lbEditSave() {
         const m = lbItems[lbIdx];
         if (!m?.dbId) return;
+        const myName2 = _authSession?.user?.user_metadata?.name || '';
+        if (m.uploadedBy && m.uploadedBy !== myName2) { showToast('본인이 올린 미디어만 수정할 수 있어요 🔒'); return; }
         const label    = document.getElementById('lb-edit-label').value.trim();
         const groupName = document.getElementById('lb-edit-group').value.trim();
         if (!groupName) { showToast('앨범 이름을 입력해주세요'); return; }
@@ -1784,7 +1789,25 @@
       async function lbDelete() {
         const m = lbItems[lbIdx];
         if (!m?.dbId || !_authSession) return;
+        const myName = _authSession?.user?.user_metadata?.name || '';
+        if (m.uploadedBy && m.uploadedBy !== myName) {
+          showToast('본인이 올린 미디어만 삭제할 수 있어요 🔒'); return;
+        }
         if (!confirm('이 미디어를 삭제할까요?')) return;
+
+        // Cloudinary 삭제 (사진인 경우만, fire-and-forget)
+        if (m.type === 'photo' && m.src?.includes('cloudinary.com')) {
+          const match = m.src.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
+          const publicId = match?.[1];
+          if (publicId) {
+            fetch('/api/delete-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ publicId })
+            }).catch(e => console.warn('Cloudinary delete failed:', e));
+          }
+        }
+
         const { error } = await sb.from('photo_memories').delete().eq('id', m.dbId);
         if (error) { showToast('삭제 실패 😢'); return; }
         const memIdx = MEMORIES.findIndex(x => x.dbId === m.dbId);
