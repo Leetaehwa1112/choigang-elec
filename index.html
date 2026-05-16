@@ -867,10 +867,8 @@
       /* ── 이벤트 로드 ── */
       async function loadEvents() {
         const el = document.getElementById('event-list');
-        const [{ data, error }, { data: rsvps }] = await Promise.all([
-          sb.from('schedule_sessions').select('*').eq('is_active', true).order('created_at', { ascending: true }),
-          sb.from('event_rsvps').select('session_id, member_name, status')
-        ]);
+        const { data, error } = await sb.from('schedule_sessions')
+          .select('*').eq('is_active', true).order('created_at', { ascending: true });
 
         calEvents = {};
         if (data) {
@@ -887,7 +885,6 @@
           return;
         }
 
-        const myName = localStorage.getItem('rsvpName') || '';
         el.innerHTML = data.map(s => {
           const dates = s.candidate_dates || [];
           const firstDate = dates[0] ? new Date(dates[0] + 'T00:00:00') : null;
@@ -918,35 +915,16 @@
                 class="inline-flex items-center gap-1 text-xs text-ink-3 hover:text-ink transition whitespace-nowrap">📍 지도 보기</a>`
             : '';
 
-          // RSVP
-          const sRsvps = (rsvps || []).filter(r => r.session_id === s.id);
-          const attending = sRsvps.filter(r => r.status === 'attend').map(r => r.member_name);
-          const declining = sRsvps.filter(r => r.status === 'decline').map(r => r.member_name);
-          const myRsvp = sRsvps.find(r => r.member_name === myName)?.status || '';
-          const attendPct = Math.round(attending.length / MEMBER_LIST.length * 100);
-          const attendAvatars = MEMBER_LIST.map(m => {
-            const isA = attending.includes(m.name), isD = declining.includes(m.name);
-            const cls = isA ? 'bg-green-100 text-green-700 ring-2 ring-green-400' : isD ? 'bg-ink/8 text-ink/25' : 'bg-ink/10 text-ink/40';
-            return `<div class="flex flex-col items-center gap-1">
-              <div class="relative w-9 h-9 rounded-full ${cls} font-display text-sm flex items-center justify-center">
-                ${m.ch}${isA ? '<span class="absolute -bottom-0.5 -right-0.5 text-[9px]">✓</span>' : ''}
-              </div>
-              <span class="text-[9px] font-mono text-ink-3 truncate w-8 text-center">${m.name.slice(0,2)}</span>
-            </div>`;
-          }).join('');
-
           const coverBg = s.cover_url ? `<div class="relative h-28 overflow-hidden"><img src="${s.cover_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/60"></div></div>` : '';
 
           return `<div class="rounded-2xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-ink/8">
             ${coverBg}
             <div class="flex">
-              <!-- 날짜 패널 -->
-              ${firstDate ? `<div class="${s.cover_url?'bg-ink/80':'bg-ink'} text-white flex flex-col items-center justify-center px-5 py-6 flex-shrink-0 min-w-[72px]">
+              ${firstDate ? `<div class="bg-ink text-white flex flex-col items-center justify-center px-5 py-6 flex-shrink-0 min-w-[72px]">
                 <span class="font-mono text-[10px] opacity-50 tracking-widest uppercase">${firstDate.getMonth()+1}월</span>
                 <span class="font-display text-4xl leading-none my-1">${firstDate.getDate()}</span>
                 <span class="font-mono text-[10px] opacity-50">${DOW_FULL[firstDate.getDay()]}</span>
               </div>` : ''}
-              <!-- 콘텐츠 -->
               <div class="bg-white flex-1 p-5 flex flex-col gap-2 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                   <span class="text-[10px] font-bold tracking-wide text-ink-3 uppercase">${s.type_icon} ${s.type}</span>
@@ -958,25 +936,7 @@
                 <h4 class="font-display text-xl leading-tight text-ink">${s.title}</h4>
                 ${s.place||timeDisplay ? `<p class="text-xs text-ink-3">${[s.place, timeDisplay].filter(Boolean).join('  ·  ')}</p>` : ''}
                 ${candidateChips}
-                <!-- RSVP 아바타 -->
-                <div class="pt-2 border-t border-ink/6">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-[10px] font-mono text-ink-3">참석 ${attending.length}/${MEMBER_LIST.length}</span>
-                  </div>
-                  <div class="flex gap-1.5 flex-wrap">${attendAvatars}</div>
-                </div>
-                <!-- 참석/불참 버튼 -->
-                <div class="grid grid-cols-2 gap-2 mt-1">
-                  <button onclick="submitRsvp(${s.id},'attend')"
-                    class="py-2.5 rounded-xl font-bold text-sm transition ${myRsvp==='attend' ? 'bg-green-500 text-white' : 'bg-green-50 text-green-700 hover:bg-green-100'}">
-                    참석 ✓
-                  </button>
-                  <button onclick="submitRsvp(${s.id},'decline')"
-                    class="py-2.5 rounded-xl font-bold text-sm transition ${myRsvp==='decline' ? 'bg-ink/40 text-white' : 'bg-ink/6 text-ink-2 hover:bg-ink/12'}">
-                    불참
-                  </button>
-                </div>
-                ${actionBtn||mapLink ? `<div class="flex flex-wrap items-center gap-2 pt-2 border-t border-ink/6">
+                ${actionBtn||mapLink ? `<div class="flex flex-wrap items-center gap-2 pt-2 mt-auto border-t border-ink/6">
                   ${actionBtn}
                   ${mapLink}
                 </div>` : ''}
