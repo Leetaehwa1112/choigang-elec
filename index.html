@@ -284,29 +284,47 @@
             window.heroCur = 0;
             let heroTimer;
             let heroUnmuted = false;
+            let heroYtPaused = false;
 
-            // 현재 슬라이드 iframe에 소리 켜기 postMessage
-            function heroSendUnmute() {
-              const activeSlide = document.getElementById('hslide-' + heroCur);
-              if (!activeSlide) return;
-              const iframe = activeSlide.querySelector('iframe');
-              if (!iframe) return;
-              try {
-                iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'unMute',args:''}), 'https://www.youtube.com');
-                iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'setVolume',args:[100]}), 'https://www.youtube.com');
-              } catch(e) {}
+            function ytPostMsg(iframe, func, args) {
+              try { iframe.contentWindow.postMessage(JSON.stringify({event:'command',func,args}), 'https://www.youtube.com'); } catch(e) {}
             }
 
-            // 첫 상호작용 시 소리 켜기
+            // 첫 클릭 시 소리 켜기
             function heroTryUnmute() {
               if (heroUnmuted) return;
               heroUnmuted = true;
-              heroSendUnmute();
+              const activeSlide = document.getElementById('hslide-' + heroCur);
+              if (activeSlide) {
+                const iframe = activeSlide.querySelector('iframe');
+                if (iframe) { ytPostMsg(iframe, 'unMute', ''); ytPostMsg(iframe, 'setVolume', [100]); }
+              }
               const hint = document.getElementById('hero-sound-hint');
               if (hint) { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 400); }
             }
 
-            // 페이지 어디든 첫 터치/클릭 때 소리 켜기
+            // 영상 오버레이 탭: 첫 탭은 소리, 이후엔 일시정지/재생
+            window.heroYtTap = function(i) {
+              const slide = document.getElementById('hslide-' + i);
+              if (!slide) return;
+              const iframe = slide.querySelector('iframe');
+              if (!heroUnmuted) { heroTryUnmute(); return; }
+              if (!iframe) return;
+              const icon = document.getElementById('hslide-pp-' + i);
+              if (!heroYtPaused) {
+                ytPostMsg(iframe, 'pauseVideo', '');
+                heroYtPaused = true;
+                clearInterval(heroTimer);
+                if (icon) { icon.textContent = '▶'; icon.style.opacity = '1'; }
+              } else {
+                ytPostMsg(iframe, 'playVideo', '');
+                heroYtPaused = false;
+                heroResetTimer();
+                if (icon) { icon.style.opacity = '0'; }
+              }
+            };
+
+            // 페이지 어디든 첫 터치/클릭 때도 소리 켜기
             document.addEventListener('click', heroTryUnmute, { once: true });
             document.addEventListener('touchend', heroTryUnmute, { once: true });
 
@@ -325,7 +343,10 @@
                   ? 'height:100%;width:auto;aspect-ratio:9/16;pointer-events:none;display:block;'
                   : 'width:100%;height:100%;pointer-events:none;display:block;';
                 wrap.innerHTML = `<iframe src="${ytSrc(s.ytId, 0)}" style="${iframeStyle}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-                  <span style="position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;background:rgba(0,0,0,0.6);color:#fff;padding:2px 7px;border-radius:4px">${badge}</span>`;
+                  <span style="position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;background:rgba(0,0,0,0.6);color:#fff;padding:2px 7px;border-radius:4px;z-index:6;pointer-events:none">${badge}</span>
+                  <div onclick="heroYtTap(${i})" style="position:absolute;inset:0;z-index:5;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                    <div id="hslide-pp-${i}" style="font-size:28px;opacity:0;transition:opacity 0.2s;background:rgba(0,0,0,0.5);border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;color:#fff">⏸</div>
+                  </div>`;
               } else {
                 wrap.innerHTML = `<img src="${s.src}" style="width:100%;height:100%;object-fit:cover;">`;
               }
@@ -378,6 +399,7 @@
               slides[heroCur].style.opacity = '0';
               dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white/40';
               heroCur = (n + total) % total;
+              heroYtPaused = false;
               slides[heroCur].style.opacity = '1';
               dots[heroCur].className = 'w-1.5 h-1.5 rounded-full transition-all cursor-pointer bg-white scale-125';
               if (HERO_SLIDES[heroCur].type === 'youtube') {
