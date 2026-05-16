@@ -769,7 +769,7 @@
             ? `background:${grad};background-image:url(${s.cover_url});background-size:cover;background-position:center`
             : `background:${grad}`;
           const dl = fd?(()=>{const dt=new Date(fd+'T00:00:00');return `${dt.getMonth()+1}.${String(dt.getDate()).padStart(2,'0')} ${DOW[dt.getDay()]}`})():'';
-          const tl = s.time_str?(()=>{const[h,m]=s.time_str.split(':').map(Number);return(h<12?'오전 ':'오후 ')+(h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시')})():'';
+          const tl = s.time_str?(()=>{const[h,m]=s.time_str.split(':').map(Number);return(h<12?'오전 ':'오후 ')+(h===0?12:h>12?h-12:h)+(m?':'+String(m).padStart(2,'0'):'시')})():'';
           const _q = ((s.place||'') + (s.addr?' '+s.addr:'')).replace(/ /g,'+');
           const _pn = (s.place||'').replace(/ /g,'+');
           const _pa = (s.addr||'').replace(/ /g,'+');
@@ -942,7 +942,7 @@
 
           const timeDisplay = s.time_str ? (() => {
             const [h, m] = s.time_str.split(':').map(Number);
-            return (h < 12 ? '오전 ' : '오후 ') + (h > 12 ? h-12 : h) + (m ? ':'+String(m).padStart(2,'0') : '시');
+            return (h < 12 ? '오전 ' : '오후 ') + (h===0?12:h>12?h-12:h) + (m ? ':'+String(m).padStart(2,'0') : '시');
           })() : '';
 
           const candidateChips = dates.length > 1
@@ -2079,6 +2079,7 @@
       }
 
       function openSchedule(session = null) {
+        if (!_authSession) { showToast('먼저 로그인해주세요 🔒'); return; }
         editingEventId = session ? session.id : null;
         const title = document.getElementById('sched-modal-title');
         const btn = document.getElementById('sched-submit-btn');
@@ -2128,6 +2129,7 @@
       }
 
       async function deleteEvent(id) {
+        if (!_authSession) { showToast('먼저 로그인해주세요 🔒'); return; }
         if (!confirm('이 이벤트를 삭제할까요?')) return;
         const { error } = await sb.from('schedule_sessions').delete().eq('id', id);
         if (error) { alert('삭제 실패: ' + error.message); return; }
@@ -2436,6 +2438,7 @@
           }
         }
 
+        if (!isEdit) localStorage.removeItem('schedDetail');
         closeSchedule();
         showToast(isEdit ? '수정됐어요! ✏️' : '일정이 등록됐어요! 🎉');
         loadEvents();
