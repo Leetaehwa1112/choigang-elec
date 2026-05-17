@@ -1,7 +1,7 @@
 {
-  "name": "최강전기 동창회",
+  "name": "최강전기",
   "short_name": "최강전기",
-  "description": "최강전기 동창회 — 모임·캘린더·멤버·추억",
+  "description": "최강전기 — 모임·캘린더·멤버·추억",
   "lang": "ko",
   "dir": "ltr",
   "start_url": "./index.html",
