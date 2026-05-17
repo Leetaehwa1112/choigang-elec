@@ -4001,12 +4001,9 @@
         const banner = document.getElementById('installBanner');
         const accept = document.getElementById('installAccept');
         const dismiss = document.getElementById('installDismiss');
-        const STORAGE_KEY = 'pwa-install-dismissed';
 
         function showBanner() {
           if (window.matchMedia('(display-mode: standalone)').matches) return;
-          const dismissed = localStorage.getItem(STORAGE_KEY);
-          if (dismissed && Date.now() - Number(dismissed) < 3 * 24 * 60 * 60 * 1000) return;
           banner.classList.add('show');
         }
 
@@ -4022,18 +4019,15 @@
           if (!deferredPrompt) return;
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') localStorage.setItem(STORAGE_KEY, String(Date.now()));
           deferredPrompt = null;
         });
 
         dismiss?.addEventListener('click', () => {
           banner.classList.remove('show');
-          localStorage.setItem(STORAGE_KEY, String(Date.now()));
         });
 
         window.addEventListener('appinstalled', () => {
           banner.classList.remove('show');
-          localStorage.setItem(STORAGE_KEY, String(Date.now()));
         });
 
         // iOS Safari (beforeinstallprompt 미지원) — 안내만 표시
@@ -4041,7 +4035,7 @@
         const isStandalone =
           window.matchMedia('(display-mode: standalone)').matches ||
           window.navigator.standalone === true;
-        if (isIOS && !isStandalone && !localStorage.getItem(STORAGE_KEY)) {
+        if (isIOS && !isStandalone) {
           accept.textContent = '방법';
           accept.onclick = () => {
             alert('Safari 하단 공유 버튼 → "홈 화면에 추가"를 눌러 설치하세요.');
