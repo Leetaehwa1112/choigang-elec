@@ -3235,8 +3235,33 @@
         const btn = document.getElementById('adminPushBtn');
         if (!btn) return;
         btn.style.display = isAdmin() ? 'inline-flex' : 'none';
-        if (isAdmin()) btn.onclick = openAdminPush;
+        if (isAdmin()) { btn.onclick = openAdminPush; buildInvitePanel(); }
         positionAdminBtn();
+      }
+
+      function buildInvitePanel() {
+        const el = document.getElementById('invite-list');
+        if (!el || el.dataset.built) return;
+        el.dataset.built = '1';
+        el.innerHTML = MEMBER_LIST.map(m => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid rgba(26,29,36,.07)">
+            <span style="font-weight:700;font-size:13px">${m.name}</span>
+            <button onclick="copyInvite('${m.name}', this)"
+              style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;border:1px solid rgba(245,180,0,.4);background:rgba(245,180,0,.12);color:#a37e3f;cursor:pointer;transition:background .15s">
+              복사 📋
+            </button>
+          </div>
+        `).join('');
+      }
+
+      function copyInvite(name, btn) {
+        const msg = `⚡ ${name}아, 최강전기 동창회 앱 들어와!\n→ https://choigang-elec.vercel.app\n\n회원가입 → 이름 선택 → 아이디/비밀번호 설정하면 끝!\n멤버 전용 공간이야 🔒`;
+        navigator.clipboard.writeText(msg).then(() => {
+          showToast(`${name} 초대 메시지 복사됐어! 📋`);
+          const orig = btn.textContent;
+          btn.textContent = '✓ 복사됨';
+          setTimeout(() => { btn.textContent = orig; }, 800);
+        }).catch(() => showToast('복사 실패 😢'));
       }
       function positionAdminBtn() {
         const btn = document.getElementById('adminPushBtn');
@@ -3712,6 +3737,12 @@
 
         <div style="font-weight:700;font-size:12px;margin-bottom:8px">예약 목록</div>
         <div id="apList" style="display:flex;flex-direction:column;gap:8px"></div>
+
+        <!-- 초대 메시지 -->
+        <div style="margin-top:16px;background:#fff;border:1px solid rgba(26,29,36,.1);border-radius:14px;padding:12px">
+          <div style="font-weight:700;font-size:12px;margin-bottom:10px">📨 카톡 초대 메시지</div>
+          <div id="invite-list" style="display:flex;flex-direction:column;gap:2px"></div>
+        </div>
       </div>
     </div>
 
