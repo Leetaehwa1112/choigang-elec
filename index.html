@@ -477,9 +477,15 @@
         </div>
 
         <div class="gate-install" id="gateInstallWrap">
-          <button type="button" class="gate-install-btn" id="gateInstallBtn" onclick="gateInstall()">
-            <span>⚡</span><span>앱 다운로드</span>
-          </button>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:0 -4px 12px;padding-top:16px;">
+            <button type="button" class="gate-install-btn" id="gateInstallBtn" onclick="gateInstall()" style="width:100%;justify-content:center;padding:13px 18px;font-size:14px;background:rgba(245,180,0,0.15);border-color:rgba(245,180,0,0.45);color:#f5b400;">
+              <span style="font-size:18px">⚡</span>
+              <div style="text-align:left;line-height:1.3;">
+                <div style="font-weight:800;">앱으로 설치하기</div>
+                <div style="font-size:11px;opacity:0.7;font-weight:400;">홈화면에서 바로 열기</div>
+              </div>
+            </button>
+          </div>
         </div>
 
         <div class="gate-footer">PWR · ON · 7/7</div>
@@ -3205,10 +3211,8 @@
         const isStandalone =
           window.matchMedia('(display-mode: standalone)').matches ||
           window.navigator.standalone === true;
-        if (isStandalone) {
-          alert('이미 앱으로 설치되어 있어요!');
-          return;
-        }
+        if (isStandalone) return;
+
         if (window._deferredInstallPrompt) {
           window._deferredInstallPrompt.prompt();
           window._deferredInstallPrompt.userChoice.then(() => {
@@ -3216,11 +3220,32 @@
           });
           return;
         }
+
         if (isIOS) {
           alert('iPhone에서 설치하기:\n\n1. Safari 하단의 공유 버튼(□↑) 탭\n2. "홈 화면에 추가" 선택\n3. "추가" 탭');
           return;
         }
-        alert('Chrome/Edge 주소창 우측 설치 아이콘(⊕) 또는 메뉴 → "앱 설치"를 눌러주세요.');
+
+        // beforeinstallprompt 아직 안 왔을 때 — 버튼 대기 상태로 전환
+        const btn = document.getElementById('gateInstallBtn');
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<span style="font-size:18px">⏳</span><div style="text-align:left;line-height:1.3;"><div style="font-weight:800;">준비 중...</div><div style="font-size:11px;opacity:0.7;">잠시 후 다시 눌러주세요</div></div>';
+          btn.disabled = true;
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window._deferredInstallPrompt = e;
+            btn.innerHTML = orig;
+            btn.disabled = false;
+          }, { once: true });
+          setTimeout(() => {
+            if (btn.disabled) {
+              btn.innerHTML = orig;
+              btn.disabled = false;
+              showToast('주소창 우측 설치 아이콘(⊕)을 눌러주세요 💡');
+            }
+          }, 5000);
+        }
       }
 
       /* ── 어드민(이태화 전용) 푸시 패널 ── */
@@ -3890,7 +3915,7 @@
         });
         dismiss?.addEventListener('click', () => {
           banner.classList.remove('show');
-          localStorage.setItem(STORAGE_KEY, '1');
+          localStorage.setItem(STORAGE_KEY, String(Date.now()));
         });
       })();
 
@@ -3979,8 +4004,9 @@
         const STORAGE_KEY = 'pwa-install-dismissed';
 
         function showBanner() {
-          if (localStorage.getItem(STORAGE_KEY)) return;
           if (window.matchMedia('(display-mode: standalone)').matches) return;
+          const dismissed = localStorage.getItem(STORAGE_KEY);
+          if (dismissed && Date.now() - Number(dismissed) < 3 * 24 * 60 * 60 * 1000) return;
           banner.classList.add('show');
         }
 
@@ -3996,18 +4022,18 @@
           if (!deferredPrompt) return;
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') localStorage.setItem(STORAGE_KEY, '1');
+          if (outcome === 'accepted') localStorage.setItem(STORAGE_KEY, String(Date.now()));
           deferredPrompt = null;
         });
 
         dismiss?.addEventListener('click', () => {
           banner.classList.remove('show');
-          localStorage.setItem(STORAGE_KEY, '1');
+          localStorage.setItem(STORAGE_KEY, String(Date.now()));
         });
 
         window.addEventListener('appinstalled', () => {
           banner.classList.remove('show');
-          localStorage.setItem(STORAGE_KEY, '1');
+          localStorage.setItem(STORAGE_KEY, String(Date.now()));
         });
 
         // iOS Safari (beforeinstallprompt 미지원) — 안내만 표시
