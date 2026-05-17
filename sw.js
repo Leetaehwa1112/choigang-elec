@@ -1,6 +1,6 @@
 // 최강전기 PWA Service Worker
 // 정적 리소스만 캐시 - Supabase/Cloudinary 등 외부 API는 네트워크 우선
-const VERSION = 'v1.0.9';
+const VERSION = 'v1.1.0';
 const VAPID_PUBLIC_KEY = 'BKN_42BLXAEFw1b912ap0ebSZ-fRRmazrY9Hhw5328s5-GsMPg6MOi2eWUewfyLmj6wJIBEtJpp9EYujGoFVZB0';
 const ORIGIN = 'https://choigang-elec.vercel.app';
 
