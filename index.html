@@ -4205,12 +4205,53 @@
           return true;
         }
 
+        function platformGuide() {
+          const ua = navigator.userAgent || '';
+          const isIOS = /iPad|iPhone|iPod/.test(ua);
+          const isAndroid = /Android/i.test(ua);
+          const isStandalone =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+          if (isIOS && isStandalone) {
+            return [
+              'iPhone 설정 앱 열기',
+              '아래로 스크롤 → "최강전기" 탭',
+              '"알림" → "알림 허용" 켜기',
+            ];
+          }
+          if (isIOS) {
+            return [
+              'Safari 주소창 옆 ⓐ(또는 AA) 탭',
+              '"웹사이트 설정" → "알림" → 허용',
+            ];
+          }
+          if (isAndroid) {
+            return [
+              '주소창 왼쪽 🔒 자물쇠 아이콘 탭',
+              '"권한" → "알림" → 허용으로 변경',
+              '(또는 설정 → 사이트 설정 → 알림)',
+            ];
+          }
+          // 데스크톱 Chrome/Edge
+          return [
+            '주소창 왼쪽 🔒 자물쇠 아이콘 클릭',
+            '"알림" 항목을 "허용"으로 변경',
+            '페이지 새로고침',
+          ];
+        }
+
         function setSheetForDenied(denied) {
           const titleEl = sheet.querySelector('.notif-sheet-title');
           const subEl   = sheet.querySelector('.notif-sheet-subtitle');
           if (denied) {
             titleEl.innerHTML = '알림이 차단돼 있어요';
-            subEl.textContent = '브라우저 설정 > 사이트 권한 > 알림에서 허용해주세요';
+            const steps = platformGuide();
+            const stepsHtml = steps.map((s, i) =>
+              `<div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;text-align:left">
+                <div style="flex-shrink:0;width:18px;height:18px;border-radius:50%;background:#1a1d24;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">${i+1}</div>
+                <div style="font-size:13px;color:#1a1d24;line-height:1.4">${s}</div>
+              </div>`).join('');
+            subEl.innerHTML = `<div style="font-size:13px;color:#4b5160;margin-bottom:8px">아래 방법으로 직접 켜주세요 👇</div>${stepsHtml}`;
             acceptBtn.style.display = 'none';
           } else {
             titleEl.innerHTML = '모임 놓치지 말고<br>알림 받으실래요?';
@@ -4241,18 +4282,34 @@
           setTimeout(() => t.remove(), 2800);
         }
 
-        function updateNavToggle() {
+        async function hasActiveSubscription() {
+          try {
+            if (!('serviceWorker' in navigator)) return false;
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            return !!sub;
+          } catch (_) { return false; }
+        }
+
+        async function updateNavToggle() {
           if (!navToggle) return;
           if (!_authSession || !isPushSupportedHere()) { navToggle.style.display = 'none'; return; }
           const perm = Notification.permission;
-          navToggle.style.display = perm === 'granted' ? 'none' : 'inline-flex';
+          // granted이지만 구독이 끊긴 경우(OS에서 끔 / 데이터 삭제)도 벨 표시 → 재구독 가능
+          if (perm === 'granted') {
+            const alive = await hasActiveSubscription();
+            navToggle.style.display = alive ? 'none' : 'inline-flex';
+          } else {
+            navToggle.style.display = 'inline-flex';
+          }
         }
 
-        function maybeShow() {
+        async function maybeShow() {
           if (!sheet || !_authSession) return;
           if (!isPushSupportedHere()) return;
           const perm = Notification.permission;
           updateNavToggle();
+          // granted + 구독 살아있으면 스킵, granted이지만 구독 끊긴 경우는 시트 안 띄움(벨로만 안내)
           if (perm === 'granted') return;
           // 3일 안에 닫았으면 자동 표시 안 함 (헤더 토글로 직접 열기는 가능)
           const dismissed = localStorage.getItem(STORAGE_KEY);
