@@ -165,6 +165,178 @@
         clip-path: polygon(12% 0, 88% 0, 100% 12%, 100% 88%, 88% 100%, 12% 100%, 0 88%, 0 12%);
       }
 
+      /* ===== 푸시 알림 권한 요청 바텀시트 (토스 스타일) ===== */
+      .notif-sheet-overlay {
+        position: fixed; inset: 0; z-index: 200;
+        background: rgba(0,0,0,0.5);
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.25s ease;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+      }
+      .notif-sheet-overlay.show { opacity: 1; pointer-events: auto; }
+      .notif-sheet {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        z-index: 201;
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+        padding: 28px 22px calc(22px + var(--safe-bottom));
+        box-shadow: 0 -20px 60px rgba(0,0,0,0.25);
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      .notif-sheet.show { transform: translateY(0); }
+      .notif-sheet-handle {
+        width: 40px; height: 4px;
+        background: rgba(0,0,0,0.15);
+        border-radius: 999px;
+        margin: -10px auto 18px;
+      }
+      .notif-bell {
+        font-size: 56px;
+        text-align: center;
+        margin-bottom: 8px;
+        display: inline-block;
+        transform-origin: top center;
+        animation: bell-ring 1.6s ease-in-out infinite;
+      }
+      @keyframes bell-ring {
+        0%, 60%, 100% { transform: rotate(0deg); }
+        5%, 15%, 25%, 35%, 45% { transform: rotate(12deg); }
+        10%, 20%, 30%, 40%, 50% { transform: rotate(-12deg); }
+        55% { transform: rotate(0deg); }
+      }
+      .notif-sheet-title {
+        font-family: "Black Han Sans", sans-serif;
+        font-size: 22px;
+        text-align: center;
+        color: #1a1d24;
+        letter-spacing: 0.01em;
+        margin-bottom: 6px;
+      }
+      .notif-sheet-subtitle {
+        text-align: center;
+        font-size: 13px;
+        color: #7a8090;
+        margin-bottom: 22px;
+        line-height: 1.5;
+      }
+      .notif-preview-stack {
+        display: flex; flex-direction: column; gap: 8px;
+        margin-bottom: 22px;
+      }
+      .notif-preview-card {
+        background: #f4efe2;
+        border: 1px solid rgba(26,29,36,0.06);
+        border-radius: 14px;
+        padding: 11px 13px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        animation: preview-slide-in 0.5s ease backwards;
+      }
+      .notif-preview-card:nth-child(2) { animation-delay: 0.1s; }
+      .notif-preview-card:nth-child(3) { animation-delay: 0.2s; }
+      @keyframes preview-slide-in {
+        from { transform: translateX(20px); opacity: 0; }
+        to   { transform: translateX(0); opacity: 1; }
+      }
+      .notif-preview-icon {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f5b400, #d99a00);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(245,180,0,0.3);
+      }
+      .notif-preview-body { flex: 1; min-width: 0; }
+      .notif-preview-title-text {
+        font-weight: 700; font-size: 13px; color: #1a1d24;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .notif-preview-desc {
+        font-size: 11px; color: #4b5160; margin-top: 2px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .notif-preview-time {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        color: #7a8090;
+        flex-shrink: 0;
+      }
+      .notif-sheet-accept {
+        width: 100%;
+        background: linear-gradient(180deg, #f5b400, #d99a00);
+        color: #1a1d24;
+        border: 1px solid #a37700;
+        font-weight: 800; font-size: 15px;
+        padding: 15px;
+        border-radius: 14px;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(245,180,0,0.35), inset 0 1px 0 rgba(255,255,255,0.5);
+        transition: transform 0.05s;
+      }
+      .notif-sheet-accept:active { transform: translateY(2px); }
+      .notif-sheet-dismiss {
+        display: block; width: 100%;
+        background: transparent; border: none;
+        font-size: 13px; color: #7a8090; font-weight: 600;
+        padding: 14px;
+        cursor: pointer;
+      }
+      .notif-sheet-foot {
+        text-align: center;
+        font-size: 11px; color: #a0a8b8;
+        margin-top: 4px;
+      }
+      /* 헤더 알림 토글 아이콘 */
+      .notif-toggle {
+        position: relative;
+        background: rgba(245,180,0,0.12);
+        border: 1px solid rgba(245,180,0,0.35);
+        width: 32px; height: 32px;
+        border-radius: 999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .notif-toggle:hover { background: rgba(245,180,0,0.2); }
+      .notif-toggle::after {
+        content: '';
+        position: absolute; top: 2px; right: 2px;
+        width: 8px; height: 8px;
+        background: #d12c2c;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        animation: pulse-dot 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse-dot {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+      }
+      /* 성공 토스트 강화 */
+      @keyframes confetti-pop {
+        0%   { transform: translate(-50%, 20px) scale(0.8); opacity: 0; }
+        20%  { transform: translate(-50%, 0) scale(1.05); opacity: 1; }
+        80%  { transform: translate(-50%, 0) scale(1); opacity: 1; }
+        100% { transform: translate(-50%, -20px) scale(0.95); opacity: 0; }
+      }
+      .notif-success-toast {
+        position: fixed;
+        bottom: 100px; left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #f5b400, #d99a00);
+        color: #1a1d24;
+        padding: 14px 24px;
+        border-radius: 999px;
+        font-size: 14px; font-weight: 800;
+        box-shadow: 0 8px 24px rgba(245,180,0,0.45);
+        z-index: 300;
+        animation: confetti-pop 2.6s ease forwards;
+      }
+
       /* ===== 얼리버드 멤버 카드 (화려한 골드 그라디언트 보더 + 글로우) ===== */
       .earlybird {
         position: relative;
@@ -554,6 +726,10 @@
         </ul>
 
         <div class="flex items-center gap-2">
+          <!-- 알림 권한 토글 (default·denied일 때만 표시) -->
+          <button id="navNotifToggle" class="notif-toggle" type="button" aria-label="알림 켜기" onclick="openNotifSheet()" style="display:none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a1d24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </button>
           <!-- 로그인 상태 -->
           <div id="auth-area" class="flex items-center gap-2">
             <!-- 비로그인 -->
@@ -3840,7 +4016,48 @@
     </div>
 
     <!-- ===== 알림 권한 배너 (로그인 후) ===== -->
-<div id="notifBanner" class="install-banner" role="dialog" aria-label="알림 받기" style="bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px)">
+    <!-- ===== 토스 스타일 알림 권한 바텀시트 ===== -->
+    <div id="notifSheetOverlay" class="notif-sheet-overlay" onclick="closeNotifSheet()"></div>
+    <div id="notifSheet" class="notif-sheet" role="dialog" aria-label="알림 받기">
+      <div class="notif-sheet-handle"></div>
+      <div style="text-align:center"><span class="notif-bell">🔔</span></div>
+      <div class="notif-sheet-title">모임 놓치지 말고<br>알림 받으실래요?</div>
+      <div class="notif-sheet-subtitle">잊어버리지 않게 살짝 알려드릴게요</div>
+
+      <div class="notif-preview-stack">
+        <div class="notif-preview-card">
+          <div class="notif-preview-icon">🍻</div>
+          <div class="notif-preview-body">
+            <div class="notif-preview-title-text">내일 강남 번개</div>
+            <div class="notif-preview-desc">19:00 · 강남역 6번출구</div>
+          </div>
+          <div class="notif-preview-time">D-1</div>
+        </div>
+        <div class="notif-preview-card">
+          <div class="notif-preview-icon" style="background:linear-gradient(135deg,#16a34a,#0d7a36)">💍</div>
+          <div class="notif-preview-body">
+            <div class="notif-preview-title-text">이은준 결혼식</div>
+            <div class="notif-preview-desc">10:30 · 르한스</div>
+          </div>
+          <div class="notif-preview-time">D-3</div>
+        </div>
+        <div class="notif-preview-card">
+          <div class="notif-preview-icon" style="background:linear-gradient(135deg,#d12c2c,#a32020)">📸</div>
+          <div class="notif-preview-body">
+            <div class="notif-preview-title-text">추억에 새 사진</div>
+            <div class="notif-preview-desc">이태화님이 사진을 올렸어요</div>
+          </div>
+          <div class="notif-preview-time">방금</div>
+        </div>
+      </div>
+
+      <button id="notifSheetAccept" class="notif-sheet-accept">알림 받기</button>
+      <button class="notif-sheet-dismiss" onclick="closeNotifSheet(true)">다음에 할게요</button>
+      <div class="notif-sheet-foot">언제든지 헤더 🔔 아이콘으로 켤 수 있어요</div>
+    </div>
+
+    <!-- 기존 작은 배너(미사용으로 숨김, 호환용 DOM 유지) -->
+    <div id="notifBanner" class="install-banner" role="dialog" aria-label="알림 받기" style="display:none;bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px)">
       <div style="font-size:24px">🔔</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:13px">모임 알림 받기</div>
@@ -3937,53 +4154,91 @@
         }
       }
 
-      // 알림 권한 배너 (로그인 후 + 권한 default 상태)
+      // ===== 토스 스타일 알림 권한 바텀시트 =====
       (function () {
-        const banner = document.getElementById('notifBanner');
-        const accept = document.getElementById('notifAccept');
-        const dismiss = document.getElementById('notifDismiss');
-        const STORAGE_KEY = 'notif-banner-dismissed';
+        const sheet      = document.getElementById('notifSheet');
+        const overlay    = document.getElementById('notifSheetOverlay');
+        const acceptBtn  = document.getElementById('notifSheetAccept');
+        const navToggle  = document.getElementById('navNotifToggle');
+        const STORAGE_KEY = 'notif-sheet-dismissed';
+        const REPROMPT_MS = 3 * 24 * 60 * 60 * 1000; // 3일
 
-        function maybeShow() {
-          if (!banner) return;
-          if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-          if (!_authSession) return;
-          // iOS는 standalone에서만 푸시 가능
+        function isPushSupportedHere() {
+          if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
           const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
           const isStandalone =
             window.matchMedia('(display-mode: standalone)').matches ||
             window.navigator.standalone === true;
-          if (isIOS && !isStandalone) return;
-          const perm = Notification.permission;
-          if (perm === 'granted') return;
-          if (localStorage.getItem(STORAGE_KEY) && perm !== 'denied') return;
-          if (perm === 'denied') {
-            // 거부 상태: 안내 모드로 표시 (브라우저 설정에서 풀어야 한다고)
-            const titleEl = banner.querySelector('div[style*="font-weight:700"]');
-            const subEl = banner.querySelector('div[style*="font-size:11px"]');
-            const acceptBtn = banner.querySelector('#notifAccept');
-            if (titleEl) titleEl.textContent = '알림이 차단돼 있어요';
-            if (subEl) subEl.textContent = '브라우저 설정 > 사이트 권한 > 알림에서 허용';
-            if (acceptBtn) acceptBtn.style.display = 'none';
-          }
-          banner.classList.add('show');
+          if (isIOS && !isStandalone) return false; // iOS는 PWA 설치 후에만 푸시
+          return true;
         }
 
-        // 세션 변할 때마다 체크
-        sb?.auth?.onAuthStateChange?.(() => setTimeout(maybeShow, 800));
-        setTimeout(maybeShow, 1500);
-
-        accept?.addEventListener('click', async () => {
-          banner.classList.remove('show');
-          const ok = await enablePushNotifications();
-          if (ok) {
-            // 짧은 피드백
-            try { showToast?.('알림이 켜졌어요 🔔'); } catch (_) {}
+        function setSheetForDenied(denied) {
+          const titleEl = sheet.querySelector('.notif-sheet-title');
+          const subEl   = sheet.querySelector('.notif-sheet-subtitle');
+          if (denied) {
+            titleEl.innerHTML = '알림이 차단돼 있어요';
+            subEl.textContent = '브라우저 설정 > 사이트 권한 > 알림에서 허용해주세요';
+            acceptBtn.style.display = 'none';
+          } else {
+            titleEl.innerHTML = '모임 놓치지 말고<br>알림 받으실래요?';
+            subEl.textContent = '잊어버리지 않게 살짝 알려드릴게요';
+            acceptBtn.style.display = '';
           }
-        });
-        dismiss?.addEventListener('click', () => {
-          banner.classList.remove('show');
-          localStorage.setItem(STORAGE_KEY, String(Date.now()));
+        }
+
+        window.openNotifSheet = function () {
+          if (!sheet) return;
+          const perm = Notification.permission;
+          setSheetForDenied(perm === 'denied');
+          overlay.classList.add('show');
+          sheet.classList.add('show');
+        };
+
+        window.closeNotifSheet = function (markDismissed) {
+          sheet.classList.remove('show');
+          overlay.classList.remove('show');
+          if (markDismissed) localStorage.setItem(STORAGE_KEY, String(Date.now()));
+        };
+
+        function showSuccessToast() {
+          const t = document.createElement('div');
+          t.className = 'notif-success-toast';
+          t.textContent = '이제 모임 안 놓쳐요 ⚡';
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 2800);
+        }
+
+        function updateNavToggle() {
+          if (!navToggle) return;
+          if (!_authSession || !isPushSupportedHere()) { navToggle.style.display = 'none'; return; }
+          const perm = Notification.permission;
+          navToggle.style.display = perm === 'granted' ? 'none' : 'inline-flex';
+        }
+
+        function maybeShow() {
+          if (!sheet || !_authSession) return;
+          if (!isPushSupportedHere()) return;
+          const perm = Notification.permission;
+          updateNavToggle();
+          if (perm === 'granted') return;
+          // 3일 안에 닫았으면 자동 표시 안 함 (헤더 토글로 직접 열기는 가능)
+          const dismissed = localStorage.getItem(STORAGE_KEY);
+          if (dismissed && Date.now() - Number(dismissed) < REPROMPT_MS) return;
+          openNotifSheet();
+        }
+
+        // 로그인 후 5초 뒤 자연스럽게 등장 (토스 스타일 — 너무 빠르지 않게)
+        sb?.auth?.onAuthStateChange?.(() => setTimeout(maybeShow, 5000));
+        setTimeout(maybeShow, 5000);
+        // 권한 상태 변경 감지 (다른 탭에서 변경된 경우 등)
+        setInterval(updateNavToggle, 4000);
+
+        acceptBtn?.addEventListener('click', async () => {
+          closeNotifSheet(false);
+          const ok = await enablePushNotifications();
+          updateNavToggle();
+          if (ok) showSuccessToast();
         });
       })();
 
