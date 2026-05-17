@@ -3554,14 +3554,11 @@
       }
       function positionAdminBtn() {
         const btn = document.getElementById('adminPushBtn');
-        const banner = document.getElementById('notifBanner');
         const install = document.getElementById('installBanner');
         if (!btn) return;
         // 배너가 떠있으면 그 위로 띄움, 없으면 기본 위치
         let extra = 0;
-        if (banner && banner.classList.contains('show')) {
-          extra = banner.offsetHeight + 12;
-        } else if (install && install.classList.contains('show')) {
+        if (install && install.classList.contains('show')) {
           extra = install.offsetHeight + 12;
         }
         btn.style.bottom = `calc(var(--tabbar-height) + var(--safe-bottom) + ${76 + extra}px)`;
@@ -3571,9 +3568,7 @@
         const reposition = () => positionAdminBtn();
         const obs = new MutationObserver(reposition);
         const tryAttach = () => {
-          const b = document.getElementById('notifBanner');
           const i = document.getElementById('installBanner');
-          if (b) obs.observe(b, { attributes: true, attributeFilter: ['class', 'style'] });
           if (i) obs.observe(i, { attributes: true, attributeFilter: ['class', 'style'] });
         };
         if (document.readyState === 'loading') {
@@ -3636,6 +3631,7 @@
 
       async function reloadAdminPushList() {
         const wrap = document.getElementById('apList');
+        if (!wrap) return;
         wrap.innerHTML = '<div style="font-size:11px;color:#4b5160">불러오는 중...</div>';
         const { data, error } = await sb.from('scheduled_pushes')
           .select('id, title, body, send_at, sent, sent_count, sent_at, recipients')
@@ -4103,17 +4099,6 @@
       <div class="notif-sheet-foot">언제든지 헤더 🔔 아이콘으로 켤 수 있어요</div>
     </div>
 
-    <!-- 기존 작은 배너(미사용으로 숨김, 호환용 DOM 유지) -->
-    <div id="notifBanner" class="install-banner" role="dialog" aria-label="알림 받기" style="display:none;bottom:calc(var(--tabbar-height) + var(--safe-bottom) + 76px)">
-      <div style="font-size:24px">🔔</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:13px">모임 알림 받기</div>
-        <div style="font-size:11px;opacity:0.75">D-day 3일/1일/당일 전 알려드려요</div>
-      </div>
-      <button id="notifAccept" style="background:#16a34a;color:#fff;font-weight:700;font-size:12px;padding:8px 14px;border-radius:10px;border:none">허용</button>
-      <button id="notifDismiss" aria-label="닫기" style="background:transparent;color:#fff;opacity:0.6;font-size:18px;padding:4px 8px;border:none">×</button>
-    </div>
-
     <!-- ===== PWA 설치 배너 ===== -->
     <div id="installBanner" class="install-banner" role="dialog" aria-label="앱 설치">
       <div style="font-size:24px">⚡</div>
@@ -4276,7 +4261,12 @@
         }
 
         // 로그인 후 5초 뒤 자연스럽게 등장 (토스 스타일 — 너무 빠르지 않게)
-        sb?.auth?.onAuthStateChange?.(() => setTimeout(maybeShow, 5000));
+        // TOKEN_REFRESHED/USER_UPDATED는 무시 — SIGNED_IN/INITIAL_SESSION만 트리거
+        sb?.auth?.onAuthStateChange?.((event) => {
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            setTimeout(maybeShow, 5000);
+          }
+        });
         setTimeout(maybeShow, 5000);
         // 권한 상태 변경 감지 (다른 탭에서 변경된 경우 등)
         setInterval(updateNavToggle, 4000);
@@ -4387,11 +4377,22 @@
           showBanner();
         });
 
+        // iOS Safari (beforeinstallprompt 미지원) — 안내만 표시
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone =
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true;
+
         accept?.addEventListener('click', async () => {
+          if (isIOS && !isStandalone) {
+            alert('Safari 하단 공유 버튼 → "홈 화면에 추가"를 눌러 설치하세요.');
+            banner.classList.remove('show');
+            return;
+          }
           banner.classList.remove('show');
           if (!deferredPrompt) return;
           deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
+          await deferredPrompt.userChoice;
           deferredPrompt = null;
         });
 
@@ -4403,16 +4404,8 @@
           banner.classList.remove('show');
         });
 
-        // iOS Safari (beforeinstallprompt 미지원) — 안내만 표시
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isStandalone =
-          window.matchMedia('(display-mode: standalone)').matches ||
-          window.navigator.standalone === true;
         if (isIOS && !isStandalone) {
           accept.textContent = '방법';
-          accept.onclick = () => {
-            alert('Safari 하단 공유 버튼 → "홈 화면에 추가"를 눌러 설치하세요.');
-          };
           setTimeout(showBanner, 2000);
         }
       })();
