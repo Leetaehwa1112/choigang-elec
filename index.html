@@ -165,6 +165,46 @@
         clip-path: polygon(12% 0, 88% 0, 100% 12%, 100% 88%, 88% 100%, 12% 100%, 0 88%, 0 12%);
       }
 
+      /* ===== 얼리버드 멤버 카드 (화려한 골드 그라디언트 보더 + 글로우) ===== */
+      .earlybird {
+        position: relative;
+        border: 2px solid transparent !important;
+        background:
+          linear-gradient(180deg, #fffaeb, #fff5d9) padding-box,
+          linear-gradient(135deg, #f5b400 0%, #ff8c00 25%, #d12c2c 50%, #ff8c00 75%, #f5b400 100%) border-box !important;
+        background-size: auto, 300% 300% !important;
+        animation: earlybird-shimmer 3.5s linear infinite;
+        box-shadow:
+          0 4px 24px rgba(245, 180, 0, 0.35),
+          0 0 40px rgba(245, 180, 0, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+      }
+      @keyframes earlybird-shimmer {
+        0%   { background-position: 0% 0%, 0% 50%; }
+        100% { background-position: 0% 0%, 300% 50%; }
+      }
+      .earlybird-badge {
+        position: absolute;
+        top: -8px;
+        right: 12px;
+        background: linear-gradient(135deg, #f5b400, #ff8c00);
+        color: #1a1d24;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        padding: 3px 8px;
+        border-radius: 999px;
+        box-shadow: 0 2px 8px rgba(245, 180, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.5);
+        border: 1px solid rgba(255,255,255,0.6);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        z-index: 1;
+      }
+      .earlybird-badge::before { content: '⭐'; font-size: 11px; }
+
       /* 플로팅 도움 요청 버튼 */
       .fab {
         position: fixed;
@@ -1382,7 +1422,8 @@
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
           <!-- 나준민 -->
-          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="나준민">
+          <div class="earlybird rounded-xl shadow-sm p-5 flex flex-col gap-3" data-member="나준민">
+            <span class="earlybird-badge">EARLYBIRD · 1호</span>
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-line-l text-white font-display text-xl flex items-center justify-center flex-shrink-0">준</div>
               <div>
@@ -1399,7 +1440,8 @@
           </div>
 
           <!-- 한동명 -->
-          <div class="bg-panel rounded-xl border-2 border-board shadow-sm p-5 flex flex-col gap-3" data-member="한동명">
+          <div class="earlybird rounded-xl shadow-sm p-5 flex flex-col gap-3" data-member="한동명">
+            <span class="earlybird-badge">EARLYBIRD · 2호</span>
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-line-y text-ink font-display text-xl flex items-center justify-center flex-shrink-0">동</div>
               <div>
