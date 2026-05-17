@@ -337,24 +337,7 @@
         animation: confetti-pop 2.6s ease forwards;
       }
 
-      /* ===== 얼리버드 멤버 카드 (초록 그라디언트 보더 + 부드러운 글로우) ===== */
-      .earlybird {
-        position: relative;
-        border: 2px solid transparent !important;
-        background:
-          linear-gradient(180deg, #f0fdf4, #ecfdf5) padding-box,
-          linear-gradient(135deg, #16a34a 0%, #22c55e 25%, #34d399 50%, #22c55e 75%, #16a34a 100%) border-box !important;
-        background-size: auto, 300% 300% !important;
-        animation: earlybird-shimmer 3.5s linear infinite;
-        box-shadow:
-          0 4px 24px rgba(34, 197, 94, 0.25),
-          0 0 36px rgba(34, 197, 94, 0.12),
-          inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-      }
-      @keyframes earlybird-shimmer {
-        0%   { background-position: 0% 0%, 0% 50%; }
-        100% { background-position: 0% 0%, 300% 50%; }
-      }
+      /* ===== 얼리버드 멤버 카드 — 보더/글로우 제거, 인라인 뱃지만 유지 ===== */
       /* 이름 옆 인라인 EARLYBIRD ⭐ 뱃지 */
       .earlybird-inline {
         display: inline-flex;
@@ -4346,12 +4329,9 @@
           document.querySelectorAll('[data-member]').forEach((card) => {
             const name = card.dataset.member;
             const isReg = registered.has(name);
-            // 얼리버드 카드는 자체 그라디언트 보더 유지 — 인라인 보더 덮어쓰기 금지
-            if (!card.classList.contains('earlybird')) {
-              card.style.borderColor = isReg ? '#34d399' : '#f87171';
-              card.style.borderWidth = '2px';
-              card.style.borderStyle = 'solid';
-            }
+            card.style.borderColor = isReg ? '#34d399' : '#f87171';
+            card.style.borderWidth = '2px';
+            card.style.borderStyle = 'solid';
             const nameEl = card.querySelector('.font-bold.text-base');
             if (nameEl && !nameEl.querySelector('.member-status-badge')) {
               const badge = document.createElement('span');
