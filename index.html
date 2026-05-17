@@ -3369,7 +3369,44 @@
         const t = new Date();
         const kst = new Date(t.getTime() + 9 * 60 * 60 * 1000);
         document.getElementById('apDate').value = kst.toISOString().slice(0, 10);
+        reloadSubsList();
         await reloadAdminPushList();
+      }
+
+      async function reloadSubsList() {
+        const wrap = document.getElementById('apSubsList');
+        if (!wrap) return;
+        wrap.innerHTML = '<div style="font-size:11px;color:#4b5160">불러오는 중…</div>';
+        const { data, error } = await sb.from('push_subscriptions')
+          .select('member_name, last_seen_at')
+          .order('last_seen_at', { ascending: false });
+        if (error) { wrap.innerHTML = '<div style="font-size:11px;color:#d12c2c">불러오기 실패</div>'; return; }
+        // 멤버별 디바이스 개수 + 가장 최근 활동
+        const byMember = new Map();
+        for (const s of data || []) {
+          const name = s.member_name || '(이름없음)';
+          const prev = byMember.get(name) || { count: 0, last: null };
+          prev.count++;
+          if (!prev.last || (s.last_seen_at && s.last_seen_at > prev.last)) prev.last = s.last_seen_at;
+          byMember.set(name, prev);
+        }
+        const subscribed = new Set(byMember.keys());
+        wrap.innerHTML = MEMBER_LIST.map(m => {
+          const info = byMember.get(m.name);
+          if (info) {
+            const lastKst = info.last ? new Date(info.last).toLocaleString('ko-KR', { timeZone:'Asia/Seoul', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
+            const dev = info.count > 1 ? ` <span style="font-size:9px;color:#4b5160">·${info.count}대</span>` : '';
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 2px">
+              <span style="font-weight:700">✅ ${m.name}${dev}</span>
+              <span style="font-size:10px;color:#7a8090;font-family:monospace">${lastKst}</span>
+            </div>`;
+          } else {
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 2px;opacity:0.5">
+              <span>⬜ ${m.name}</span>
+              <span style="font-size:10px;color:#7a8090">미구독</span>
+            </div>`;
+          }
+        }).join('') + `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(26,29,36,.1);font-size:10px;color:#4b5160;font-family:monospace">${subscribed.size}/${MEMBER_LIST.length} 구독중</div>`;
       }
       function closeAdminPush() {
         document.getElementById('adminPushModal').style.display = 'none';
@@ -3379,7 +3416,7 @@
         const wrap = document.getElementById('apList');
         wrap.innerHTML = '<div style="font-size:11px;color:#4b5160">불러오는 중...</div>';
         const { data, error } = await sb.from('scheduled_pushes')
-          .select('id, title, body, send_at, sent, sent_count, sent_at')
+          .select('id, title, body, send_at, sent, sent_count, sent_at, recipients')
           .order('send_at', { ascending: false })
           .limit(20);
         if (error) { wrap.innerHTML = '<div style="font-size:11px;color:#d12c2c">불러오기 실패</div>'; return; }
@@ -3389,12 +3426,16 @@
           const status = p.sent
             ? `<span style="color:#16a34a">발송완료 · ${p.sent_count}명</span>`
             : `<span style="color:#d4a017">예약</span>`;
+          const recipientsLine = p.sent && p.recipients?.length
+            ? `<div style="font-size:10px;color:#16a34a;margin-top:3px;line-height:1.4">→ ${p.recipients.map(escapeHtml).join(', ')}</div>`
+            : (p.sent && p.sent_count > 0 ? `<div style="font-size:10px;color:#7a8090;margin-top:3px;font-style:italic">(이전 발송분 — 수신자 미기록)</div>` : '');
           return `<div style="background:#fff;border:1px solid rgba(26,29,36,.1);border-radius:11px;padding:10px">
             <div style="display:flex;justify-content:space-between;gap:8px">
               <div style="flex:1;min-width:0">
                 <div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.title)}</div>
                 <div style="font-size:11px;color:#4b5160;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.body)}</div>
                 <div style="font-size:10px;color:#4b5160;margin-top:4px">${sendKst} · ${status}</div>
+                ${recipientsLine}
               </div>
               <button onclick="adminDeletePush(${p.id})" aria-label="삭제" style="background:transparent;border:none;color:#d12c2c;font-size:18px;cursor:pointer;align-self:flex-start">×</button>
             </div>
@@ -3800,6 +3841,14 @@
             <button onclick="adminSendNow()" style="background:#d12c2c;color:#fff;border:none;border-radius:9px;padding:10px 12px;font-weight:700;font-size:12px;cursor:pointer">즉시 발송</button>
           </div>
           <div id="apMsg" style="font-size:11px;color:#d12c2c;margin-top:6px;min-height:14px"></div>
+        </div>
+
+        <div style="background:#fff;border:1px solid rgba(26,29,36,.1);border-radius:14px;padding:12px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-weight:700;font-size:12px">🔔 알림 구독 현황</div>
+            <button onclick="reloadSubsList()" style="font-size:10px;font-weight:700;background:transparent;border:1px solid rgba(26,29,36,.15);padding:3px 8px;border-radius:6px;cursor:pointer;color:#4b5160">새로고침</button>
+          </div>
+          <div id="apSubsList" style="display:flex;flex-direction:column;gap:4px;font-size:12px"></div>
         </div>
 
         <div style="font-weight:700;font-size:12px;margin-bottom:8px">예약 목록</div>
