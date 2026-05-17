@@ -337,6 +337,176 @@
         animation: confetti-pop 2.6s ease forwards;
       }
 
+      /* ===== 추억 섹션 — 게임화 stat / nudge / story bar / FAB ===== */
+      .mem-stats-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .mem-stat-tile {
+        background: #fff;
+        border: 1px solid rgba(26,29,36,0.06);
+        border-radius: 12px;
+        padding: 10px 8px;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+      }
+      .mem-stat-num {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 20px;
+        font-weight: 800;
+        color: #1a1d24;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .mem-stat-label {
+        font-size: 10px;
+        color: #4b5160;
+        margin-top: 3px;
+        font-weight: 600;
+      }
+      .mem-stat-tile.highlight {
+        background: linear-gradient(135deg, #fef9c3, #fef3c7);
+        border-color: #f5b400;
+      }
+      .mem-stat-tile.highlight .mem-stat-num { color: #b45309; }
+
+      .mem-nudge-card {
+        display: flex; align-items: center; gap: 12px;
+        background: linear-gradient(135deg, #1a1d24, #2d3343);
+        color: #fff;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+        box-shadow: 0 6px 20px rgba(26,29,36,0.18);
+      }
+      .mem-nudge-emoji { font-size: 26px; flex-shrink: 0; }
+      .mem-nudge-text { flex: 1; min-width: 0; }
+      .mem-nudge-title { font-weight: 700; font-size: 14px; line-height: 1.35; }
+      .mem-nudge-sub   { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+      .mem-nudge-cta {
+        background: #f5b400;
+        color: #1a1d24;
+        font-weight: 800;
+        font-size: 12px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: none;
+        flex-shrink: 0;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .mem-nudge-cta:active { transform: scale(0.96); }
+
+      .mem-recent-strip {
+        display: flex; gap: 10px;
+        overflow-x: auto;
+        padding: 2px 2px 12px;
+        margin: 0 -4px 16px;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .mem-recent-strip::-webkit-scrollbar { display: none; }
+      .mem-recent-item {
+        flex: 0 0 auto;
+        width: 84px;
+        scroll-snap-align: start;
+        cursor: pointer;
+      }
+      .mem-recent-thumb {
+        width: 84px; height: 84px;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        background: #f4efe2;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: transform 0.15s ease;
+      }
+      .mem-recent-item:active .mem-recent-thumb { transform: scale(0.96); }
+      .mem-recent-thumb img { width: 100%; height: 100%; object-fit: cover; }
+      .mem-recent-thumb::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.5));
+      }
+      .mem-recent-meta {
+        position: absolute; left: 6px; right: 6px; bottom: 5px;
+        font-size: 9px; font-weight: 700;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        z-index: 2;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .mem-recent-label {
+        font-size: 10px; color: #4b5160;
+        margin-top: 4px;
+        text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+
+      /* 폴라로이드 카드 호버 오버레이 */
+      .mem-card-hover-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7));
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        display: flex; align-items: flex-end;
+        padding: 8px;
+        pointer-events: none;
+      }
+      .mem-card-pol:hover .mem-card-hover-overlay,
+      .mem-card-pol:active .mem-card-hover-overlay { opacity: 1; }
+      .mem-card-hover-text {
+        font-size: 10px; font-weight: 700; color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        line-height: 1.3;
+      }
+
+      /* Sticky FAB (memory 섹션 전용) */
+      .mem-fab {
+        position: fixed;
+        right: 18px;
+        bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 18px);
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f5b400, #fbbf24);
+        color: #1a1d24;
+        font-size: 28px; font-weight: 800;
+        line-height: 1;
+        border: none;
+        box-shadow: 0 8px 24px rgba(245,180,0,0.45), 0 0 0 0 rgba(245,180,0,0.6);
+        cursor: pointer;
+        z-index: 35;
+        display: none;
+        align-items: center; justify-content: center;
+        animation: mem-fab-pulse 2.6s ease-out infinite;
+      }
+      .mem-fab.show { display: flex; }
+      .mem-fab:active { transform: scale(0.92); }
+      @keyframes mem-fab-pulse {
+        0%   { box-shadow: 0 8px 24px rgba(245,180,0,0.45), 0 0 0 0 rgba(245,180,0,0.55); }
+        70%  { box-shadow: 0 8px 24px rgba(245,180,0,0.45), 0 0 0 18px rgba(245,180,0,0); }
+        100% { box-shadow: 0 8px 24px rgba(245,180,0,0.45), 0 0 0 0 rgba(245,180,0,0); }
+      }
+
+      .mem-empty-state {
+        text-align: center;
+        padding: 48px 20px;
+        background: #fff;
+        border: 2px dashed rgba(26,29,36,0.12);
+        border-radius: 16px;
+      }
+      .mem-empty-emoji { font-size: 56px; margin-bottom: 8px; }
+      .mem-empty-title { font-weight: 800; font-size: 16px; color: #1a1d24; }
+      .mem-empty-sub   { font-size: 12px; color: #4b5160; margin-top: 4px; margin-bottom: 14px; }
+      .mem-empty-cta {
+        background: #1a1d24; color: #fff;
+        font-weight: 800; font-size: 13px;
+        padding: 10px 22px; border-radius: 999px;
+        border: none; cursor: pointer;
+      }
+
       /* ===== 알림 설정 카드 (iOS 스타일 토글 스위치) ===== */
       .notif-settings-card {
         background: #fff;
@@ -1835,21 +2005,53 @@
     </section>
 
     <!-- ===== 추억 ===== -->
-    <section id="memory" class="workboard-light py-10 sm:py-14">
+    <section id="memory" class="workboard-light py-10 sm:py-14 relative">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-end justify-between mb-5">
           <div>
             <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-05</div>
             <h2 class="font-display text-2xl sm:text-3xl mt-2">추억</h2>
-            <p class="text-ink-2 text-sm mt-1">클릭하면 크게 볼 수 있어요.</p>
+            <p class="text-ink-2 text-sm mt-1">올릴수록 단톡방이 살아나요 📸</p>
           </div>
         </div>
+
+        <!-- Stat strip: 총 / 이번달 / TOP 업로더 -->
+        <div id="memStatsStrip" class="mem-stats-strip" style="display:none">
+          <div class="mem-stat-tile">
+            <div id="memStatTotal" class="mem-stat-num">0</div>
+            <div class="mem-stat-label">총 사진</div>
+          </div>
+          <div class="mem-stat-tile highlight">
+            <div id="memStatMonth" class="mem-stat-num">0</div>
+            <div class="mem-stat-label">이번달</div>
+          </div>
+          <div class="mem-stat-tile">
+            <div id="memStatTop" class="mem-stat-num" style="font-size:13px;font-weight:700;padding-top:3px">—</div>
+            <div class="mem-stat-label">TOP 업로더</div>
+          </div>
+        </div>
+
+        <!-- 개인화 nudge card -->
+        <div id="memNudgeCard" class="mem-nudge-card" style="display:none">
+          <div class="mem-nudge-emoji">📸</div>
+          <div class="mem-nudge-text">
+            <div id="memNudgeTitle" class="mem-nudge-title">오늘 한 장 어때요?</div>
+            <div id="memNudgeSub"   class="mem-nudge-sub">올린 사진은 단톡방 분위기를 살려요</div>
+          </div>
+          <button class="mem-nudge-cta" onclick="openUploadModal('')">올리기</button>
+        </div>
+
+        <!-- 최근 업로드 가로 스크롤 (Stories 스타일) -->
+        <div id="memRecentStrip" class="mem-recent-strip" style="display:none"></div>
 
         <!-- 미디어 그리드 -->
         <div id="memory-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
 
         <p class="text-[11px] text-ink-3/60 mt-4 font-mono">사진을 탭하면 댓글을 남길 수 있어요 💬</p>
       </div>
+
+      <!-- Sticky FAB -->
+      <button id="memUploadFab" class="mem-fab" type="button" aria-label="사진 올리기" onclick="openUploadModal('')">+</button>
     </section>
 
     <!-- ===== 미디어 업로드 모달 ===== -->
@@ -2047,6 +2249,21 @@
         const grid = document.getElementById('memory-grid');
         let html = '';
 
+        // 빈 상태
+        if (!MEM_GROUPS.length) {
+          grid.innerHTML = `
+            <div class="mem-empty-state" style="grid-column:1/-1">
+              <div class="mem-empty-emoji">📷</div>
+              <div class="mem-empty-title">첫 사진이 가장 소중해요</div>
+              <div class="mem-empty-sub">오늘부터 추억 쌓아볼까요?</div>
+              <button class="mem-empty-cta" onclick="openUploadModal('')">+ 사진 올리기</button>
+            </div>
+          `;
+          updateMemStats();
+          updateMemFab();
+          return;
+        }
+
         MEM_GROUPS.forEach((g, gi) => {
           const first = g.items[0];
           const count = g.items.length;
@@ -2065,15 +2282,26 @@
           const countBadge = count > 1 ? `<span class="absolute bottom-7 right-2 text-[8px] font-mono bg-ink/75 text-white px-1.5 py-0.5 rounded">${count}장</span>` : '';
           const groupNameEsc = g.name.replace(/'/g, "\\'");
 
+          // 최신 항목의 업로더/시간 (호버 오버레이용)
+          const latest = g.items[g.items.length - 1];
+          const latestBy = latest?.uploadedBy || first?.uploadedBy || '';
+          const latestAt = latest?.createdAt || first?.createdAt;
+          const relTime = latestAt ? memRelativeTime(latestAt) : '';
+          const overlay = (latestBy || relTime)
+            ? `<div class="mem-card-hover-overlay">
+                 <div class="mem-card-hover-text">${latestBy ? escHtml(latestBy) + ' · ' : ''}${relTime}</div>
+               </div>` : '';
+
           html += `
             <div class="relative" style="padding:10px 12px 0 0">
               ${backCards}
-              <div class="relative bg-white p-1.5 pb-6 shadow-md hover:scale-105 transition-transform duration-200 overflow-hidden cursor-pointer" style="rotate:-1.5deg;z-index:10" onclick="lbOpenGroup(${gi},0)">
+              <div class="mem-card-pol relative bg-white p-1.5 pb-6 shadow-md hover:scale-105 transition-transform duration-200 overflow-hidden cursor-pointer" style="rotate:-1.5deg;z-index:10" onclick="lbOpenGroup(${gi},0)">
                 <div class="relative aspect-square overflow-hidden">
                   <img src="${thumbOf(first)}" alt="${escHtml(first.label||'')}" loading="lazy" decoding="async" class="w-full h-full object-cover"/>
                   ${playIcon}
                   ${badge}
                   ${countBadge}
+                  ${overlay}
                 </div>
                 <div class="font-mono text-[9px] text-ink-3 text-center mt-2 leading-tight px-1">${g.name}</div>
               </div>
@@ -2088,7 +2316,131 @@
           <div class="font-mono text-[9px] text-ink-3 text-center mt-2">새 앨범 추가</div>
         </div>`;
         grid.innerHTML = html;
+
+        updateMemStats();
+        renderMemRecentStrip();
+        updateMemFab();
       }
+
+      function memRelativeTime(iso) {
+        const t = new Date(iso).getTime();
+        if (isNaN(t)) return '';
+        const diff = Date.now() - t;
+        const d = Math.floor(diff / 86400000);
+        if (d <= 0) return '오늘';
+        if (d === 1) return '어제';
+        if (d < 7) return `${d}일 전`;
+        if (d < 30) return `${Math.floor(d/7)}주 전`;
+        if (d < 365) return `${Math.floor(d/30)}달 전`;
+        return `${Math.floor(d/365)}년 전`;
+      }
+
+      function updateMemStats() {
+        const strip = document.getElementById('memStatsStrip');
+        const nudge = document.getElementById('memNudgeCard');
+        if (!strip || !nudge) return;
+        const total = MEMORIES.length;
+        const now = new Date();
+        const ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+        let monthCount = 0;
+        const uploaderCount = new Map();
+        let myName = '';
+        try { myName = _authSession?.user?.user_metadata?.name || ''; } catch (_) {}
+        let myCount = 0, myMonthCount = 0;
+        let latestAt = 0;
+        MEMORIES.forEach(m => {
+          if (m.createdAt) {
+            const d = new Date(m.createdAt);
+            const dym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+            if (dym === ym) monthCount++;
+            const ts = d.getTime();
+            if (ts > latestAt) latestAt = ts;
+            if (m.uploadedBy && m.uploadedBy === myName && dym === ym) myMonthCount++;
+          }
+          if (m.uploadedBy) {
+            uploaderCount.set(m.uploadedBy, (uploaderCount.get(m.uploadedBy) || 0) + 1);
+            if (m.uploadedBy === myName) myCount++;
+          }
+        });
+
+        // stat strip
+        document.getElementById('memStatTotal').textContent = total;
+        document.getElementById('memStatMonth').textContent = monthCount;
+        let topName = '—';
+        let topMax = 0;
+        uploaderCount.forEach((c, n) => { if (c > topMax) { topMax = c; topName = n; } });
+        document.getElementById('memStatTop').textContent = topMax ? `${topName} · ${topMax}장` : '—';
+        strip.style.display = total > 0 ? '' : 'none';
+
+        // nudge (로그인한 사람만)
+        if (!myName) { nudge.style.display = 'none'; return; }
+        const titleEl = document.getElementById('memNudgeTitle');
+        const subEl   = document.getElementById('memNudgeSub');
+        const daysSince = latestAt ? Math.floor((Date.now() - latestAt) / 86400000) : 999;
+        let show = false;
+        if (total === 0) {
+          titleEl.textContent = `${myName}님, 첫 한 장을 올려볼래요?`;
+          subEl.textContent = '추억은 올린 순간부터 쌓여요';
+          show = true;
+        } else if (myMonthCount === 0 && monthCount === 0) {
+          titleEl.textContent = `이번달 사진이 0장이에요`;
+          subEl.textContent = `${myName}님이 첫 타자가 되어볼까요?`;
+          show = true;
+        } else if (myMonthCount === 0) {
+          titleEl.textContent = `${myName}님, 이번달 아직 0장이에요`;
+          subEl.textContent = `다른 멤버는 벌써 ${monthCount}장 올렸어요`;
+          show = true;
+        } else if (daysSince >= 14) {
+          titleEl.textContent = `${daysSince}일째 새 사진이 없어요`;
+          subEl.textContent = '한 장 올리면 단톡방이 살아나요';
+          show = true;
+        } else if (topName && topName !== myName && topMax - myCount >= 5) {
+          titleEl.textContent = `TOP은 ${topName} (${topMax}장)`;
+          subEl.textContent = `${myName}님은 ${myCount}장 — 따라잡아볼래요?`;
+          show = true;
+        }
+        nudge.style.display = show ? '' : 'none';
+      }
+
+      function renderMemRecentStrip() {
+        const strip = document.getElementById('memRecentStrip');
+        if (!strip) return;
+        // 최근 업로드 순으로 정렬 — 최신 8개
+        const sorted = [...MEMORIES]
+          .filter(m => m.createdAt)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 8);
+        if (sorted.length < 3) { strip.style.display = 'none'; return; }
+        strip.style.display = '';
+        strip.innerHTML = sorted.map(m => {
+          const gi = MEM_GROUPS.findIndex(g => g.name === m.group);
+          const ii = gi >= 0 ? MEM_GROUPS[gi].items.indexOf(m) : 0;
+          const rel = memRelativeTime(m.createdAt);
+          const by = m.uploadedBy ? escHtml(m.uploadedBy) : '';
+          return `
+            <div class="mem-recent-item" onclick="lbOpenGroup(${gi}, ${ii})">
+              <div class="mem-recent-thumb">
+                <img src="${thumbOf(m)}" loading="lazy" decoding="async" alt=""/>
+                <div class="mem-recent-meta">${by || rel}</div>
+              </div>
+              <div class="mem-recent-label">${escHtml(m.group || '')}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function updateMemFab() {
+        const fab = document.getElementById('memUploadFab');
+        if (!fab) return;
+        // memory 섹션이 보일 때만 표시
+        const sec = document.getElementById('memory');
+        if (!sec) return;
+        const rect = sec.getBoundingClientRect();
+        const visible = rect.top < window.innerHeight * 0.8 && rect.bottom > window.innerHeight * 0.2;
+        fab.classList.toggle('show', visible);
+      }
+      window.addEventListener('scroll', () => updateMemFab(), { passive: true });
+      window.addEventListener('resize', () => updateMemFab());
 
       // ── 업로드 모달 ──
       let _uploadGroupName = '';
