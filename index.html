@@ -1183,10 +1183,17 @@
         // 1) 기본 상태(이은준=attend)로 즉시 UI 그림 — DB 실패해도 빈 게이지 안 보이게
         refreshRsvpUI();
 
-        // 2) 결혼식 session_id 찾기 (schedule_sessions에 등록돼 있어야 함)
-        const { data: weddings } = await sb.from('schedule_sessions')
+        // 2) 결혼식 session_id 찾기 — 정확 매칭 실패 시 ilike fallback
+        let { data: weddings } = await sb.from('schedule_sessions')
           .select('id').eq('title', '이은준 결혼식').limit(1);
-        if (!weddings?.length) return;
+        if (!weddings?.length) {
+          ({ data: weddings } = await sb.from('schedule_sessions')
+            .select('id').ilike('title', '%이은준%결혼%').limit(1));
+        }
+        if (!weddings?.length) {
+          console.warn('[RSVP] 결혼식 일정을 찾지 못함');
+          return;
+        }
         currentEventId = weddings[0].id;
 
         const { data: rsvps } = await sb.from('event_rsvps')
@@ -1194,6 +1201,8 @@
           .eq('session_id', currentEventId);
 
         if (rsvps) {
+          // DB가 진실의 원천 — 메모리 상태 초기화 후 DB 반영 (이은준만 유지)
+          MEMBERS.forEach(n => { if (n !== '이은준') rsvpState[n] = null; });
           rsvps.forEach(r => {
             if (MEMBERS.includes(r.member_name) && r.member_name !== '이은준') {
               rsvpState[r.member_name] = r.status;
@@ -1224,44 +1233,73 @@
       async function toggleRsvp(name) {
         const myName = _authSession?.user?.user_metadata?.name || '';
         if (!myName) { showToast('먼저 로그인해주세요 🔒'); return; }
-        if (myName !== name) { showToast('본인 투표만 가능해요'); return; }
-        const newStatus = rsvpState[name] === 'attend' ? null : 'attend';
+        // 우리끼리라 본인 검증 완화 — 누구나 누구의 RSVP 토글 가능
+        if (!currentEventId) {
+          showToast('결혼식 일정을 못 불러왔어요. 다시 시도할게요 🔄');
+          await loadRsvp();
+          if (!currentEventId) return;
+        }
+        // 3-state 토글: null → attend → decline → null
+        const cur = rsvpState[name];
+        const newStatus = cur === 'attend' ? 'decline' : cur === 'decline' ? null : 'attend';
+        const prev = cur;
         rsvpState[name] = newStatus;
         refreshRsvpUI();
-        if (!currentEventId) return;
         if (newStatus === null) {
-          await sb.from('event_rsvps').delete()
+          const { error } = await sb.from('event_rsvps').delete()
             .eq('session_id', currentEventId).eq('member_name', name);
+          if (error) { rsvpState[name] = prev; refreshRsvpUI(); showToast('저장 실패: ' + error.message); return; }
+          showToast(`${name} 응답 취소`);
         } else {
-          await sb.from('event_rsvps').upsert(
-            { session_id: Number(currentEventId), member_name: name, status: 'attend', updated_at: new Date().toISOString() },
+          const { error } = await sb.from('event_rsvps').upsert(
+            { session_id: Number(currentEventId), member_name: name, status: newStatus, updated_at: new Date().toISOString() },
             { onConflict: 'session_id,member_name' }
           );
+          if (error) { rsvpState[name] = prev; refreshRsvpUI(); showToast('저장 실패: ' + error.message); return; }
+          showToast(`${name} ${newStatus === 'attend' ? '참석 ✓' : '불참'}`);
         }
       }
 
       async function submitRsvp(status) {
         const myName = (typeof _authSession !== 'undefined' && _authSession?.user?.user_metadata?.name)
           || localStorage.getItem('rsvpName') || '';
-        rsvpState[myName] = status;
-        refreshRsvpUI();
         const msg = document.getElementById('rsvp-msg');
         if (!myName) {
           msg.textContent = '먼저 로그인해주세요.';
           msg.className = 'text-center text-sm mt-3 text-warn';
-          setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 3000);
           msg.classList.remove('hidden');
+          setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 3000);
+          return;
+        }
+        // 결혼식 ID 누락 시 자동 재로드 후 재시도
+        if (!currentEventId) {
+          msg.textContent = '결혼식 일정 불러오는 중… 잠시 후 다시 눌러주세요';
+          msg.className = 'text-center text-sm mt-3 text-warn';
+          msg.classList.remove('hidden');
+          await loadRsvp();
+          setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 3000);
+          if (!currentEventId) return;
+        }
+        const prev = rsvpState[myName];
+        rsvpState[myName] = status;
+        refreshRsvpUI();
+        const { error } = await sb.from('event_rsvps').upsert(
+          { session_id: Number(currentEventId), member_name: myName, status, updated_at: new Date().toISOString() },
+          { onConflict: 'session_id,member_name' }
+        );
+        if (error) {
+          rsvpState[myName] = prev;
+          refreshRsvpUI();
+          msg.textContent = '저장 실패: ' + error.message;
+          msg.className = 'text-center text-sm mt-3 text-warn';
+          msg.classList.remove('hidden');
+          setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 4000);
           return;
         }
         msg.textContent = status === 'attend' ? '✓ 참석으로 등록됐어요!' : '불참으로 등록됐어요.';
         msg.className = 'text-center text-sm mt-3 ' + (status === 'attend' ? 'text-ok' : 'text-ink-3');
         msg.classList.remove('hidden');
         setTimeout(() => { msg.textContent = ''; msg.classList.add('hidden'); }, 3000);
-        if (!currentEventId) return;
-        await sb.from('event_rsvps').upsert(
-          { session_id: Number(currentEventId), member_name: myName, status, updated_at: new Date().toISOString() },
-          { onConflict: 'session_id,member_name' }
-        );
       }
 
       loadRsvp();
@@ -3127,18 +3165,18 @@
       async function toggleDbRsvp(sessionId, memberName, isAttending) {
         const myName = _authSession?.user?.user_metadata?.name || '';
         if (!myName) { showToast('먼저 로그인해주세요 🔒'); return; }
-        if (myName !== memberName) { showToast('본인 투표만 가능해요'); return; }
+        // 우리끼리라 본인 검증 완화 — 누구나 토글 가능
         if (isAttending) {
           const { error } = await sb.from('event_rsvps').delete()
             .eq('session_id', sessionId).eq('member_name', memberName);
-          if (error) { alert('오류: ' + error.message); return; }
+          if (error) { showToast('저장 실패: ' + error.message); return; }
           showToast(`${memberName} 참석 취소`);
         } else {
           const { error } = await sb.from('event_rsvps').upsert(
             { session_id: Number(sessionId), member_name: memberName, status: 'attend', updated_at: new Date().toISOString() },
             { onConflict: 'session_id,member_name' }
           );
-          if (error) { alert('오류: ' + error.message); return; }
+          if (error) { showToast('저장 실패: ' + error.message); return; }
           showToast(`${memberName} 참석 ✓`);
         }
         initMeetSlider();
@@ -3171,7 +3209,7 @@
           { session_id: Number(sessionId), member_name: name, status, updated_at: new Date().toISOString() },
           { onConflict: 'session_id,member_name' }
         );
-        if (error) { alert('오류: ' + error.message); return; }
+        if (error) { showToast('저장 실패: ' + error.message); return; }
         showToast(`${name} ${status==='attend'?'참석 ✓':'불참'}`);
         initMeetSlider();
       }
@@ -3332,6 +3370,8 @@
         }
         updateCmtAuthUI();
         updateAdminUI();
+        // 로그인 후 RSVP 재로드 (currentEventId 누락 복구 + 최신 상태 반영)
+        if (session) loadRsvp();
       });
 
       // 초기 세션 확인
@@ -3352,6 +3392,8 @@
         }
         updateCmtAuthUI();
         updateAdminUI();
+        // 로그인 후 RSVP 재로드 (currentEventId 누락 복구 + 최신 상태 반영)
+        if (session) loadRsvp();
       });
 
       /* ── 게이트 핸들러 ── */
