@@ -3174,7 +3174,6 @@
           loginBtn.classList.remove('hidden');
           showAuthGate();
         }
-        highlightRegisteredMembers();
         updateCmtAuthUI();
         updateAdminUI();
       });
@@ -3505,31 +3504,9 @@
         await reloadAdminPushList();
       }
 
-      // 가입완료 멤버 카드 강조
-      async function highlightRegisteredMembers() {
-        const { data: profiles } = await sb.from('profiles').select('name');
-        if (!profiles) return;
-        const registered = new Set(profiles.map(p => p.name));
-        document.querySelectorAll('#status .grid > div').forEach(card => {
-          const nameEl = card.querySelector('.font-bold.text-base');
-          if (!nameEl) return;
-          const name = nameEl.textContent.trim();
-          if (registered.has(name)) {
-            card.classList.remove('border-board');
-            card.classList.add('border-line-l', 'border-2');
-            if (!card.querySelector('.reg-badge')) {
-              const badge = document.createElement('span');
-              badge.className = 'reg-badge text-[10px] font-mono font-bold text-line-l bg-line-l/10 px-1.5 py-0.5 rounded-full ml-1.5';
-              badge.textContent = '가입완료';
-              nameEl.after(badge);
-            }
-          } else {
-            card.classList.remove('border-line-l', 'border-2');
-            card.classList.add('border-board');
-            card.querySelector('.reg-badge')?.remove();
-          }
-        });
-      }
+      // (제거됨) highlightRegisteredMembers — updateMemberBorders가 동일 역할 + 초록 인라인 뱃지로 대체
+      // 캐시된 옛 DOM에 남아있을 수 있는 빨간 reg-badge 정리
+      document.querySelectorAll('.reg-badge').forEach(el => el.remove());
     </script>
 
     <script>
