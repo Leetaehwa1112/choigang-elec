@@ -337,24 +337,77 @@
         animation: confetti-pop 2.6s ease forwards;
       }
 
-      /* ===== 얼리버드 멤버 카드 (초록 그라디언트 보더 + 부드러운 글로우) ===== */
-      .earlybird {
+      /* ===== 알림 설정 카드 (iOS 스타일 토글 스위치) ===== */
+      .notif-settings-card {
+        background: #fff;
+        border: 1px solid rgba(26,29,36,0.08);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      }
+      .notif-settings-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      }
+      .notif-settings-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .notif-settings-icon {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: linear-gradient(135deg, #f5b400, #fbbf24);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; flex-shrink: 0;
+      }
+      .notif-settings-text { min-width: 0; }
+      .notif-settings-title { font-weight: 700; font-size: 14px; color: #1a1d24; }
+      .notif-settings-status { font-size: 11px; color: #4b5160; margin-top: 1px; }
+      .notif-settings-status.on { color: #16a34a; font-weight: 600; }
+      .notif-settings-status.off { color: #d12c2c; font-weight: 600; }
+      /* iOS 스타일 토글 */
+      .notif-switch {
         position: relative;
-        border: 2px solid transparent !important;
-        background:
-          linear-gradient(180deg, #f0fdf4, #ecfdf5) padding-box,
-          linear-gradient(135deg, #16a34a 0%, #22c55e 25%, #34d399 50%, #22c55e 75%, #16a34a 100%) border-box !important;
-        background-size: auto, 300% 300% !important;
-        animation: earlybird-shimmer 3.5s linear infinite;
-        box-shadow:
-          0 4px 24px rgba(34, 197, 94, 0.25),
-          0 0 36px rgba(34, 197, 94, 0.12),
-          inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+        width: 50px; height: 30px;
+        background: #d4d7dd;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 0.25s ease;
+        flex-shrink: 0;
+        border: none; padding: 0;
       }
-      @keyframes earlybird-shimmer {
-        0%   { background-position: 0% 0%, 0% 50%; }
-        100% { background-position: 0% 0%, 300% 50%; }
+      .notif-switch::after {
+        content: '';
+        position: absolute;
+        top: 3px; left: 3px;
+        width: 24px; height: 24px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        transition: transform 0.25s ease;
       }
+      .notif-switch.on { background: #16a34a; }
+      .notif-switch.on::after { transform: translateX(20px); }
+      .notif-settings-guide {
+        margin-top: 12px; padding-top: 12px;
+        border-top: 1px dashed rgba(26,29,36,0.12);
+        display: none;
+      }
+      .notif-settings-guide.show { display: block; }
+      .notif-guide-step {
+        display: flex; gap: 10px; align-items: flex-start;
+        margin-top: 8px;
+      }
+      .notif-guide-step:first-child { margin-top: 0; }
+      .notif-guide-step-num {
+        flex-shrink: 0;
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        background: #1a1d24; color: #fff;
+        font-size: 11px; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .notif-guide-step-text {
+        font-size: 12px; color: #1a1d24; line-height: 1.5;
+      }
+
+      /* ===== 얼리버드 멤버 카드 — 보더/글로우 제거, 인라인 뱃지만 유지 ===== */
       /* 이름 옆 인라인 EARLYBIRD ⭐ 뱃지 */
       .earlybird-inline {
         display: inline-flex;
@@ -1639,6 +1692,22 @@
           <div class="label-tape inline-block px-2 py-0.5 text-[11px]">CH-03</div>
           <h2 class="font-display text-2xl sm:text-3xl mt-2">멤버</h2>
         </div>
+
+        <!-- 알림 설정 카드 -->
+        <div id="notifSettingsCard" class="notif-settings-card" style="display:none">
+          <div class="notif-settings-row">
+            <div class="notif-settings-info">
+              <div class="notif-settings-icon">🔔</div>
+              <div class="notif-settings-text">
+                <div class="notif-settings-title">푸시 알림</div>
+                <div id="notifSettingsStatus" class="notif-settings-status">상태 확인 중…</div>
+              </div>
+            </div>
+            <button id="notifSettingsSwitch" class="notif-switch" type="button" aria-label="알림 켜기/끄기"></button>
+          </div>
+          <div id="notifSettingsGuide" class="notif-settings-guide"></div>
+        </div>
+
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
@@ -4332,8 +4401,114 @@
           closeNotifSheet(false);
           const ok = await enablePushNotifications();
           updateNavToggle();
+          updateSettingsCard();
           if (ok) showSuccessToast();
         });
+
+        // ===== 알림 설정 카드 (멤버 섹션 상단 토글 스위치) =====
+        const card    = document.getElementById('notifSettingsCard');
+        const sw      = document.getElementById('notifSettingsSwitch');
+        const statusEl= document.getElementById('notifSettingsStatus');
+        const guideEl = document.getElementById('notifSettingsGuide');
+
+        function renderGuide() {
+          const steps = platformGuide();
+          guideEl.innerHTML = `
+            <div style="font-size:11px;color:#4b5160;margin-bottom:8px">아래 방법으로 직접 켜주세요 👇</div>
+            ${steps.map((s, i) => `
+              <div class="notif-guide-step">
+                <div class="notif-guide-step-num">${i+1}</div>
+                <div class="notif-guide-step-text">${s}</div>
+              </div>
+            `).join('')}
+          `;
+        }
+
+        async function updateSettingsCard() {
+          if (!card) return;
+          if (!_authSession || !isPushSupportedHere()) { card.style.display = 'none'; return; }
+          card.style.display = '';
+          const perm = Notification.permission;
+          if (perm === 'denied') {
+            sw.classList.remove('on');
+            statusEl.textContent = '차단됨 — 설정에서 직접 켜야 해요';
+            statusEl.className = 'notif-settings-status off';
+            renderGuide();
+            guideEl.classList.add('show');
+            return;
+          }
+          if (perm === 'granted') {
+            const alive = await hasActiveSubscription();
+            if (alive) {
+              sw.classList.add('on');
+              statusEl.textContent = 'D-3 / D-1 / 당일 알림 받는 중';
+              statusEl.className = 'notif-settings-status on';
+              guideEl.classList.remove('show');
+            } else {
+              sw.classList.remove('on');
+              statusEl.textContent = '구독이 끊겼어요 — 다시 켜주세요';
+              statusEl.className = 'notif-settings-status off';
+              guideEl.classList.remove('show');
+            }
+            return;
+          }
+          // default
+          sw.classList.remove('on');
+          statusEl.textContent = '꺼짐 — 켜면 모임 잊지 않아요';
+          statusEl.className = 'notif-settings-status';
+          guideEl.classList.remove('show');
+        }
+
+        sw?.addEventListener('click', async () => {
+          const perm = Notification.permission;
+          if (perm === 'denied') {
+            // 토글 불가 — 안내만 펼침
+            renderGuide();
+            guideEl.classList.toggle('show');
+            return;
+          }
+          if (perm === 'granted') {
+            const alive = await hasActiveSubscription();
+            if (alive) {
+              // OFF로: 로컬 구독 해제 + DB에서 endpoint 삭제
+              if (!confirm('알림을 끌까요?\n(완전히 차단하려면 브라우저 설정에서 해제해야 해요)')) return;
+              try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) {
+                  await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+                  await sub.unsubscribe();
+                }
+                localStorage.removeItem('push-enabled');
+                showSuccessToast.call(null);
+                document.querySelector('.notif-success-toast')?.remove();
+                const t = document.createElement('div');
+                t.className = 'notif-success-toast';
+                t.textContent = '알림 꺼졌어요 🔕';
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 2400);
+              } catch (_) {}
+              updateSettingsCard();
+              updateNavToggle();
+              return;
+            }
+            // granted인데 구독 없음 → 재구독
+            const ok = await enablePushNotifications();
+            updateSettingsCard();
+            updateNavToggle();
+            if (ok) showSuccessToast();
+            return;
+          }
+          // default → 권한 요청
+          const ok = await enablePushNotifications();
+          updateSettingsCard();
+          updateNavToggle();
+          if (ok) showSuccessToast();
+        });
+
+        // 초기 + 4초 주기 동기화
+        setTimeout(updateSettingsCard, 1000);
+        setInterval(updateSettingsCard, 4000);
       })();
 
       // 이미 권한 허용된 사용자도 구독 갱신 (브라우저 데이터 삭제 대비)
@@ -4346,12 +4521,9 @@
           document.querySelectorAll('[data-member]').forEach((card) => {
             const name = card.dataset.member;
             const isReg = registered.has(name);
-            // 얼리버드 카드는 자체 그라디언트 보더 유지 — 인라인 보더 덮어쓰기 금지
-            if (!card.classList.contains('earlybird')) {
-              card.style.borderColor = isReg ? '#34d399' : '#f87171';
-              card.style.borderWidth = '2px';
-              card.style.borderStyle = 'solid';
-            }
+            card.style.borderColor = isReg ? '#34d399' : '#f87171';
+            card.style.borderWidth = '2px';
+            card.style.borderStyle = 'solid';
             const nameEl = card.querySelector('.font-bold.text-base');
             if (nameEl && !nameEl.querySelector('.member-status-badge')) {
               const badge = document.createElement('span');
