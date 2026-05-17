@@ -4431,8 +4431,8 @@
           const perm = Notification.permission;
           if (perm === 'denied') {
             sw.classList.remove('on');
-            statusEl.textContent = '모임 못 가요 · 차단됨';
-            statusEl.className = 'notif-settings-status off';
+            statusEl.textContent = '모임 잊지 않게 알려드릴게요';
+            statusEl.className = 'notif-settings-status';
             renderGuide();
             guideEl.classList.add('show');
             return;
@@ -4446,16 +4446,16 @@
               guideEl.classList.remove('show');
             } else {
               sw.classList.remove('on');
-              statusEl.textContent = '모임 못 가요 · 회비 환불 X';
-              statusEl.className = 'notif-settings-status off';
+              statusEl.textContent = '모임 잊지 않게 알려드릴게요';
+              statusEl.className = 'notif-settings-status';
               guideEl.classList.remove('show');
             }
             return;
           }
           // default
           sw.classList.remove('on');
-          statusEl.textContent = '모임 못 가요 · 회비 환불 X';
-          statusEl.className = 'notif-settings-status off';
+          statusEl.textContent = '모임 잊지 않게 알려드릴게요';
+          statusEl.className = 'notif-settings-status';
           guideEl.classList.remove('show');
         }
 
