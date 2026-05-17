@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
   const { data: subs, error: subErr } = await supabase
     .from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth');
+    .select('id, endpoint, p256dh, auth, member_name');
   if (subErr) {
     return new Response(JSON.stringify({ error: subErr.message }), { status: 500 });
   }
@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
     });
 
     let sent = 0;
+    const recipientSet = new Set<string>();
     for (const sub of subs || []) {
       try {
         await webpush.sendNotification(
@@ -86,18 +87,20 @@ Deno.serve(async (req) => {
           payload
         );
         sent++;
+        if (sub.member_name) recipientSet.add(sub.member_name);
       } catch (e: any) {
         const status = e?.statusCode || e?.status || 0;
         if (status === 404 || status === 410) expired.push(sub.id);
       }
     }
+    const recipients = Array.from(recipientSet).sort();
 
     await supabase
       .from('scheduled_pushes')
-      .update({ sent: true, sent_at: new Date().toISOString(), sent_count: sent })
+      .update({ sent: true, sent_at: new Date().toISOString(), sent_count: sent, recipients })
       .eq('id', p.id);
 
-    results.push({ id: p.id, sent });
+    results.push({ id: p.id, sent, recipients });
   }
 
   if (expired.length) {
